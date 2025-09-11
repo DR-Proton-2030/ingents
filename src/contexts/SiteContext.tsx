@@ -11,7 +11,7 @@ const SiteContext = createContext<SiteContextType | null>(null);
 
 export function SiteProvider({ children }: { children: ReactNode }) {
   const params = useParams();
-  const site = (params?.site as string) || "default-site";
+  const site = (params?.site as string) || "dashboard";
   const siteUrl = `/${site}`;
 
   return (

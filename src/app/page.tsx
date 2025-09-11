@@ -2,5 +2,5 @@ import { redirect } from "next/navigation";
 
 export default function Home() {
   // Redirect to default site
-  redirect("/my-site");
+  redirect("/dashboard");
 }

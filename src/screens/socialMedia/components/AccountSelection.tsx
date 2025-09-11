@@ -3,17 +3,17 @@ import React, { useState } from "react";
 
 const socials = [
   {
-    src: "https://cdn-icons-png.flaticon.com/512/2111/2111463.png", // Instagram
+    src: "https://cdn.pixabay.com/photo/2021/06/15/12/14/instagram-6338393_960_720.png", // Instagram
     href: "https://instagram.com",
     alt: "Instagram",
   },
   {
-    src: "https://cdn-icons-png.flaticon.com/512/733/733547.png", // Facebook
+    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Logo_de_Facebook.png/1028px-Logo_de_Facebook.png", // Facebook
     href: "https://facebook.com",
     alt: "Facebook",
   },
   {
-    src: "https://cdn-icons-png.flaticon.com/512/5968/5968830.png", // Twitter / X
+    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/X_logo.jpg/250px-X_logo.jpg", // Twitter / X
     href: "https://x.com",
     alt: "Twitter / X",
   },
