@@ -8,10 +8,14 @@ import {
   Maximize,
   MessageCircle,
   Navigation,
+  RefreshCcw,
+  RefreshCcwDot,
   Send,
   Wheat,
 } from "lucide-react";
 import ChatModal from "./ChatModal";
+import FacebookPostBtn from "../facebookPostbtn/FacebookPostBtn";
+import { BsFacebook, BsSignRailroadFill } from "react-icons/bs";
 
 type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; videoUrl?: string; platform?: string };
 
@@ -357,15 +361,22 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                       </div>
                     )}
                     {/* If assistant message includes a platform hint, surface Post buttons accordingly */}
-                    {m.role === 'assistant' && m.platform && (
-                      <div className="mt-2 flex gap-2">
+                   
+                    {m.videoUrl && (
+                      <div className="mt-2">
+                        <video
+                          src={m.videoUrl}
+                          controls
+                          className="rounded-lg max-w-full h-auto"
+                        />
+                      </div>
+                    )}
+                  </div>
+                   {m.role === 'assistant' && m.platform && (
+                      <div className="mt-2 flex items-center gap-2">
                         {m.platform === 'facebook' ? (
-                          <button
-                            onClick={() => { console.log("=====>message", m.content) }}
-                            className="px-3 py-1 rounded bg-sky-600 text-white text-sm"
-                          >
-                            Post to Facebook
-                          </button>
+                        
+                          <FacebookPostBtn message={m.content} file={undefined} />
                         ) : null}
 
                         {m.platform === 'all' ? (
@@ -387,7 +398,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                           </>
                         ) : null}
 
-                        <button
+                        <div
                           onClick={async () => {
                             const userMsg: Msg = { role: 'user', content: 'regenerate' };
                             setMessages((s) => [...s, userMsg]);
@@ -401,22 +412,27 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                               console.error('Regenerate request failed', e);
                             }
                           }}
-                          className="px-3 py-1 rounded bg-white border border-gray-200 text-sm"
+                          
                         >
-                          Regenerate
+                        <button
+                          className="group flex items-center justify-start w-11 h-11 bg-gray-800 rounded-full cursor-pointer relative overflow-hidden
+                           transition-all duration-200 shadow-lg hover:w-40 hover:rounded-full active:translate-x-1 active:translate-y-1"
+                        >
+                          <div
+                            className="flex items-center justify-center w-full transition-all duration-300 group-hover:justify-start group-hover:px-3"
+                          >
+                           <RefreshCcwDot className="text-white"/>
+                          </div>
+                          <div
+                            className="absolute right-5 transform translate-x-full opacity-0 text-white text-lg font-semibold transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
+                          >
+                            Regenerate
+                          </div>
                         </button>
+                        </div>
+                     
                       </div>
                     )}
-                    {m.videoUrl && (
-                      <div className="mt-2">
-                        <video
-                          src={m.videoUrl}
-                          controls
-                          className="rounded-lg max-w-full h-auto"
-                        />
-                      </div>
-                    )}
-                  </div>
                 </motion.div>
               );
             })}
