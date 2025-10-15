@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { sessionStore } from "@/lib/sessionStore";
 import { generateImageWithGemini } from "@/service/imageGenrate";
+import { callGemini } from "@/lib/social/callGemini";
+import { detectMediaIntent, interpretIntent } from "@/lib/social/intents";
+import { generateMain, tryGenerateImage } from "@/lib/social/generate";
 
 // Session-aware social API route with Gemini integration
 // - Accepts { messages: [{ role, content }], sessionId? }
@@ -17,114 +20,10 @@ const GEMINI_ENDPOINT = GEMINI_API_KEY
 
 export const runtime = "nodejs";
 
-async function callGemini(
-  systemInstruction: string | undefined, // optional system instruction
-  contents: Array<{ role: string; parts: Array<{ text: string }> }>
-): Promise<string> {
-  if (!GEMINI_ENDPOINT) throw new Error("Missing GEMINI_API_KEY");
 
-  // Ensure the system instruction is sent as the first contents element (role: 'system')
-  const reqContents = [...contents];
-  if (systemInstruction) {
-    // Gemini generateContent expects roles 'user' or 'model'.
-    // Include the system instruction as a 'user' message prefixed so the model sees it as instructions.
-    reqContents.unshift({ role: "user", parts: [{ text: `SYSTEM INSTRUCTION:\n${systemInstruction}` }] });
-  }
 
-  const requestBody: any = {
-    contents: reqContents,
-    generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
-  };
 
-  const resp = await fetch(GEMINI_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(requestBody),
-  });
-
-  if (!resp.ok) {
-    const txt = await resp.text().catch(() => "(no body)");
-    throw new Error(`Gemini API error ${resp.status}: ${txt}`);
-  }
-
-  const data = await resp.json().catch(async (e) => {
-    const t = await resp.text().catch(() => "(unreadable body)");
-    throw new Error("Invalid JSON from Gemini: " + t);
-  });
-
-  if (!data || !data.candidates || data.candidates.length === 0) {
-    throw new Error("No candidates returned from Gemini");
-  }
-
-  const first = data.candidates[0];
-  const parts = first?.content?.parts || [];
-  const reply = parts.map((p: any) => p.text || "").join("\n");
-  return reply || JSON.stringify(data);
-}
-
-// Fallback regex-based detection (used if Gemini intent detection fails)
-function fallbackMediaDetection(userText: string) {
-  const imagePatterns = /\b(image|photo|pic|picture|visual|graphic|artwork|illustration|snapshot|with\s+image)\b/i;
-  const videoPatterns = /\b(video|clip|footage|recording|movie|animation|motion|with\s+video)\b/i;
-  const imageOnlyPatterns = /\b(generate|create|make|show)\s+(image|photo|pic|picture)\b/i;
-  const videoOnlyPatterns = /\b(generate|create|make|show)\s+(video|clip|footage)\b/i;
-  const postPatterns = /\b(post|content|draft|share)\b/i;
-
-  const imageRequested = imagePatterns.test(userText);
-  const videoRequested = videoPatterns.test(userText);
-  const imageOnly = imageOnlyPatterns.test(userText) && !postPatterns.test(userText);
-  const videoOnly = videoOnlyPatterns.test(userText) && !postPatterns.test(userText);
-
-  return { imageRequested, videoRequested, imageOnly, videoOnly };
-}
-
-// Use Gemini to detect media intent. Returns same shape as fallback.
-async function detectMediaIntent(userText: string) {
-  if (!GEMINI_ENDPOINT) return fallbackMediaDetection(userText);
-
-  const intentPrompt = `Analyze this user request and return ONLY a JSON object with the fields: {"imageRequested": true/false, "videoRequested": true/false, "imageOnly": true/false, "videoOnly": true/false}.\nUser request: "${userText.replace(/"/g, '\\"')}"`;
-
-  try {
-    const resp = await fetch(GEMINI_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: intentPrompt }] }], generationConfig: { temperature: 0.0, maxOutputTokens: 150 } }),
-    });
-
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '(no body)');
-      console.warn('Intent detection Gemini error', resp.status, text);
-      return fallbackMediaDetection(userText);
-    }
-
-    const data = await resp.json().catch(async () => {
-      const t = await resp.text().catch(() => '(unreadable body)');
-      throw new Error('Invalid JSON from Gemini: ' + t);
-    });
-
-    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const jsonMatch = reply.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          imageRequested: Boolean(parsed.imageRequested),
-          videoRequested: Boolean(parsed.videoRequested),
-          imageOnly: Boolean(parsed.imageOnly),
-          videoOnly: Boolean(parsed.videoOnly),
-        };
-      } catch (e) {
-        console.warn('Failed to parse intent JSON, falling back', e);
-        return fallbackMediaDetection(userText);
-      }
-    }
-
-    return fallbackMediaDetection(userText);
-  } catch (err) {
-    console.warn('Intent detection failed, using fallback', err);
-    return fallbackMediaDetection(userText);
-  }
-}
+// (moved to src/lib/social)
 
 export async function POST(req: Request) {
   try {
@@ -166,87 +65,92 @@ export async function POST(req: Request) {
     // as it's already included in `recent` if `all` is correctly constructed from history and current messages.
     // Fix 4: Removed the empty model turn, as it's not typically required for `generateContent` calls.
 
+  // Step 1: Detect intent using Gemini + fallback
+    const intent = await detectMediaIntent(text);
+    console.log('Detected intent for session', sessionId, intent);
+
+    // Step 2: Ask Gemini to interpret user's specific goal more deeply
+    const intentInterpretationPrompt = `
+You are an AI intent interpreter for a social media assistant.
+Analyze the user’s message below and determine their *true goal* in plain language.
+Return a JSON object with these fields:
+{
+  "goal": "short sentence about the user's goal (e.g., generate Facebook post, design image, write caption, brainstorm ideas)",
+  "confidence": "low" | "medium" | "high",
+  "needsConfirmation": true/false
+}
+User message: "${text.replace(/"/g, '\\"')}"
+`;
+
+    let interpretedIntent: { goal: string; confidence: string; needsConfirmation: boolean } | null = null;
+    try {
+      const replyRaw = await callGemini(undefined, [{ role: "user", parts: [{ text: intentInterpretationPrompt }] }]);
+      const jsonMatch = replyRaw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) interpretedIntent = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.warn("Intent interpretation failed, using fallback:", e);
+    }
+
+    // Step 3: Handle low-confidence or unclear intent
+    if (!interpretedIntent || interpretedIntent.needsConfirmation || interpretedIntent.confidence === "low") {
+      const clarifyReply = `I want to make sure I understand. Would you like me to:\n1️⃣ Generate a text post,\n2️⃣ Create an image,\n3️⃣ Make a short video,\nor 4️⃣ Do something else?`;
+
+      const assistantMsg = { role: "assistant", content: clarifyReply };
+      sessionStore.updateSession(sessionId, [...all, assistantMsg]);
+      return NextResponse.json({ reply: clarifyReply, sessionId });
+    }
+
+    // Step 4: Proceed to generation only when intent is clear
     let reply = "";
     let imageUrl: string | null = null;
     let videoUrl: string | null = null;
 
-    // Detect intent early so it can be used for branching (image/video/etc.)
-    const intent = await detectMediaIntent(text);
-    console.log('Detected intent for session', sessionId, intent);
+    // Add intent summary into prompt context
+    const intentText = `INTENT: ${JSON.stringify(intent)}, INTERPRETED GOAL: ${interpretedIntent.goal}`;
+    const sendContents = [{ role: "user", parts: [{ text: intentText }] }, ...contents];
 
     try {
-      if (GEMINI_ENDPOINT) {
-        // Prepare sendContents: include intent as a prefixed user message so model can react
-        const intentText = `INTENT: ${JSON.stringify(intent)}`;
-        const sendContents = [{ role: 'user', parts: [{ text: intentText }] }, ...contents];
-
-        // Pass the system instruction content and the prepared conversation history to callGemini
-        reply = await callGemini(systemInstructionContent, sendContents);
-      } else {
-        // Fallback to echo when no key is configured
-        reply = `Echo: ${text}`;
-      }
+      reply = await callGemini(systemInstructionContent, sendContents);
     } catch (e: any) {
-      console.error("Gemini call failed, falling back to echo:", e?.message || e);
+      console.error("Gemini call failed, falling back to echo:", e.message);
       reply = `Echo: ${text}`;
     }
 
-    // If intent indicates an image, attempt image generation and attach imageUrl
-    try {
-      if (intent && (intent.imageRequested || intent.imageOnly)) {
-        const imgPrompt = `Generate an image for the following content: ${text}`;
+    // Step 5: Generate image/video conditionally
+    if (intent.imageRequested || intent.imageOnly) {
+      const imgPrompt = `Generate an image for: ${text}`;
+      try {
         imageUrl = await generateImageWithGemini(imgPrompt);
-        if (imageUrl) {
-          console.log('Generated image URL for session', sessionId);
-        }
-      }
-    } catch (imgErr) {
-      console.error('Image generation failed for session', sessionId, imgErr);
-      imageUrl = null;
-    }
-
-    // If an image was produced but the model reply refused or didn't acknowledge it,
-    // replace/refine the reply so the user sees the image with a friendly line.
-    if (imageUrl) {
-      const refusalPatterns = [
-        /cannot generate images/i,
-        /can't create images/i,
-        /cannot create images/i,
-        /I cannot generate images/i,
-        /unable to generate images/i,
-        /my capabilities are limited to generating text/i,
-      ];
-      const hasRefusal = refusalPatterns.some((rx) => rx.test(reply || ""));
-
-      if (!reply || hasRefusal || intent.imageOnly) {
-        // Provide a concise, useful message that points to the generated image.
-        reply = `Here's the image I generated for you based on your request.`;
-      } else {
-        // If the assistant gave some text and didn't refuse, optionally append a short note.
-        reply = `${reply}\n\n(PS: I've also generated an image for this — see below.)`;
+      } catch (e) {
+        console.error("Image generation failed", e);
       }
     }
 
-    // If intent indicates video, attempt video generation and attach videoUrl
-    try {
-      if (intent && (intent.videoRequested || intent.videoOnly)) {
-        // dynamic import to avoid loading heavy modules unless needed
-        const { generateVideoWithGemini } = await import('@/service/videoGenrate');
-        const vidPrompt = `Generate a short video for the following content: ${text}`;
+    if (intent.videoRequested || intent.videoOnly) {
+      try {
+        const { generateVideoWithGemini } = await import("@/service/videoGenrate");
+        const vidPrompt = `Generate a short video for: ${text}`;
         videoUrl = await generateVideoWithGemini(vidPrompt);
-        if (videoUrl) {
-          console.log('Generated video URL for session', sessionId);
-        }
+      } catch (e) {
+        console.error("Video generation failed", e);
       }
-    } catch (vidErr) {
-      console.error('Video generation failed for session', sessionId, vidErr);
-      videoUrl = null;
     }
 
-    // Persist assistant reply (final) including optional imageUrl
+    // Adjust final reply if media generated
+    if (imageUrl) {
+      if (!reply || /cannot|unable|can't create/i.test(reply)) {
+        reply = "Here's the image I generated for you!";
+      } else reply += "\n\n(PS: I’ve also generated an image for this — see below.)";
+    }
+
+    if (videoUrl) {
+      reply += "\n\n(PS: A short video was generated for this — check below.)";
+    }
+
+    // Persist assistant reply (final) including optional imageUrl/videoUrl
     const assistantMsg: any = { role: "assistant", content: reply };
     if (imageUrl) assistantMsg.imageUrl = imageUrl;
-  if (videoUrl) assistantMsg.videoUrl = videoUrl;
+    if (videoUrl) assistantMsg.videoUrl = videoUrl;
     sessionStore.updateSession(sessionId, [...all, assistantMsg]);
 
     // If client requested streaming, stream the reply in small chunks
