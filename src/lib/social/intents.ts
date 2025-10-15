@@ -6,11 +6,13 @@ export function fallbackMediaDetection(userText: string) {
   const imageOnlyPatterns = /\b(generate|create|make|show)\s+(image|photo|pic|picture)\b/i;
   const videoOnlyPatterns = /\b(generate|create|make|show)\s+(video|clip|footage)\b/i;
   const postPatterns = /\b(post|content|draft|share)\b/i;
+  const inclusionPatterns = /\b(with(?: a| an)?(?: beautiful| nice| attractive|)\s+(image|photo|picture)|include an image|include image|with image)\b/i;
 
   const imageRequested = imagePatterns.test(userText);
   const videoRequested = videoPatterns.test(userText);
-  const imageOnly = imageOnlyPatterns.test(userText) && !postPatterns.test(userText);
-  const videoOnly = videoOnlyPatterns.test(userText) && !postPatterns.test(userText);
+  const hasInclusionPhrase = inclusionPatterns.test(userText);
+  const imageOnly = imageOnlyPatterns.test(userText) && !postPatterns.test(userText) && !hasInclusionPhrase;
+  const videoOnly = videoOnlyPatterns.test(userText) && !postPatterns.test(userText) && !hasInclusionPhrase;
 
   return { imageRequested, videoRequested, imageOnly, videoOnly };
 }
@@ -24,6 +26,12 @@ export async function detectMediaIntent(userText: string) {
     const jsonMatch = reply.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
+      // If user included an explicit 'with image' style phrase, prefer imageRequested but not imageOnly
+      const hasInclusionPhrase = /\b(with(?: a| an)?(?: beautiful| nice| attractive|)\s+(image|photo|picture)|include an image|include image|with image)\b/i.test(userText);
+      if (hasInclusionPhrase) {
+        parsed.imageRequested = true;
+        parsed.imageOnly = false;
+      }
       return {
         imageRequested: Boolean(parsed.imageRequested),
         videoRequested: Boolean(parsed.videoRequested),

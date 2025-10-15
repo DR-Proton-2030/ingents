@@ -109,30 +109,43 @@ User message: "${text.replace(/"/g, '\\"')}"
     const intentText = `INTENT: ${JSON.stringify(intent)}, INTERPRETED GOAL: ${interpretedIntent.goal}`;
     const sendContents = [{ role: "user", parts: [{ text: intentText }] }, ...contents];
 
-    try {
-      reply = await callGemini(systemInstructionContent, sendContents);
-    } catch (e: any) {
-      console.error("Gemini call failed, falling back to echo:", e.message);
-      reply = `Echo: ${text}`;
-    }
-
-    // Step 5: Generate image/video conditionally
-    if (intent.imageRequested || intent.imageOnly) {
+    // If the quick detect says imageOnly, skip text generation and only produce the image
+    if (intent.imageOnly) {
       const imgPrompt = `Generate an image for: ${text}`;
       try {
         imageUrl = await generateImageWithGemini(imgPrompt);
+        reply = imageUrl ? "Here's the image I generated for you!" : "I generated the image but couldn't produce a preview.";
       } catch (e) {
         console.error("Image generation failed", e);
+        reply = "I attempted to generate the image but something went wrong.";
       }
-    }
-
-    if (intent.videoRequested || intent.videoOnly) {
+    } else {
+      // Normal flow: generate textual reply first
       try {
-        const { generateVideoWithGemini } = await import("@/service/videoGenrate");
-        const vidPrompt = `Generate a short video for: ${text}`;
-        videoUrl = await generateVideoWithGemini(vidPrompt);
-      } catch (e) {
-        console.error("Video generation failed", e);
+        reply = await callGemini(systemInstructionContent, sendContents);
+      } catch (e: any) {
+        console.error("Gemini call failed, falling back to echo:", e.message);
+        reply = `Echo: ${text}`;
+      }
+
+      // Generate image/video conditionally after text generation when requested
+      if (intent.imageRequested) {
+        const imgPrompt = `Generate an image for: ${text}`;
+        try {
+          imageUrl = await generateImageWithGemini(imgPrompt);
+        } catch (e) {
+          console.error("Image generation failed", e);
+        }
+      }
+
+      if (intent.videoRequested || intent.videoOnly) {
+        try {
+          const { generateVideoWithGemini } = await import("@/service/videoGenrate");
+          const vidPrompt = `Generate a short video for: ${text}`;
+          videoUrl = await generateVideoWithGemini(vidPrompt);
+        } catch (e) {
+          console.error("Video generation failed", e);
+        }
       }
     }
 
@@ -140,7 +153,7 @@ User message: "${text.replace(/"/g, '\\"')}"
     if (imageUrl) {
       if (!reply || /cannot|unable|can't create/i.test(reply)) {
         reply = "Here's the image I generated for you!";
-      } else reply += "\n\n(PS: I’ve also generated an image for this — see below.)";
+      } else reply += "";
     }
 
     if (videoUrl) {
