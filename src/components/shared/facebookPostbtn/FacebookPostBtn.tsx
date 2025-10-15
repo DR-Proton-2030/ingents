@@ -6,7 +6,10 @@ import { generateLumaVideoFromText } from "@/service/luma";
 import { useContext, useEffect, useState } from "react";
 import { BsFacebook, BsCheck } from "react-icons/bs";
 
-export default function FacebookPostBtn({message, file}: any) {
+export default function FacebookPostBtn({message, file, messageId}: any) {
+  // Remove the specific phrase from the message if it exists
+  const cleanedMessage = message?.replace("Here's the image I generated for you!", '').trim();
+
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -25,6 +28,19 @@ export default function FacebookPostBtn({message, file}: any) {
       setUserId("");
     }
   }, [user]);
+
+  // On mount, check localStorage to see if this messageId was previously posted
+  useEffect(() => {
+    try {
+      if (messageId) {
+        const key = `posted_${messageId}`;
+        const stored = localStorage.getItem(key);
+        if (stored === '1') setSuccess(true);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [messageId]);
 
 
   async function submit(e?: React.FormEvent | React.MouseEvent) {
@@ -49,7 +65,7 @@ export default function FacebookPostBtn({message, file}: any) {
       const form = new FormData();
       form.append('userId', userId || '68ef911fd860ee30f6103bdb');
       form.append('pageId', pageId || '806839612517191');
-      form.append('message', message || 'Test post');
+      form.append('message', cleanedMessage || 'Test post');
       // Support multiple file shapes: File, Blob, or data URL string
       if (file) {
         // data URL string (data:image/png;base64,...) -> convert to blob
@@ -82,6 +98,10 @@ export default function FacebookPostBtn({message, file}: any) {
       // mark success based on HTTP ok or explicit json.ok
       if (resp.ok || (json && (json.ok === true || json.success === true))) {
         setSuccess(true);
+        // persist posted state for this messageId
+        try {
+          if (messageId) localStorage.setItem(`posted_${messageId}`, '1');
+        } catch (e) {}
       } else {
         setSuccess(false);
       }

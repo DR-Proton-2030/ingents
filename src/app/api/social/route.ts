@@ -266,7 +266,7 @@ User message: "${text.replace(/"/g, '\\"')}"
       const imgPrompt = `Generate an image for: ${text}`;
       try {
         imageUrl = await generateImageWithGemini(imgPrompt);
-        reply = imageUrl ? "Here's the image I generated for you!" : "I generated the image but couldn't produce a preview.";
+        reply = imageUrl ? "" : "I generated the image but couldn't produce a preview.";
       } catch (e) {
         console.error("Image generation failed", e);
         reply = "I attempted to generate the image but something went wrong.";
@@ -327,7 +327,7 @@ User message: "${text.replace(/"/g, '\\"')}"
       // Clean the reply for final output
       reply = cleanGeminiReply(reply);
       if (!reply || /cannot|unable|can't create/i.test(reply)) {
-        reply = "Here's the image I generated for you!";
+        reply = "";
       }
     }
 

@@ -314,6 +314,8 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
             {messages.map((m, i) => {
               const isUser = m.role === "user";
               const hasFile = /Example File|Downloads/i.test(m.content);
+              // derive a lightweight message id for persisted posted state
+              const messageId = `${sessionId || 'anon'}_${i}_${String(m.content || '').slice(0,40).replace(/\s+/g,'_')}`;
 
               return (
                 <motion.div
@@ -375,8 +377,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                    {m.role === 'assistant' && m.platform && (
                       <div className="-mt-2 flex items-center gap-2">
                         {m.platform === 'facebook' ? (
-                        
-                          <FacebookPostBtn message={m.content} file={m.imageUrl} />
+                          <FacebookPostBtn message={m.content} file={m.imageUrl} messageId={messageId} />
                         ) : null}
 
                         {m.platform === 'all' ? (
