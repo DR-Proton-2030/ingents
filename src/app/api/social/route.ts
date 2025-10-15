@@ -379,11 +379,16 @@ User message: "${text.replace(/"/g, '\\"')}"
 console.log("====> AI Reply:", reply);
 
 const outgoingMessage = pendingPost?.message || reply;
+const outgoingImage = (pendingPost && pendingPost.imageUrl) ? pendingPost.imageUrl : imageUrl;
+const outgoingVideo = (pendingPost && pendingPost.videoUrl) ? pendingPost.videoUrl : videoUrl;
 
-// Only send the final message and platform to client
+// Only send the final message, platform, and any generated media (image/video) to client
 return NextResponse.json({
   reply: outgoingMessage,
-  platform: platform || "none"
+  platform: platform || "none",
+  sessionId,
+  imageUrl: outgoingImage || null,
+  videoUrl: outgoingVideo || null,
 });
 
   } catch (err) {

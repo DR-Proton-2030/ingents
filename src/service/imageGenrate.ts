@@ -1,6 +1,6 @@
 export const generateImageWithGemini = async (prompt: string): Promise<string | null> => {
   try {
-    const huggingFaceToken = process.env.HUGGING_FACE_TOKEN || "your-huggingface-token-here";
+    const huggingFaceToken = process.env.HUGGING_FACE_TOKEN 
     
     const response = await fetch(
       "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
@@ -38,7 +38,7 @@ export const generateImageWithGemini = async (prompt: string): Promise<string | 
       }
       base64 = btoa(binary);
     }
-
+    console.log("object", base64);
     // Return a data URL the frontend can use directly as an <img src="..."></img>
     return `data:image/png;base64,${base64}`;
   } catch (error) {
