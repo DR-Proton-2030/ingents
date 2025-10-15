@@ -78,7 +78,7 @@ export default function SocialMediaDashboard() {
             selectedCompany={selectedCompany}
             setSelectedCompany={setSelectedCompany}
           />
-          {/* <FacebookPostForm /> */}
+          <FacebookPostForm />
           <AccountSelection />
           <main className="mt-8 space-y-6 pr-2">
             <FollowersChart />

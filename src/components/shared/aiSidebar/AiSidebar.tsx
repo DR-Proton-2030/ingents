@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import ChatModal from "./ChatModal";
 
-type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; videoUrl?: string };
+type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; videoUrl?: string; platform?: string };
 
 export default function AiSidebar({ aiUrl = "social", context }: any) {
   const [input, setInput] = useState("");
@@ -106,7 +106,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
           });
         }
 
-        // After stream completes, attempt to get sessionId/image/video fields from trailing JSON (if server sends JSON)
+        // After stream completes, attempt to get sessionId/image/video/platform fields from trailing JSON (if server sends JSON)
         // Some servers may not append JSON; we'll do a best-effort fetch of headers/body fallback
         let newSessionId: string | undefined;
         try {
@@ -118,13 +118,15 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
             newSessionId = parsed.sessionId;
             const imageUrl = parsed.imageUrl;
             const videoUrl = parsed.videoUrl;
-            // attach media if present to the last message
+            const platform = parsed.platform;
+            // attach media/platform if present to the last message
             setMessages((s) => {
               const copy = s.slice();
-              const last = copy[copy.length - 1];
+              const last = copy[copy.length - 1] as Msg | undefined;
               if (last && last.role === "assistant") {
                 if (imageUrl) last.imageUrl = imageUrl;
                 if (videoUrl) last.videoUrl = videoUrl;
+                if (platform) last.platform = platform;
               }
               try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(copy)); } catch (e) {}
               return copy;
@@ -142,10 +144,11 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
       } else {
         // fallback: non-streaming JSON response
         const data = await res.json();
-        const reply = (data && data.reply) || "(no reply)";
-        const imageUrl = data && data.imageUrl;
-        const videoUrl = data && data.videoUrl;
-        const newSessionId = data && data.sessionId;
+  const reply = (data && data.reply) || "(no reply)";
+  const imageUrl = data && data.imageUrl;
+  const videoUrl = data && data.videoUrl;
+  const platform = data && data.platform;
+  const newSessionId = data && data.sessionId;
 
         // Update session ID if received from server
         if (newSessionId && newSessionId !== sessionId) {
@@ -156,7 +159,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
             /* ignore */
           }
         }
-        const assistantMsg: Msg = { role: "assistant", content: reply, imageUrl, videoUrl };
+  const assistantMsg: Msg = { role: "assistant", content: reply, imageUrl, videoUrl, platform };
         setMessages((s) => {
           const next = [...s, assistantMsg];
           try {
@@ -309,28 +312,61 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                         />
                       </div>
                     )}
-                    {/* If assistant message contains an image, surface Post / Regenerate buttons */}
-                    {m.role === 'assistant' && m.imageUrl && (
+                    {/* If assistant message includes a platform hint, surface Post buttons accordingly */}
+                    {m.role === 'assistant' && m.platform && (
                       <div className="mt-2 flex gap-2">
-                        <button
-                          onClick={async () => {
-                            // send a short 'post' confirmation message
-                            const userMsg: Msg = { role: 'user', content: 'post' };
-                            setMessages((s) => [...s, userMsg]);
-                            try {
-                              await fetch(`/api/${aiUrl}`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ messages: [...messages, userMsg], sessionId }),
-                              });
-                            } catch (e) {
-                              console.error('Post request failed', e);
-                            }
-                          }}
-                          className="px-3 py-1 rounded bg-sky-600 text-white text-sm"
-                        >
-                          Post to Facebook
-                        </button>
+                        {m.platform === 'facebook' ? (
+                          <button
+                            onClick={async () => {
+                              const userMsg: Msg = { role: 'user', content: 'post to facebook' };
+                              setMessages((s) => [...s, userMsg]);
+                              try {
+                                await fetch(`/api/${aiUrl}`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ messages: [...messages, userMsg], sessionId }),
+                                });
+                              } catch (e) {
+                                console.error('Post request failed', e);
+                              }
+                            }}
+                            className="px-3 py-1 rounded bg-sky-600 text-white text-sm"
+                          >
+                            Post to Facebook
+                          </button>
+                        ) : null}
+
+                        {m.platform === 'all' ? (
+                          <>
+                            {[
+                              { id: 'facebook', label: 'Facebook' },
+                              { id: 'instagram', label: 'Instagram' },
+                              { id: 'linkedin', label: 'LinkedIn' },
+                              { id: 'x', label: 'X' },
+                            ].map((p) => (
+                              <button
+                                key={p.id}
+                                onClick={async () => {
+                                  const userMsg: Msg = { role: 'user', content: `post to ${p.id}` };
+                                  setMessages((s) => [...s, userMsg]);
+                                  try {
+                                    await fetch(`/api/${aiUrl}`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ messages: [...messages, userMsg], sessionId }),
+                                    });
+                                  } catch (e) {
+                                    console.error('Post request failed', e);
+                                  }
+                                }}
+                                className="px-3 py-1 rounded bg-sky-600 text-white text-sm"
+                              >
+                                Post to {p.label}
+                              </button>
+                            ))}
+                          </>
+                        ) : null}
+
                         <button
                           onClick={async () => {
                             const userMsg: Msg = { role: 'user', content: 'regenerate' };

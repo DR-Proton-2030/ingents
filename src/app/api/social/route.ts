@@ -39,6 +39,9 @@ export async function POST(req: Request) {
     const lastUser = all.slice().reverse().find((m) => m.role === "user" && m.content);
     const text = (lastUser?.content || "").trim();
 
+  // Quick regex-based platform detection so Gemini doesn't have to infer it later
+  const explicitPlatform = /\bfacebook\b|\bfb\b/i.test(text) ? 'facebook' : undefined;
+
     if (!text) {
       return NextResponse.json({ message: "Missing user message" }, { status: 400 });
     }
@@ -124,7 +127,7 @@ export async function POST(req: Request) {
         return { ok: false, error: 'unknown' };
       }
 
-      // Direct command like 'post this'/'post the previous one' should post immediately
+  // Direct command like 'post this'/'post the previous one' should post immediately
       const directPostRegex = /\bpost\s+(?:this|that|it|the\s+(?:previous|last|above|one))\b/i;
       if (directPostRegex.test(text)) {
         // Prefer pending if present, otherwise try to find last assistant message in session
@@ -152,19 +155,16 @@ export async function POST(req: Request) {
         }
 
         try {
-          const postBody = { userId: effective.userId || '68ef911fd860ee30f6103bdb', pageId: effective.pageId || '806839612517191', message: effective.message, image: effective.imageUrl };
-          console.debug('[social] direct post body', { sessionId, postBody });
-          const resp = await postWithRetries(postBody, 3);
-          // clear pending if it was the source
+          // Simulate posting — do NOT call external Facebook API
+          const platform = effective.platform || (explicitPlatform ? 'facebook' : 'all');
+          const successReply = `Simulated post to ${platform}: "${effective.message?.slice(0,200)}${effective.message && effective.message.length>200 ? '...' : ''}"`;
           if (pending) sessionStore.clearPending(sessionId);
-          const successReply = resp.ok && resp.json?.ok ? 'Posted to Facebook successfully.' : `Posting failed: ${resp.error || resp.json?.error || 'unknown'}`;
-          console.debug('[social] post response', { sessionId, resp });
           const assistantMsg = { role: 'assistant', content: successReply };
           sessionStore.updateSession(sessionId, [...all, assistantMsg]);
-          return NextResponse.json({ reply: successReply, result: resp.json || resp.error, sessionId });
+          return NextResponse.json({ reply: successReply, platform, sessionId });
         } catch (err: any) {
-          console.error('Error posting to facebook (direct):', err);
-          return NextResponse.json({ message: 'Failed to post to Facebook' }, { status: 502 });
+          console.error('Error simulating post (direct):', err);
+          return NextResponse.json({ message: 'Failed to simulate post' }, { status: 502 });
         }
       }
 
@@ -172,18 +172,17 @@ export async function POST(req: Request) {
         const action = await classifyConfirmation(text);
         if (action === 'confirm') {
           try {
-            const postBody = { userId: pending.userId || '68ef911fd860ee30f6103bdb', pageId: pending.pageId || '806839612517191', message: pending.message, image: pending.imageUrl };
-            console.debug('[social] confirm post body', { sessionId, postBody });
-            const resp = await postWithRetries(postBody, 3);
+            // Simulate confirm post — do not call external API
+            const platform = pending.platform || (explicitPlatform ? 'facebook' : 'all');
             sessionStore.clearPending(sessionId);
-            const successReply = resp.ok && resp.json?.ok ? 'Posted to Facebook successfully.' : `Posting failed: ${resp.error || resp.json?.error || 'unknown'}`;
-            console.debug('[social] post response', { sessionId, resp });
+            const successReply = `Simulated post to ${platform}: "${(pending.message || '').slice(0,200)}${(pending.message||'').length>200 ? '...' : ''}"`;
+            console.debug('[social] simulated confirm post', { sessionId, platform });
             const assistantMsg = { role: 'assistant', content: successReply };
             sessionStore.updateSession(sessionId, [...all, assistantMsg]);
-            return NextResponse.json({ reply: successReply, result: resp.json || resp.error, sessionId });
+            return NextResponse.json({ reply: successReply, platform, sessionId });
           } catch (err: any) {
-            console.error('Error posting to facebook:', err);
-            return NextResponse.json({ message: 'Failed to post to Facebook' }, { status: 502 });
+            console.error('Error simulating confirm post:', err);
+            return NextResponse.json({ message: 'Failed to simulate post' }, { status: 502 });
           }
         }
 
@@ -350,9 +349,7 @@ User message: "${text.replace(/"/g, '\\"')}"
     const userIdToUse =  '68ef911fd860ee30f6103bdb';
     const pageIdToUse = '806839612517191'; // keep page optional until real account linking
 
-    // If this generation looked like a post (interpretedIntent.goal contains 'post' or user requested a post), save pendingPost so the user can confirm posting
-    // If the user's text explicitly mentions Facebook (regex), force platform to facebook
-    const explicitPlatform = /\bfacebook\b|\bfb\b/i.test(text) ? 'facebook' : undefined;
+  // If this generation looked like a post (interpretedIntent.goal contains 'post' or user requested a post), save pendingPost so the user can confirm posting
 
     const pendingPost: any = {
       message: reply,
@@ -373,6 +370,11 @@ User message: "${text.replace(/"/g, '\\"')}"
     sessionStore.updateSession(sessionId, [...all, assistantMsg], userIdToUse);
     sessionStore.setPending(sessionId, pendingPost);
 
+    // Determine platform for client metadata: prefer pending/platform hints, fall back to interpreted intent
+    const platform = (pendingPost && pendingPost.platform)
+      ? pendingPost.platform
+      : (/post/i.test(interpretedIntent?.goal || '') ? 'all' : 'none');
+
     // If client requested streaming, stream the reply in small chunks
     const wantStream = req.headers.get("x-ai-stream") === "1" || req.headers.get("accept") === "text/event-stream";
   if (wantStream) {
@@ -390,7 +392,7 @@ User message: "${text.replace(/"/g, '\\"')}"
             }
             // After sending textual chunks, append a JSON metadata object so clients
             // reading the stream can pick up sessionId and any generated media (image/video).
-            const meta = JSON.stringify({ sessionId, imageUrl, videoUrl });
+            const meta = JSON.stringify({ sessionId, imageUrl, videoUrl, platform });
             controller.enqueue(encoder.encode("\n" + meta));
             controller.close();
           } catch (err) {
@@ -404,8 +406,8 @@ User message: "${text.replace(/"/g, '\\"')}"
       });
     }
     
-    console.log("====>ai reply",reply)
-    return NextResponse.json({ reply, imageUrl, sessionId });
+  console.log("====>ai reply",reply)
+  return NextResponse.json({ reply, imageUrl, platform });
   } catch (err) {
     console.error("social route error", err);
     return NextResponse.json({ message: "Internal error" }, { status: 500 });
