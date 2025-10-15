@@ -91,3 +91,53 @@ export async function postVideoToFacebook(payload: any) {
     };
   }
 }
+
+// Multipart/form-data uploader (for image/file uploads)
+export async function postToFacebookFormData(opts: { userId: string; pageId: string; message?: string; imagePath?: string; imageBuffer?: Buffer; filename?: string; contentType?: string; }) {
+  const { userId, pageId, message = '', imagePath, imageBuffer, filename = 'upload.jpg', contentType = 'image/jpeg' } = opts;
+  const url = `${BASE_URL.replace(/\/$/, '')}/api/v1/facebook/post`;
+  try {
+    // Lazy import to avoid opt-in deps when not used
+    const FormData = (await import('form-data')).default;
+    const fs = await import('fs');
+    const axios = (await import('axios')).default;
+    const form = new FormData();
+    form.append('userId', userId);
+    form.append('pageId', pageId);
+    form.append('message', message);
+
+    if (imageBuffer) {
+      form.append('image', imageBuffer, { filename, contentType });
+    } else if (imagePath) {
+      const stream = fs.createReadStream(imagePath);
+      form.append('image', stream, { filename, contentType });
+    }
+
+    // Get headers including boundary
+    const headers = form.getHeaders();
+    // Determine content length (some servers/busboy need it)
+    const length: number = await new Promise((resolve, reject) => {
+      form.getLength((err: any, len: number) => {
+        if (err) return reject(err);
+        resolve(len);
+      });
+    });
+    (headers as any)['Content-Length'] = length;
+
+    const resp = await axios.post(url, form as any, {
+      headers,
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      timeout: 30_000,
+    });
+
+    if (resp.status < 200 || resp.status >= 300) {
+      throw new Error(`HTTP ${resp.status}: ${JSON.stringify(resp.data)}`);
+    }
+
+    return resp.data;
+  } catch (err: unknown) {
+    console.error('postToFacebookFormData error', err);
+    return { success: false, message: err instanceof Error ? err.message : String(err) };
+  }
+}

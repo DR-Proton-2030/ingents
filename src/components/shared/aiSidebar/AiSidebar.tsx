@@ -309,6 +309,48 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                         />
                       </div>
                     )}
+                    {/* If assistant message contains an image, surface Post / Regenerate buttons */}
+                    {m.role === 'assistant' && m.imageUrl && (
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          onClick={async () => {
+                            // send a short 'post' confirmation message
+                            const userMsg: Msg = { role: 'user', content: 'post' };
+                            setMessages((s) => [...s, userMsg]);
+                            try {
+                              await fetch(`/api/${aiUrl}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ messages: [...messages, userMsg], sessionId }),
+                              });
+                            } catch (e) {
+                              console.error('Post request failed', e);
+                            }
+                          }}
+                          className="px-3 py-1 rounded bg-sky-600 text-white text-sm"
+                        >
+                          Post to Facebook
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const userMsg: Msg = { role: 'user', content: 'regenerate' };
+                            setMessages((s) => [...s, userMsg]);
+                            try {
+                              await fetch(`/api/${aiUrl}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ messages: [...messages, userMsg], sessionId }),
+                              });
+                            } catch (e) {
+                              console.error('Regenerate request failed', e);
+                            }
+                          }}
+                          className="px-3 py-1 rounded bg-white border border-gray-200 text-sm"
+                        >
+                          Regenerate
+                        </button>
+                      </div>
+                    )}
                     {m.videoUrl && (
                       <div className="mt-2">
                         <video

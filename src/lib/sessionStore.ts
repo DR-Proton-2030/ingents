@@ -13,6 +13,7 @@ type Session = {
   messages: Message[];
   lastActivity: number;
   userId?: string;
+  pending?: any;
 };
 
 class SessionStore {
@@ -39,6 +40,19 @@ class SessionStore {
   }
 
   /**
+   * Return the full session object (messages + metadata) or null if not found/expired
+   */
+  getSessionObject(sessionId: string) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return null;
+    if (Date.now() - session.lastActivity > this.SESSION_TIMEOUT) {
+      this.sessions.delete(sessionId);
+      return null;
+    }
+    return session;
+  }
+
+  /**
    * Update session with new messages
    */
   updateSession(sessionId: string, messages: Message[], userId?: string): void {
@@ -47,6 +61,40 @@ class SessionStore {
       lastActivity: Date.now(),
       userId,
     });
+  }
+
+  /**
+   * Set a pending object (e.g., pending post) for this session
+   */
+  setPending(sessionId: string, pending: any) {
+    const session = this.sessions.get(sessionId) || { messages: [], lastActivity: Date.now() } as Session;
+    session.pending = pending;
+    session.lastActivity = Date.now();
+    this.sessions.set(sessionId, session);
+  }
+
+  /**
+   * Get pending object for a session
+   */
+  getPending(sessionId: string) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return null;
+    if (Date.now() - session.lastActivity > this.SESSION_TIMEOUT) {
+      this.sessions.delete(sessionId);
+      return null;
+    }
+    return session.pending || null;
+  }
+
+  /**
+   * Clear pending object for a session
+   */
+  clearPending(sessionId: string) {
+    const session = this.sessions.get(sessionId);
+    if (!session) return;
+    delete session.pending;
+    session.lastActivity = Date.now();
+    this.sessions.set(sessionId, session);
   }
 
   /**
