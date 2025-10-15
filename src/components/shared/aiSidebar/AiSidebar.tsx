@@ -328,10 +328,10 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                   }`}
                 >
                   <div
-                    className={`rounded-2xl px-4 py-2 ${
+                    className={`rounded-t-[1.3rem]  px-4 py-2 ${
                       isUser
-                        ? "bg-gradient from:gray-100 to:white border border-gray-200 text-sky-900"
-                        : "bg-white text-gray-900 border border-gray-100"
+                        ? "rounded-l-[1.3rem] bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                        : "rounded-r-[1.3rem] bg-white/80 backdrop-blur-sm text-gray-900 border border-gray-200 shadow-lg"
                     }`}
                   >
                     {hasFile ? (
