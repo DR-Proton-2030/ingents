@@ -245,7 +245,7 @@ User message: "${text.replace(/"/g, '\\"')}"
 
     // Step 3: Handle low-confidence or unclear intent
     if (!interpretedIntent || interpretedIntent.needsConfirmation || interpretedIntent.confidence === "low") {
-      const clarifyReply = `I want to make sure I understand. Would you like me to:\n1️⃣ Generate a text post,\n2️⃣ Create an image,\n3️⃣ Make a short video,\nor 4️⃣ Do something else?`;
+      const clarifyReply = `Hello i am your social media assitant . Would you like me to:\n1️⃣ Generate a text post,\n2️⃣ Create an image,\n3️⃣ Make a short video,\n4️⃣ Do something else?`;
 
       const assistantMsg = { role: "assistant", content: clarifyReply };
       sessionStore.updateSession(sessionId, [...all, assistantMsg]);
