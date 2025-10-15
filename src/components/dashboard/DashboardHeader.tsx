@@ -13,7 +13,8 @@ export const DashboardHeader = () => {
           Manage and track your beloved project
         </p>
         <div className="mt-1 flex items-center gap-3">
-          <div className="text-5xl  font-semibold  text-gray-900">
+          <div className="text-5xl  font-semibold  text-gray-900 flex items-center gap-3">
+            <img src={user?.company_details?.logo || "/default-logo.png"} alt=""  className="h-16 w-16"/>
             {user?.company_details?.company_name || "Ingents"}
           </div>
           {/* <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2.5 py-1 text-xs font-medium text-white">

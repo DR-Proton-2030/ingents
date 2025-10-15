@@ -15,12 +15,13 @@ import ChatModal from "./ChatModal";
 
 type Msg = { role: "user" | "assistant"; content: string; imageUrl?: string; videoUrl?: string };
 
-export default function AiSidebar({ aiUrl, context }: any) {
+export default function AiSidebar({ aiUrl = "social", context }: any) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [sessionId, setSessionId] = useState<string>(""); // Track session ID
+  const [clearing, setClearing] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +31,24 @@ export default function AiSidebar({ aiUrl, context }: any) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, loading]);
+
+  // Restore sessionId and messages from localStorage if available
+  useEffect(() => {
+    try {
+      const keyId = `ai_session_${aiUrl}_id`;
+      const keyMsgs = `ai_session_${aiUrl}_messages`;
+      const storedId = localStorage.getItem(keyId);
+      const storedMsgs = localStorage.getItem(keyMsgs);
+      if (storedId) setSessionId(storedId);
+      if (storedMsgs) {
+        const parsed = JSON.parse(storedMsgs) as Msg[];
+        if (Array.isArray(parsed)) setMessages(parsed);
+      }
+    } catch (e) {
+      // ignore localStorage errors
+      console.warn("Failed to restore AI session from localStorage", e);
+    }
+  }, [aiUrl]);
 
   const send = async () => {
     const text = input.trim();
@@ -66,9 +85,22 @@ export default function AiSidebar({ aiUrl, context }: any) {
       // Update session ID if received from server
       if (newSessionId && newSessionId !== sessionId) {
         setSessionId(newSessionId);
+        try {
+          localStorage.setItem(`ai_session_${aiUrl}_id`, newSessionId);
+        } catch (e) {
+          /* ignore */
+        }
       }
-      
-  setMessages((s) => [...s, { role: "assistant", content: reply, imageUrl, videoUrl }]);
+      const assistantMsg: Msg = { role: "assistant", content: reply, imageUrl, videoUrl };
+      setMessages((s) => {
+        const next = [...s, assistantMsg];
+        try {
+          localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(next));
+        } catch (e) {
+          /* ignore */
+        }
+        return next;
+      });
     } catch (err) {
       console.error("AI request failed:", err);
       setMessages((s) => [
@@ -112,14 +144,46 @@ export default function AiSidebar({ aiUrl, context }: any) {
             />
           </motion.div>
           <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <div>
-                <div className="text-sm font-semibold">Seomi AI</div>
-                <div className="text-xs text-gray-500">Social quick help</div>
+              <div className="flex items-center gap-3">
+                <div>
+                  <div className="text-sm font-semibold">Seomi AI</div>
+                  <div className="text-xs text-gray-500">Social quick help</div>
+                </div>
+                <div className="ml-2 text-xs text-gray-500 flex items-center gap-2">
+                  {sessionId ? (
+                    <>
+                      <span className="font-mono text-[12px] px-2 py-1 bg-gray-100 rounded">{sessionId.slice(0,8)}</span>
+                      <button
+                        onClick={() => {
+                          try { navigator.clipboard.writeText(sessionId); } catch (e) {}
+                        }}
+                        className="text-xs text-sky-600 hover:underline"
+                      >
+                        Copy
+                      </button>
+                      <button
+                        onClick={() => {
+                          setClearing(true);
+                          try {
+                            localStorage.removeItem(`ai_session_${aiUrl}_id`);
+                            localStorage.removeItem(`ai_session_${aiUrl}_messages`);
+                          } catch (e) {}
+                          setMessages([]);
+                          setSessionId("");
+                          setClearing(false);
+                        }}
+                        className="text-xs text-red-500 hover:underline"
+                      >
+                        Clear
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-xs text-gray-400">no session</span>
+                  )}
+                </div>
+                {headerAction}
               </div>
-              {headerAction}
             </div>
-          </div>
         </div>
 
         {/* Chat window */}
