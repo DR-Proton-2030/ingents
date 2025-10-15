@@ -24,20 +24,6 @@ export const generateImageWithGemini = async (prompt: string): Promise<string | 
     // Get as ArrayBuffer
     const arrayBuffer = await response.arrayBuffer();
 
-    // Try to upload to S3 and return a public URL. If that fails, fallback to data URL.
-    try {
-      // Lazy-import the S3 uploader to avoid bundling AWS SDK into edge/runtime bundles
-      const { uploadFileToS3Service } = await import("@/service/s3Upload");
-      const buffer:any = Buffer.from(arrayBuffer);
-      const mimeType = 'image/png'; // HF router returns PNG bytes; use a safe default
-      // use a key prefix e.g. 'generated-images'
-      const s3Url = await uploadFileToS3Service('generated-images', buffer, mimeType as string);
-      if (s3Url) return s3Url;
-    } catch (s3Err) {
-      console.error('S3 upload failed:', s3Err);
-      // continue to build data URL fallback
-    }
-
     // Convert to base64 in a runtime-safe way (Node Buffer or browser btoa)
     let base64: string;
     if (typeof Buffer !== "undefined") {

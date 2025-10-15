@@ -62,45 +62,113 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
       // Ensure context is a serialized string so backend receives full details
       const serializedContext =
         context && typeof context === "object" ? JSON.stringify(context) : context;
-
+      // Ask for a streaming response so we can show progressive assistant typing
       const res = await fetch(`/api/${aiUrl}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-ai-stream": "1" },
         body: JSON.stringify({
           context: serializedContext,
           messages: [...messages, userMsg], // Send full conversation history
           sessionId: sessionId || undefined, // Include session ID if exists
         }),
       });
-  const data = await res.json();
-  const reply = (data && data.reply) || "(no reply)";
-  const imageUrl = data && data.imageUrl;
-  const videoUrl = data && data.videoUrl;
-  const newSessionId = data && data.sessionId;
-      
-      console.log("AI Response data:", data);
-      console.log("Image URL received:", imageUrl);
-      console.log("Session ID:", newSessionId);
-      
-      // Update session ID if received from server
-      if (newSessionId && newSessionId !== sessionId) {
-        setSessionId(newSessionId);
-        try {
-          localStorage.setItem(`ai_session_${aiUrl}_id`, newSessionId);
-        } catch (e) {
-          /* ignore */
+
+      // If server responded with a streaming body, consume it progressively
+      if (res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let partial = "";
+
+        // create a placeholder assistant message and persist it
+        const placeholder: Msg = { role: "assistant", content: "" };
+        setMessages((s) => {
+          const next = [...s, placeholder];
+          try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(next)); } catch (e) {}
+          return next;
+        });
+
+        // read chunks
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          partial += chunk;
+
+          // update the last assistant message with current partial text
+          setMessages((s) => {
+            const copy = s.slice();
+            const last = copy[copy.length - 1];
+            if (last && last.role === "assistant") {
+              last.content = partial;
+            }
+            try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(copy)); } catch (e) {}
+            return copy;
+          });
         }
+
+        // After stream completes, attempt to get sessionId/image/video fields from trailing JSON (if server sends JSON)
+        // Some servers may not append JSON; we'll do a best-effort fetch of headers/body fallback
+        let newSessionId: string | undefined;
+        try {
+          const text = partial.trim();
+          // If server appended a JSON blob after a delimiter, try to parse it
+          const jsonMatch = text.match(/\{\s*"sessionId"[\s\S]*\}$/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            newSessionId = parsed.sessionId;
+            const imageUrl = parsed.imageUrl;
+            const videoUrl = parsed.videoUrl;
+            // attach media if present to the last message
+            setMessages((s) => {
+              const copy = s.slice();
+              const last = copy[copy.length - 1];
+              if (last && last.role === "assistant") {
+                if (imageUrl) last.imageUrl = imageUrl;
+                if (videoUrl) last.videoUrl = videoUrl;
+              }
+              try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(copy)); } catch (e) {}
+              return copy;
+            });
+          }
+        } catch (e) {
+          // ignore JSON parse errors
+        }
+
+        if (newSessionId && newSessionId !== sessionId) {
+          setSessionId(newSessionId);
+          try { localStorage.setItem(`ai_session_${aiUrl}_id`, newSessionId); } catch (e) {}
+        }
+
+      } else {
+        // fallback: non-streaming JSON response
+        const data = await res.json();
+        const reply = (data && data.reply) || "(no reply)";
+        const imageUrl = data && data.imageUrl;
+        const videoUrl = data && data.videoUrl;
+        const newSessionId = data && data.sessionId;
+
+        // Update session ID if received from server
+        if (newSessionId && newSessionId !== sessionId) {
+          setSessionId(newSessionId);
+          try {
+            localStorage.setItem(`ai_session_${aiUrl}_id`, newSessionId);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+        const assistantMsg: Msg = { role: "assistant", content: reply, imageUrl, videoUrl };
+        setMessages((s) => {
+          const next = [...s, assistantMsg];
+          try {
+            localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(next));
+          } catch (e) {
+            /* ignore */
+          }
+          return next;
+        });
       }
-      const assistantMsg: Msg = { role: "assistant", content: reply, imageUrl, videoUrl };
-      setMessages((s) => {
-        const next = [...s, assistantMsg];
-        try {
-          localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(next));
-        } catch (e) {
-          /* ignore */
-        }
-        return next;
-      });
+      
+      // Response handled (streamed or non-streaming) above; nothing more to do here.
     } catch (err) {
       console.error("AI request failed:", err);
       setMessages((s) => [
