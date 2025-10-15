@@ -375,39 +375,17 @@ User message: "${text.replace(/"/g, '\\"')}"
       ? pendingPost.platform
       : (/post/i.test(interpretedIntent?.goal || '') ? 'all' : 'none');
 
-    // If client requested streaming, stream the reply in small chunks
-    const wantStream = req.headers.get("x-ai-stream") === "1" || req.headers.get("accept") === "text/event-stream";
-  if (wantStream) {
-      // create a ReadableStream that emits the reply in chunks
-      const encoder = new TextEncoder();
-      const chunkSize = 60; // chars per chunk
-      const stream = new ReadableStream({
-        async start(controller) {
-          try {
-            for (let i = 0; i < reply.length; i += chunkSize) {
-              const chunk = reply.slice(i, i + chunkSize);
-              controller.enqueue(encoder.encode(chunk));
-              // small delay to allow client to show progressive text
-              await new Promise((r) => setTimeout(r, 20));
-            }
-            // After sending textual chunks, append a JSON metadata object so clients
-            // reading the stream can pick up sessionId and any generated media (image/video).
-            const meta = JSON.stringify({ sessionId, imageUrl, videoUrl, platform });
-            controller.enqueue(encoder.encode("\n" + meta));
-            controller.close();
-          } catch (err) {
-            controller.error(err);
-          }
-        },
-      });
+ // ✅ Simplified clean response — no streaming, no sessionId in client output
+console.log("====> AI Reply:", reply);
 
-      return new Response(stream, {
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      });
-    }
-    
-  console.log("====>ai reply",reply)
-  return NextResponse.json({ reply, imageUrl, platform });
+const outgoingMessage = pendingPost?.message || reply;
+
+// Only send the final message and platform to client
+return NextResponse.json({
+  reply: outgoingMessage,
+  platform: platform || "none"
+});
+
   } catch (err) {
     console.error("social route error", err);
     return NextResponse.json({ message: "Internal error" }, { status: 500 });

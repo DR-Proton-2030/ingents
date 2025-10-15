@@ -69,18 +69,48 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
         body: JSON.stringify({
           context: serializedContext,
           messages: [...messages, userMsg], // Send full conversation history
-          sessionId: sessionId || undefined, // Include session ID if exists
         }),
       });
 
-      // If server responded with a streaming body, consume it progressively
-      if (res.body) {
+      // Prefer JSON parsing if server sent application/json (non-streaming)
+      const contentType = (res.headers && res.headers.get && res.headers.get("content-type")) || "";
+      if (contentType.includes("application/json")) {
+        // Non-streaming JSON response (preferred)
+        const data = await res.json();
+        const reply = (data && data.reply) || "(no reply)";
+        const imageUrl = data && data.imageUrl;
+        const videoUrl = data && data.videoUrl;
+        const platform = data && data.platform;
+        const newSessionId = data && data.sessionId;
+
+        // Update session ID if received from server
+        if (newSessionId && newSessionId !== sessionId) {
+          setSessionId(newSessionId);
+          try {
+            localStorage.setItem(`ai_session_${aiUrl}_id`, newSessionId);
+          } catch (e) {
+            /* ignore */
+          }
+        }
+
+        const assistantMsg: Msg = { role: "assistant", content: reply, imageUrl, videoUrl, platform };
+        setMessages((s) => {
+          const next = [...s, assistantMsg];
+          try {
+            localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(next));
+          } catch (e) {
+            /* ignore */
+          }
+          return next;
+        });
+      } else if (res.body) {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let partial = "";
 
         // create a placeholder assistant message and persist it
         const placeholder: Msg = { role: "assistant", content: "" };
+        console.log("===>placeholder created", placeholder);
         setMessages((s) => {
           const next = [...s, placeholder];
           try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(next)); } catch (e) {}
@@ -106,69 +136,83 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
           });
         }
 
-        // After stream completes, attempt to get sessionId/image/video/platform fields from trailing JSON (if server sends JSON)
-        // Some servers may not append JSON; we'll do a best-effort fetch of headers/body fallback
+  // After stream completes, extract trailing JSON metadata (if any) and remove all such
+        // metadata blocks from the assistant message so the chat only shows the human text.
+        // Some servers may include the metadata multiple times; we'll parse the last one.
         let newSessionId: string | undefined;
         try {
-          const text = partial.trim();
-          // If server appended a JSON blob after a delimiter, try to parse it
-          const jsonMatch = text.match(/\{\s*"sessionId"[\s\S]*\}$/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            newSessionId = parsed.sessionId;
-            const imageUrl = parsed.imageUrl;
-            const videoUrl = parsed.videoUrl;
-            const platform = parsed.platform;
-            // attach media/platform if present to the last message
-            setMessages((s) => {
-              const copy = s.slice();
-              const last = copy[copy.length - 1] as Msg | undefined;
-              if (last && last.role === "assistant") {
-                if (imageUrl) last.imageUrl = imageUrl;
-                if (videoUrl) last.videoUrl = videoUrl;
-                if (platform) last.platform = platform;
+          const text = partial;
+          // Find the last occurrence of a JSON object starting with '{"sessionId"' (or simply '{')
+          const lastJsonIndex = text.lastIndexOf('\n{');
+          if (lastJsonIndex !== -1) {
+            const jsonText = text.slice(lastJsonIndex + 1).trim();
+              try {
+              const parsed = JSON.parse(jsonText);
+              newSessionId = parsed.sessionId;
+              const imageUrl = parsed.imageUrl;
+              const videoUrl = parsed.videoUrl;
+              const platform = parsed.platform;
+
+              // Remove ALL trailing JSON meta blocks from the displayed text
+              const cleaned = text.slice(0, lastJsonIndex).trim();
+
+              // attach cleaned text and media/platform to the last message
+              setMessages((s) => {
+                const copy = s.slice();
+                const last = copy[copy.length - 1] as Msg | undefined;
+                if (last && last.role === 'assistant') {
+                  last.content = cleaned || last.content;
+                  if (imageUrl) last.imageUrl = imageUrl;
+                  if (videoUrl) last.videoUrl = videoUrl;
+                  if (platform) last.platform = platform;
+                }
+                try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(copy)); } catch (e) {}
+                return copy;
+              });
+
+              // Log parsed metadata (includes platform)
+              console.log('===>stream parsed meta', { sessionId: newSessionId, imageUrl, videoUrl, platform, cleaned });
+            } catch (parseErr) {
+              // If parsing failed, fall back to previous behavior: try single-match regex
+              const jsonMatch = text.match(/\{\s*"sessionId"[\s\S]*\}$/);
+              if (jsonMatch) {
+                const parsed = JSON.parse(jsonMatch[0]);
+                newSessionId = parsed.sessionId;
+                const imageUrl = parsed.imageUrl;
+                const videoUrl = parsed.videoUrl;
+                const platform = parsed.platform;
+                const cleaned = text.replace(/\n\{[\s\S]*\}$/, "").trim();
+                setMessages((s) => {
+                  const copy = s.slice();
+                  const last = copy[copy.length - 1] as Msg | undefined;
+                  if (last && last.role === 'assistant') {
+                    last.content = cleaned || last.content;
+                    if (imageUrl) last.imageUrl = imageUrl;
+                    if (videoUrl) last.videoUrl = videoUrl;
+                    if (platform) last.platform = platform;
+                  }
+                  try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(copy)); } catch (e) {}
+                  return copy;
+                });
+
+                // Log parsed metadata from fallback parse
+                console.log('===>stream parsed meta (fallback)', { sessionId: newSessionId, imageUrl, videoUrl, platform, cleaned });
               }
-              try { localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(copy)); } catch (e) {}
-              return copy;
-            });
+            }
+          } else {
+            // no trailing JSON found; nothing to clean
           }
         } catch (e) {
-          // ignore JSON parse errors
+          // ignore JSON/parse errors
         }
 
         if (newSessionId && newSessionId !== sessionId) {
           setSessionId(newSessionId);
           try { localStorage.setItem(`ai_session_${aiUrl}_id`, newSessionId); } catch (e) {}
         }
-
       } else {
-        // fallback: non-streaming JSON response
-        const data = await res.json();
-  const reply = (data && data.reply) || "(no reply)";
-  const imageUrl = data && data.imageUrl;
-  const videoUrl = data && data.videoUrl;
-  const platform = data && data.platform;
-  const newSessionId = data && data.sessionId;
-
-        // Update session ID if received from server
-        if (newSessionId && newSessionId !== sessionId) {
-          setSessionId(newSessionId);
-          try {
-            localStorage.setItem(`ai_session_${aiUrl}_id`, newSessionId);
-          } catch (e) {
-            /* ignore */
-          }
-        }
-  const assistantMsg: Msg = { role: "assistant", content: reply, imageUrl, videoUrl, platform };
-        setMessages((s) => {
-          const next = [...s, assistantMsg];
-          try {
-            localStorage.setItem(`ai_session_${aiUrl}_messages`, JSON.stringify(next));
-          } catch (e) {
-            /* ignore */
-          }
-          return next;
-        });
+        // No body stream and not JSON: treat as empty response
+        console.warn('AI response had no readable body and was not JSON');
       }
       
       // Response handled (streamed or non-streaming) above; nothing more to do here.
@@ -317,19 +361,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                       <div className="mt-2 flex gap-2">
                         {m.platform === 'facebook' ? (
                           <button
-                            onClick={async () => {
-                              const userMsg: Msg = { role: 'user', content: 'post to facebook' };
-                              setMessages((s) => [...s, userMsg]);
-                              try {
-                                await fetch(`/api/${aiUrl}`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ messages: [...messages, userMsg], sessionId }),
-                                });
-                              } catch (e) {
-                                console.error('Post request failed', e);
-                              }
-                            }}
+                            onClick={() => { console.log("=====>message", m.content) }}
                             className="px-3 py-1 rounded bg-sky-600 text-white text-sm"
                           >
                             Post to Facebook
@@ -346,19 +378,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                             ].map((p) => (
                               <button
                                 key={p.id}
-                                onClick={async () => {
-                                  const userMsg: Msg = { role: 'user', content: `post to ${p.id}` };
-                                  setMessages((s) => [...s, userMsg]);
-                                  try {
-                                    await fetch(`/api/${aiUrl}`, {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ messages: [...messages, userMsg], sessionId }),
-                                    });
-                                  } catch (e) {
-                                    console.error('Post request failed', e);
-                                  }
-                                }}
+                                onClick={()=>{console.log("=====>message",m.content)}}
                                 className="px-3 py-1 rounded bg-sky-600 text-white text-sm"
                               >
                                 Post to {p.label}
