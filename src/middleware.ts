@@ -20,7 +20,7 @@ export function middleware(req: NextRequest) {
   }
 
   if(req.nextUrl.pathname === "/" && token) {
-    return NextResponse.redirect(new URL("/ingents/dashboard", req.url));
+    return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   return NextResponse.next();
