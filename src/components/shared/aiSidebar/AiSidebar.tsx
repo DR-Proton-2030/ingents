@@ -308,7 +308,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
         {/* Chat window */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-auto hidescroll rounded-2xl p-3 bg-gradient-to-br from-gray-50 via-white to-gray-100 shadow-inner"
+          className="flex-1 overflow-auto hidescroll  rounded-2xl p-3 bg-gradient-to-br from-gray-50 via-white to-gray-100 shadow-inner"
         >
           <div className="flex flex-col gap-4">
             {messages.map((m, i) => {
@@ -373,7 +373,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                     )}
                   </div>
                    {m.role === 'assistant' && m.platform && (
-                      <div className="mt-2 flex items-center gap-2">
+                      <div className="-mt-2 flex items-center gap-2">
                         {m.platform === 'facebook' ? (
                         
                           <FacebookPostBtn message={m.content} file={undefined} />
@@ -414,7 +414,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                           }}
                           
                         >
-                        <button
+                        {/* <button
                           className="group flex items-center justify-start w-11 h-11 bg-gray-800 rounded-full cursor-pointer relative overflow-hidden
                            transition-all duration-200 shadow-lg hover:w-40 hover:rounded-full active:translate-x-1 active:translate-y-1"
                         >
@@ -428,7 +428,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                           >
                             Regenerate
                           </div>
-                        </button>
+                        </button> */}
                         </div>
                      
                       </div>
