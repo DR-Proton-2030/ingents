@@ -274,7 +274,12 @@ User message: "${text.replace(/"/g, '\\"')}"
     } else {
       // Normal flow: generate textual reply first
       try {
-        reply = await callGemini(systemInstructionContent, sendContents);
+        // Force model to return only the post content with no introductory phrasing.
+        // This instruction is supplied as the top-level user turn so it is applied
+        // to the final output format while keeping the main system instruction intact.
+  const outputOnlyInstruction = `Please return ONLY the final post content as plain text. Do NOT include any introductory sentence (for example: "Here's a draft for your..."), labels, markdown, explanations,add hashtags, Output the post text only.`;
+        const sendContentsWithFormat = [{ role: 'user', parts: [{ text: outputOnlyInstruction }] }, ...sendContents];
+        reply = await callGemini(systemInstructionContent, sendContentsWithFormat);
       } catch (e: any) {
         console.error("Gemini call failed, falling back to echo:", e.message);
         reply = `Echo: ${text}`;
@@ -306,13 +311,32 @@ User message: "${text.replace(/"/g, '\\"')}"
       // Clean Gemini’s verbose markdown and extract only the real post text
       const cleanGeminiReply = (raw: string) => {
         if (!raw) return "";
+        // start with raw
+        let text = String(raw || "").trim();
 
-        // Remove **Image:** and any [Image: ...] parts
-        let text = raw
-          .replace(/\*\*Image:\*\*[\s\S]*?(?=\*\*Text:\*\*|$)/gi, "")
-          .replace(/\[Image:[^\]]*\]/gi, "")
-          .replace(/Here'?s a Facebook post[^:]*:/i, "") // remove intro like "Here's a Facebook post about Diwali:"
-          .trim();
+  // Remove **Image:** and any [Image: ...] parts and parenthetical image captions
+  text = text.replace(/\*\*Image:\*\*[\s\S]*?(?=\*\*Text:\*\*|$)/gi, "")
+       .replace(/\[Image:[^\]]*\]/gi, "")
+       // remove parenthetical or bolded image captions like (Image: ...) or **(Image: ...)**
+       .replace(/^\s*\*?\(?\s*(?:Image|image|Illustration)[:\)][\s\S]*?\)?\*?\s*$/gim, "")
+       // remove inline occurrences like (Image: ...)
+       .replace(/\(\s*(?:Image|image|Illustration)\s*:[^)]*\)/gi, "")
+       .trim();
+
+        // Strip common assistant intro phrases like:
+        // "Here's a draft for your Happy Holi Facebook post:",
+        // "Here's a Facebook post about ...:",
+        // "Here's a sample post:", "Here's an example:", etc.
+        const introPatterns: RegExp[] = [
+          /^\s*(?:here(?:'s| is)|here are)\b[\s\S]{0,120}?[\:\-]\s*/i,
+          /^\s*here(?:'s| is)\s+a\s+draft(?:\s+for\s+your)?[\s\S]{0,120}?[\:\-]\s*/i,
+          /^\s*here(?:'s| is)\s+(?:a\s+)?(?:suggested|sample|example)[\s\S]{0,120}?[\:\-]\s*/i,
+          /^\s*here(?:'s| is)\s+one[\s\S]{0,120}?[\:\-]\s*/i,
+          /^\s*(?:draft|post|suggested post|sample post)[\s\S]{0,40}?[\:\-]\s*/i,
+        ];
+        for (const p of introPatterns) {
+          if (p.test(text)) text = text.replace(p, "").trim();
+        }
 
         // If Gemini used **Text:** marker, extract only that
         const textMatch = text.match(/\*\*Text:\*\*([\s\S]*)/i);
