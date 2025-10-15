@@ -20,13 +20,6 @@ interface ChatModalProps {
   onSend: () => void;
 }
 
-// Define webkitSpeechRecognition for TypeScript
-interface Window {
-  webkitSpeechRecognition: any;
-}
-
-declare const webkitSpeechRecognition: any;
-
 export default function ChatModal({
   isOpen,
   onClose,
@@ -38,6 +31,9 @@ export default function ChatModal({
 }: ChatModalProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [sessionId, setSessionId] = useState<string>("");
+  const [isMicActive, setIsMicActive] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const autoStopTimerRef = useRef<number | null>(null);
 
   // Auto scroll to bottom when new messages come in
   useEffect(() => {
@@ -56,32 +52,92 @@ export default function ChatModal({
     }
   }, []);
 
-  const handleSpeechToText = () => {
-    if (!('webkitSpeechRecognition' in window)) {
+  // cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+        recognitionRef.current = null;
+      }
+      if (autoStopTimerRef.current) {
+        window.clearTimeout(autoStopTimerRef.current);
+        autoStopTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const getSpeechRecognition = () => window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+  const handleSpeechToText = (autoStopMs = 10000) => {
+    const SR = getSpeechRecognition();
+    if (!SR) {
       alert('Speech recognition not supported in this browser.');
       return;
     }
 
-    const recognition = new webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    // If already active, stop
+    if (isMicActive && recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch (e) {}
+      setIsMicActive(false);
+      if (autoStopTimerRef.current) {
+        window.clearTimeout(autoStopTimerRef.current);
+        autoStopTimerRef.current = null;
+      }
+      recognitionRef.current = null;
+      return;
+    }
+
+  const recognition: any = new SR();
+    recognitionRef.current = recognition;
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
-      console.log('Speech recognition started');
+      setIsMicActive(true);
+      // schedule auto-stop
+      if (autoStopMs && !autoStopTimerRef.current) {
+        autoStopTimerRef.current = window.setTimeout(() => {
+          if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch (e) {}
+            recognitionRef.current = null;
+            setIsMicActive(false);
+          }
+          if (autoStopTimerRef.current) {
+            window.clearTimeout(autoStopTimerRef.current);
+            autoStopTimerRef.current = null;
+          }
+        }, autoStopMs);
+      }
     };
 
     recognition.onresult = (event: any) => {
-      const transcript = event.results[0][0].transcript;
-      setInput(transcript);
+      let interim = "";
+      let finalText = input || "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) finalText += t;
+        else interim += t;
+      }
+      setInput(finalText + interim);
     };
 
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
+    recognition.onerror = (_e: any) => {
+      setIsMicActive(false);
+      recognitionRef.current = null;
+      if (autoStopTimerRef.current) {
+        window.clearTimeout(autoStopTimerRef.current);
+        autoStopTimerRef.current = null;
+      }
     };
 
     recognition.onend = () => {
-      console.log('Speech recognition ended');
+      setIsMicActive(false);
+      recognitionRef.current = null;
+      if (autoStopTimerRef.current) {
+        window.clearTimeout(autoStopTimerRef.current);
+        autoStopTimerRef.current = null;
+      }
     };
 
     recognition.start();
@@ -215,13 +271,27 @@ export default function ChatModal({
         {/* Footer Input */}
         <div className="bg-white border-t border-gray-200 p-6">
           <div className="flex gap-3 items-center max-w-6xl mx-auto">
+
             <button
-              onClick={handleSpeechToText}
-              className="p-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg hover:shadow-xl transition-all"
-              aria-label="Activate speech-to-text"
+              onClick={() => handleSpeechToText()}
+              className={`p-3 rounded-full shadow-lg hover:shadow-xl transition-all ${
+                isMicActive
+                  ? "bg-gradient-to-r from-red-400 to-red-500"
+                  : "bg-gradient-to-r from-blue-400 to-blue-500"
+              } text-white`}
+              aria-label={isMicActive ? "Stop speech-to-text" : "Activate speech-to-text"}
             >
-              <Mic size={20} />
+              {isMicActive ? (
+                <div className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" style={{ animationDelay: '0s' }} />
+                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.15s' }} />
+                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" style={{ animationDelay: '0.3s' }} />
+                </div>
+              ) : (
+                <Mic size={20} />
+              )}
             </button>
+
             <div className="flex-1 max-w-4xl">
               <input
                 value={input}
