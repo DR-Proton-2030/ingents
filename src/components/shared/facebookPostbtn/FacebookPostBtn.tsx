@@ -28,7 +28,19 @@ export default function FacebookPostBtn({message, file}: any) {
 
 
   async function submit(e?: React.FormEvent | React.MouseEvent) {
-    e?.preventDefault();
+    // If called with an event, prevent default. If someone mistakenly calls submit(file)
+    // then `e` might be the file itself — guard against that.
+    try {
+      if (e && typeof (e as any).preventDefault === 'function') {
+        (e as React.FormEvent | React.MouseEvent).preventDefault();
+      }
+    } catch (err) {
+      // ignore
+    }
+
+    // debug: confirm the button was clicked and what file prop is
+    console.log('FacebookPostBtn: submit invoked', { message, file });
+
     // reset success when user triggers another upload
     setSuccess(false);
     setLoading(true);
@@ -38,7 +50,31 @@ export default function FacebookPostBtn({message, file}: any) {
       form.append('userId', userId || '68ef911fd860ee30f6103bdb');
       form.append('pageId', pageId || '806839612517191');
       form.append('message', message || 'Test post');
-      if (file) form.append('image', file, file.name);
+      // Support multiple file shapes: File, Blob, or data URL string
+      if (file) {
+        // data URL string (data:image/png;base64,...) -> convert to blob
+        if (typeof file === 'string' && file.startsWith('data:')) {
+          try {
+            const resp = await fetch(file);
+            const blob = await resp.blob();
+            form.append('image', blob, `image-${Date.now()}.png`);
+          } catch (convErr) {
+            console.warn('Failed to convert data URL to blob', convErr);
+          }
+        } else if (file instanceof File) {
+          form.append('image', file, file.name);
+        } else if (file instanceof Blob) {
+          form.append('image', file, `image-${Date.now()}.png`);
+        } else {
+          // Unknown shape — attempt to append anyway
+          try {
+            // @ts-ignore
+            form.append('image', file);
+          } catch (appendErr) {
+            console.warn('Unable to append provided file to FormData', appendErr);
+          }
+        }
+      }
 
       const resp = await fetch('/api/test/facebook/post', { method: 'POST', body: form });
       const json = await resp.json();
@@ -60,6 +96,7 @@ export default function FacebookPostBtn({message, file}: any) {
     <div className="p-4">
       <div className="">
         <button
+          type="button"
           onClick={submit}
           disabled={loading}
           aria-busy={loading}

@@ -376,7 +376,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
                       <div className="-mt-2 flex items-center gap-2">
                         {m.platform === 'facebook' ? (
                         
-                          <FacebookPostBtn message={m.content} file={undefined} />
+                          <FacebookPostBtn message={m.content} file={m.imageUrl} />
                         ) : null}
 
                         {m.platform === 'all' ? (
