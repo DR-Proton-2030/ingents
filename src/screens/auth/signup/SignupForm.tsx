@@ -3,8 +3,8 @@
 
 import React from "react";
 import { Stepper } from "@/components/ui/stepper";
-import { UserDetailsStep } from "@/components/auth/UserDetailsStep";
-import { CompanyDetailsStep } from "@/components/auth/CompanyDetailsStep";
+import { UserDetailsStep } from "@/components/screens/auth/UserDetailsStep";
+import { CompanyDetailsStep } from "@/components/screens/auth/CompanyDetailsStep";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeftIcon,
@@ -12,7 +12,7 @@ import {
   CheckIcon,
   LoaderIcon,
 } from "lucide-react";
-import { AuthHeader } from "@/components/auth/AuthHeader";
+import { AuthHeader } from "@/components/screens/auth/AuthHeader";
 import Link from "next/link";
 
 const STEPS = ["Personal Info", "Company Details"];

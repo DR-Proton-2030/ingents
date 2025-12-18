@@ -1,11 +1,11 @@
 import React from "react";
 import Layout from "../layout/Layout";
-import { DashboardHeader } from "../../components/dashboard/DashboardHeader";
-import { LeftNavigation } from "../../components/dashboard/LeftNavigation";
-import { ProjectProgress } from "../../components/dashboard/ProjectProgress";
-import { UpcomingEvent } from "../../components/dashboard/UpcomingEvent";
-import { TimeSchedule } from "../../components/dashboard/TimeSchedule";
-import { TeamControl } from "../../components/dashboard/TeamControl";
+import { DashboardHeader } from "../../components/screens/dashboard/DashboardHeader";
+import { LeftNavigation } from "../../components/screens/dashboard/LeftNavigation";
+import { ProjectProgress } from "../../components/screens/dashboard/ProjectProgress";
+import { UpcomingEvent } from "../../components/screens/dashboard/UpcomingEvent";
+import { TimeSchedule } from "../../components/screens/dashboard/TimeSchedule";
+import { TeamControl } from "../../components/screens/dashboard/TeamControl";
 
 export const Dashboard = () => {
   return (

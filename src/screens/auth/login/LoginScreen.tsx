@@ -13,7 +13,7 @@ import {
   LoaderIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import AuthHeader from "@/components/auth/AuthHeader";
+import AuthHeader from "@/components/screens/auth/AuthHeader";
 import { motion } from "framer-motion";
 import Logo from "@/components/shared/logo/Logo";
 import AuthContext from "@/contexts/authContext/authContext";

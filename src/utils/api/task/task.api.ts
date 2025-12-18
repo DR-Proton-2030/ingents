@@ -1,0 +1,84 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import API from "../api";
+
+const initialRoute = "tasks";
+
+export const getTasks = async (): Promise<any> => {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
+    if (!token) {
+      throw new Error("Token not found");
+    }
+
+    console.log("🚀 Calling get tasks API...");
+    const response = await API.get(`/${initialRoute}/get-tasks`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("✅ Tasks fetch successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Tasks fetch failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Tasks fetch failed");
+  }
+};
+
+export const createTask = async (payload: object): Promise<any> => {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
+    if (!token) {
+      throw new Error("Token not found");
+    }
+
+    console.log("🚀 Calling create task API...");
+    const response = await API.post(`/${initialRoute}/create-task`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("✅ Task creation successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Task creation failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Task creation failed");
+  }
+};
+
+export const updateTask = async (taskId: string, payload: object): Promise<any> => {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
+    if (!token) {
+      throw new Error("Token not found");
+    }
+
+    console.log("🚀 Calling update task API...");
+    const response = await API.put(`/${initialRoute}/update-task/${taskId}`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("✅ Task update successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Task update failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Task update failed");
+  }
+};
+
+export const deleteTask = async (taskId: string): Promise<any> => {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
+    if (!token) {
+      throw new Error("Token not found");
+    }
+
+    console.log("🚀 Calling delete task API...");
+    const response = await API.delete(`/${initialRoute}/delete-task/${taskId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    console.log("✅ Task deletion successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Task deletion failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Task deletion failed");
+  }
+};

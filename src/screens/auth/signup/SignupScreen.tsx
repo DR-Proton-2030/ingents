@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AuthHeader } from "@/components/auth/AuthHeader";
+import { AuthHeader } from "@/components/screens/auth/AuthHeader";
 import SignupForm from "./SignupForm";
 import { useSignup } from "@/hooks/useSignup";
 import Link from "next/link";

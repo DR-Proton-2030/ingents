@@ -4,17 +4,17 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ClipboardCopy, Trash2, Home } from "lucide-react";
-import ExecutiveSummary from "@/components/result/ExecutiveSummary";
-import ImageSEO from "@/components/result/ImageSEO";
-import FinalChecklist from "@/components/result/FinalChecklist";
-import OriginalText from "@/components/result/OriginalText";
-import TopPrioritiesSERP from "@/components/result/TopPrioritiesSERP";
-import Metadata from "@/components/result/Metadata";
-import SitemapCrawl from "@/components/result/SitemapCrawl";
-import TechnicalAudit from "@/components/result/TechnicalAudit";
-import StructuredReport from "@/components/result/StructuredReport";
-import Performance from "@/components/result/Performance";
-import PageByPage from "@/components/result/PageByPage";
+import ExecutiveSummary from "@/components/screens/result/ExecutiveSummary";
+import ImageSEO from "@/components/screens/result/ImageSEO";
+import FinalChecklist from "@/components/screens/result/FinalChecklist";
+import OriginalText from "@/components/screens/result/OriginalText";
+import TopPrioritiesSERP from "@/components/screens/result/TopPrioritiesSERP";
+import Metadata from "@/components/screens/result/Metadata";
+import SitemapCrawl from "@/components/screens/result/SitemapCrawl";
+import TechnicalAudit from "@/components/screens/result/TechnicalAudit";
+import StructuredReport from "@/components/screens/result/StructuredReport";
+import Performance from "@/components/screens/result/Performance";
+import PageByPage from "@/components/screens/result/PageByPage";
 
 export default function ResultPage() {
   const [stored, setStored] = useState<any | null>(null);

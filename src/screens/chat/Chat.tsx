@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import ChatLayout from "../../components/chat/ChatLayout";
-import ChatMessage from "../../components/chat/ChatMessage";
-import ChatInput from "../../components/chat/ChatInput";
+import ChatLayout from "../../components/screens/chat/ChatLayout";
+import ChatMessage from "../../components/screens/chat/ChatMessage";
+import ChatInput from "../../components/screens/chat/ChatInput";
 import { LucideSparkles, LucideFileText } from "lucide-react";
 // simple rendering — no framer-motion
 

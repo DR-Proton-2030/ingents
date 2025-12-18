@@ -29,6 +29,11 @@ export default function Sidebar() {
       imageUrl: assets.icons.finance,
     },
     {
+      href: `/${site}/tasks`,
+      label: "Task Management",
+      imageUrl: assets.icons.socialMedia,
+    },
+    {
       href: `/${site}/social-media`,
       label: "Social Media",
       imageUrl: assets.icons.socialMedia,
