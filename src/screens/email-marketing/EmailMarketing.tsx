@@ -15,34 +15,6 @@ export const EmailMarketing = () => {
   const [seoResult, setSeoResult] = React.useState<unknown | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
-  React.useEffect(() => {
-    try {
-      // try both keys for compatibility
-      const v =
-        localStorage.getItem("seo_result") ?? localStorage.getItem("seoResult");
-      if (v) {
-        try {
-          setSeoResult(JSON.parse(v).body);
-          console.log(
-            "SEO Result (parsed) from localStorage:",
-            JSON.parse(v).body
-          );
-        } catch (parseErr) {
-          // Not valid JSON, store raw string
-          setSeoResult(JSON.parse(v).body);
-          console.warn(
-            "Failed to parse stored seo result, keeping raw string:",
-            parseErr
-          );
-        }
-      } else {
-        setSeoResult(null);
-      }
-    } catch (err) {
-      // localStorage not available (SSR) or access denied
-      console.warn("localStorage unavailable:", err);
-    }
-  }, []);
 
   if (isFullScreen) {
     return (
@@ -76,6 +48,7 @@ export const EmailMarketing = () => {
           <EmailMarketingAiSidebar
             isFullScreen={isFullScreen}
             setIsFullScreen={setIsFullScreen}
+            aiUrl="emailMarketingAi"
           />
         </div>
       </div>
