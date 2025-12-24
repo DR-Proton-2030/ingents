@@ -3,10 +3,22 @@ import React, { useContext } from "react";
 import Image from "next/image";
 import { Lock, Plus } from "lucide-react";
 import AuthContext from "@/contexts/authContext/authContext";
+import CommonModal from "@/components/shared/commonModal/CommonModal";
+import InviteUsersModal from "@/components/shared/inviteUsersModal/InviteUsersModal";
 
 export const DashboardHeader = () => {
   const { user } = useContext(AuthContext);
+  const [isInviteModalOpen, setIsInviteModalOpen] = React.useState(false);
+
+  const handleInviteClick = () => {
+    setIsInviteModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsInviteModalOpen(false);
+  }
   return (
+    <>
     <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div>
         <p className="text-sm text-gray-500">
@@ -44,10 +56,18 @@ export const DashboardHeader = () => {
             8+
           </span>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
+        <button className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50" onClick={handleInviteClick}>
           <Plus className="h-4 w-4" /> Invite Member
         </button>
+      
       </div>
-    </header>
+      </header>
+    {isInviteModalOpen && (
+
+      <CommonModal isOpen={isInviteModalOpen} onClose={handleCloseModal}>
+        <InviteUsersModal onClose={handleCloseModal} />
+      </CommonModal>
+    )}
+          </>
   );
 };
