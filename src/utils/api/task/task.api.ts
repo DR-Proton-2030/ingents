@@ -5,14 +5,7 @@ const initialRoute = "tasks";
 
 export const getTasks = async (): Promise<any> => {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
-    if (!token) {
-      throw new Error("Token not found");
-    }
-
-    console.log("🚀 Calling get tasks API...");
     const response = await API.get(`/${initialRoute}/get-tasks`, {
-      headers: { Authorization: `Bearer ${token}` },
     });
 
     console.log("✅ Tasks fetch successful:", response.data);
@@ -25,14 +18,14 @@ export const getTasks = async (): Promise<any> => {
 
 export const createTask = async (payload: object): Promise<any> => {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
-    if (!token) {
-      throw new Error("Token not found");
-    }
+    // const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
+    // if (!token) {
+    //   throw new Error("Token not found");
+    // }
 
-    console.log("🚀 Calling create task API...");
-    const response = await API.post(`/${initialRoute}/create-task`, payload, {
-      headers: { Authorization: `Bearer ${token}` },
+    console.log("🚀 Calling create task API with payload:", payload);
+    const response = await API.post(`/${initialRoute}/add-task`, payload, {
+      // headers: { Authorization: `Bearer ${token}` },
     });
 
     console.log("✅ Task creation successful:", response.data);

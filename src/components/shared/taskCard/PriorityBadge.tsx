@@ -4,10 +4,16 @@ import { PriorityBadgeProps } from "@/types/interface/props/TaskCard.props";
 export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
   const config = {
     urgent: {
-      bg: "bg-red-50",
-      text: "text-red-600",
+      bg: "bg-red-100",
+      text: "text-red-700",
       icon: "🚩",
       label: "Urgent",
+    },
+    high: {
+      bg: "bg-orange-50",
+      text: "text-red-600",
+      icon: "🚩",
+      label: "High",
     },
     normal: {
       bg: "bg-yellow-50",
@@ -23,7 +29,13 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
     },
   };
 
-  const { bg, text, icon, label } = config[priority];
+  const { bg, text, icon, label } =
+    config[priority] ?? {
+      bg: "bg-gray-100",
+      text: "text-gray-400",
+      icon: "🚩",
+      label: "Unknown",
+    };
 
   return (
     <span

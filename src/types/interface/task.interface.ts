@@ -1,6 +1,6 @@
-export type TaskPriority = "urgent" | "normal" | "low";
+export type TaskPriority = "urgent" | "high" | "normal" | "low";
 export type TaskStatus =
-  | "in-progress"
+  | "pending"
   | "ready-to-check"
   | "completed"
   | "backlog";
@@ -32,7 +32,7 @@ export interface Task {
   completed_by_user_object_id?: string;
   company_object_id: string;
   assignees?: Assignee[];
-  subtasks?: Task[];
+  subtask?: Task[];
 }
 
 export interface TaskSection {

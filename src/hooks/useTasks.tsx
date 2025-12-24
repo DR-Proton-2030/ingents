@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getTasks, createTask, updateTask, deleteTask } from "@/utils/api/task/task.api";
 import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
+import { api } from "@/utils/api";
 
 interface UseTasksReturn {
   tasks: Task[];
@@ -25,47 +26,12 @@ export const useTasks = (): UseTasksReturn => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getTasks();
-      
+      const response = await api.task.getTasks();
       if (response?.data) {
-        // Transform API response to match our interface
-        const transformedTasks: Task[] = response.data.map((task: any) => ({
-          _id: task._id || task.id,
-          title: task.title,
-          completed: task.status === "completed",
-          description: task.description,
-          parent_task_object_id: task.parent_task_object_id,
-          due_date: task.due_date ? new Date(task.due_date) : undefined,
-          priority: task.priority?.toLowerCase() || "normal",
-          progress: task.progress || 0,
-          subtaskCount: task.subtask?.length || 0,
-          commentCount: task.commentCount || 0,
-          status: task.status === "pending" ? "in-progress" : task.status,
-          completed_at: task.completed_at ? new Date(task.completed_at) : undefined,
-          created_by_user_object_id: task.created_by_user_object_id,
-          completed_by_user_object_id: task.completed_by_user_object_id,
-          company_object_id: task.company_object_id,
-          assignees: task.assignees || [],
-          subtasks: task.subtask?.map((sub: any) => ({
-            _id: sub._id || sub.id,
-            title: sub.title,
-            completed: sub.status === "completed",
-            description: sub.description,
-            parent_task_object_id: sub.parent_task_object_id,
-            due_date: sub.due_date ? new Date(sub.due_date) : undefined,
-            priority: sub.priority?.toLowerCase() || "normal",
-            progress: sub.progress || 0,
-            status: sub.status === "pending" ? "in-progress" : sub.status,
-            created_by_user_object_id: sub.created_by_user_object_id,
-            company_object_id: sub.company_object_id,
-            assignees: sub.assignees || [],
-          })) || [],
-        }));
-
-        setTasks(transformedTasks);
-
-        // Group tasks into sections by status
-        const grouped = groupTasksByStatus(transformedTasks);
+        // console.log("response data", response.data);
+        setTasks(response.data);
+        const grouped = groupTasksByStatus(response.data);
+        // console.log("grouped sections", grouped);
         setSections(grouped);
       }
     } catch (err: any) {
@@ -130,9 +96,9 @@ export const useTasks = (): UseTasksReturn => {
 function groupTasksByStatus(tasks: Task[]): TaskSection[] {
   const sections: TaskSection[] = [
     {
-      id: "in-progress",
+      id: "pending",
       title: "In Progress",
-      status: "in-progress",
+      status: "pending",
       color: "orange",
       count: 0,
       tasks: [],

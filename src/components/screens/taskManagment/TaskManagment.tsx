@@ -3,14 +3,24 @@ import React, { useState, useCallback } from "react";
 import Layout from "@/screens/layout/Layout";
 import TaskHeader from "./TaskHeader";
 import TaskSection from "./TaskSection";
+import CreateTaskModal from "./CreateTaskModal";
 import { ViewMode, Task as TaskType } from "@/types/interface/task.interface";
 import { useTasks } from "@/hooks/useTasks";
+import { TaskFormData } from "@/types/interface/task-modal.interface";
 
 const TaskManagement: React.FC = () => {
-  const { sections, loading, error, handleUpdateTask, refetchTasks } = useTasks();
+  const {
+    sections,
+    loading,
+    error,
+    handleUpdateTask,
+    refetchTasks,
+    handleCreateTask,
+  } = useTasks();
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleToggleTask = useCallback((taskId: string) => {
     setExpandedTasks((prev) => {
@@ -40,12 +50,10 @@ const TaskManagement: React.FC = () => {
 
   const handleAddTask = useCallback((sectionId: string) => {
     console.log("Add task to section:", sectionId);
-    // TODO: Implement add task modal/form
   }, []);
 
   const handleFilter = useCallback(() => {
     console.log("Open filter modal");
-    // TODO: Implement filter functionality
   }, []);
 
   const handleCreateProject = useCallback(() => {
@@ -53,16 +61,36 @@ const TaskManagement: React.FC = () => {
     // TODO: Implement create project
   }, []);
 
-  const handleCreateTask = useCallback(() => {
-    console.log("Create task");
-    // TODO: Implement create task
+  const handleTaskModal = useCallback(() => {
+    console.log("task open");
+    setIsCreateModalOpen(true);
   }, []);
 
+  console.log("tasks", sections);
+
+  const handleCreateTaskSubmit = useCallback(
+    async (taskData: TaskFormData) => {
+      // Transform form data to match API payload format
+      const payload = {
+        title: taskData.title,
+        description: taskData.description,
+        due_date: taskData.due_date
+          ? new Date(taskData.due_date).toISOString()
+          : undefined,
+        priority: taskData.priority,
+        status: taskData.status,
+      };
+
+      await handleCreateTask(payload);
+    },
+    [handleCreateTask]
+  );
+
   // Filter tasks based on search query
-  const filteredSections = sections.map((section) => ({
-    ...section,
-    tasks: filterTasks(section.tasks, searchQuery),
-  }));
+  // const filteredSections = sections.map((section) => ({
+  //   ...section,
+  //   tasks: filterTasks(section.tasks, searchQuery),
+  // }));
 
   if (loading) {
     return (
@@ -106,52 +134,32 @@ const TaskManagement: React.FC = () => {
           onSearchChange={setSearchQuery}
           onFilter={handleFilter}
           onCreateProject={handleCreateProject}
-          onCreateTask={handleCreateTask}
+          onCreateTask={handleTaskModal}
         />
 
         {/* Task Sections */}
         <div className="space-y-4">
-          {filteredSections.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-              <p className="text-gray-500">No tasks found</p>
-            </div>
-          ) : (
-            filteredSections.map((section) => (
-              <TaskSection
-                key={section.id}
-                section={section}
-                onToggleTask={handleToggleTask}
-                onCheckTask={handleCheckTask}
-                onAddTask={handleAddTask}
-                expandedTasks={expandedTasks}
-              />
-            ))
-          )}
+          {sections.map((section) => (
+            <TaskSection
+              key={section.id}
+              section={section}
+              onToggleTask={handleToggleTask}
+              onCheckTask={handleCheckTask}
+              onAddTask={handleAddTask}
+              expandedTasks={expandedTasks}
+            />
+          ))}
         </div>
+
+        {/* Create Task Modal */}
+        <CreateTaskModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={handleCreateTaskSubmit}
+        />
       </div>
     </Layout>
   );
 };
-
-// Helper function to filter tasks based on search query
-function filterTasks(
-  tasks: TaskType[],
-  query: string
-): TaskType[] {
-  if (!query.trim()) return tasks;
-
-  const lowerQuery = query.toLowerCase();
-
-  return tasks.filter((task) => {
-    const matchesTitle = task.title.toLowerCase().includes(lowerQuery);
-    const matchesDescription = task.description
-      ?.toLowerCase()
-      .includes(lowerQuery);
-    const hasMatchingChildren =
-      task.subtasks && filterTasks(task.subtasks, query).length > 0;
-
-    return matchesTitle || matchesDescription || hasMatchingChildren;
-  });
-}
 
 export default TaskManagement;

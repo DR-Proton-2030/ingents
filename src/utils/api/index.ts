@@ -8,6 +8,7 @@ import {
   createUsers, 
   getUsers 
 } from "./auth/auth.api";
+import { createTask, deleteTask, getTasks, updateTask } from "./task/task.api";
 
 export const api = {
   auth: {
@@ -19,5 +20,11 @@ export const api = {
     googleSignUp,
     createUsers,
     getUsers
+  },
+  task: {
+    getTasks,
+    createTask,
+    updateTask,
+    deleteTask
   }
 }

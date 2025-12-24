@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, MessageSquare, MoreHorizontal } from "lucide
 import { cn } from "@/lib/utils";
 import { ProgressBar, AvatarGroup, PriorityBadge, TaskCheckbox } from ".";
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
+import { formatDate } from "@/utils/commonFunction/formatDate";
 
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
@@ -12,7 +13,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onCheckChange,
   isExpanded = false,
 }) => {
-  const hasChildren = task.subtasks && task.subtasks.length > 0;
+  const hasChildren = task.subtask && task.subtask.length > 0;
   const paddingLeft = depth * 24;
 
   return (
@@ -116,7 +117,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Due Date Cell */}
         <td className="py-3 px-4">
-          <span className="text-sm text-gray-700">{task.due_date?.toLocaleDateString()}</span>
+          <span className="text-sm text-gray-700">{formatDate(task?.due_date)}</span>
         </td>
 
         {/* Priority Cell */}
@@ -157,7 +158,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       {/* Render Children */}
       {hasChildren &&
         isExpanded &&
-        task.subtasks?.map((child) => (
+        task.subtask?.map((child) => (
           <TaskCard
             key={child._id}
             task={child}
