@@ -2,6 +2,8 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Assignee } from "@/types/interface/task.interface";
+import { UserPlus } from "lucide-react";
+import SearchAndAssign from "../searchAndAssign/SearchAndAssign";
 
 interface AvatarGroupProps {
   assignees: Assignee[];

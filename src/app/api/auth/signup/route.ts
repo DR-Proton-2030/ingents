@@ -62,8 +62,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Call backend API
-    console.log("BACKEND_URL from env:", process.env.BACKEND_URL);
-    const backendUrls = [`${process.env.BACKEND_URL}/api/v1/auth/signup`];
+    console.log("BACKEND_URL from env:", process.env.NEXT_PUBLIC_BACKEND_URL);
+    const backendUrls = [`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/signup`];
     let response: Response | null = null;
     const errors: Array<{ url: string; error: string }> = [];
 
