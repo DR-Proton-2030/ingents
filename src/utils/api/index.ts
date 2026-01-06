@@ -10,6 +10,7 @@ import {
 } from "./auth/auth.api";
 import { createTask, deleteTask, getTasks, updateTask } from "./task/task.api";
 import { sendMessage } from "./chat/chat.api";
+import { searchUsers } from "./user/user.api";
 
 export const api = {
   auth: {
@@ -31,5 +32,7 @@ export const api = {
   chat: {
     sendMessage,
   },
- 
+  user:{
+    searchUsers
+  }
 }
