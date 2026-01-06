@@ -1,4 +1,4 @@
-import { Task, TaskPriority } from "../task.interface";
+import { Task, TaskPriority, TaskStatus } from "../task.interface";
 
 export interface PriorityBadgeProps {
   priority: TaskPriority;
@@ -9,5 +9,9 @@ export interface TaskCardProps {
   depth?: number;
   onToggle?: (taskId: string) => void;
   onCheckChange?: (taskId: string, checked: boolean) => void;
+  handleOpenUpdateTask?: () => void;
+  onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
+  handleDeleteTask: (taskId: string) => void;
+  handleAddSubtask: (parentTaskId: string) => void;
   isExpanded?: boolean;
 }

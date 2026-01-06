@@ -38,15 +38,9 @@ export const createTask = async (payload: object): Promise<any> => {
 
 export const updateTask = async (taskId: string, payload: object): Promise<any> => {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
-    if (!token) {
-      throw new Error("Token not found");
-    }
-
+  
     console.log("🚀 Calling update task API...");
-    const response = await API.put(`/${initialRoute}/update-task/${taskId}`, payload, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await API.patch(`/${initialRoute}/update-task-status/${taskId}`, payload);
 
     console.log("✅ Task update successful:", response.data);
     return response.data;
@@ -57,21 +51,19 @@ export const updateTask = async (taskId: string, payload: object): Promise<any> 
 };
 
 export const deleteTask = async (taskId: string): Promise<any> => {
-  try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem("@token") : null;
-    if (!token) {
-      throw new Error("Token not found");
-    }
+  console.log("🚀 Calling delete task API...");
 
-    console.log("🚀 Calling delete task API...");
-    const response = await API.delete(`/${initialRoute}/delete-task/${taskId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  const res = await fetch(`/api/tasks/delete-task/${taskId}`, {
+    method: "DELETE",
+    credentials: "include", // 🔥 cookie auth
+  });
 
-    console.log("✅ Task deletion successful:", response.data);
-    return response.data;
-  } catch (error: any) {
-    console.error("❌ Task deletion failed:", error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || "Task deletion failed");
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error?.error || "Failed to delete task");
   }
+
+  return res.json();
 };
+
+

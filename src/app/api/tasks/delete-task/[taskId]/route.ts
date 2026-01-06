@@ -1,0 +1,33 @@
+import { NextResponse } from "next/server";
+import axios from "axios";
+
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8989";
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { taskId: string } }
+) {
+  try {
+    const { taskId } = params;
+
+    const cookies = req.headers.get("cookie") || "";
+
+    const response = await axios.delete(
+      `${BACKEND_URL}/api/v1/tasks/delete-task/${taskId}`,
+      {
+        headers: {
+          Cookie: cookies,
+        },
+        withCredentials: true,
+      }
+    );
+
+    return NextResponse.json(response.data);
+  } catch (err: any) {
+    console.error("Backend API error:", err.response?.data || err.message);
+    return NextResponse.json(
+      { error: err.response?.data?.message || "Failed to delete task" },
+      { status: err.response?.status || 500 }
+    );
+  }
+}

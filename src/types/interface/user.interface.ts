@@ -6,6 +6,7 @@ export interface IUser {
   email: string;
   password: string;
   emp_id: string;
+  has_joined: boolean;
   company_object_id: string;
   role: string;
   profile_picture: string;

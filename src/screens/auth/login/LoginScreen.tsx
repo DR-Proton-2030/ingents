@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -24,12 +24,14 @@ interface LoginFormData {
 }
 
 export default function LoginScreen() {
-  const { setUser } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const [formData, setFormData] = useState<LoginFormData>({
     email: "",
-    password: "",
+    password: "1234",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showSetupPassword, setShowSetupPassword] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
@@ -64,48 +66,51 @@ export default function LoginScreen() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!validateForm()) return;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  setIsLoading(true);
+  setApiError(null);
+  setShowSetupPassword(false);
 
-    if (!validateForm()) {
+  try {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // ✅ KEY FIX
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+
+    if (response.status === 400 && data.code === "PASSWORD_NOT_SET") {
+      setApiError(data.message);
+      setShowSetupPassword(true);
       return;
     }
 
-    setIsLoading(true);
-    setApiError(null);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed");
-      }
-      
-      const {
-        data: { user },
-      } = data;
-      
-      setUser(user);
-
-      // Login successful, redirect to dashboard
-      router.push("/dashboard");
-    } catch (error: any) {
-      console.error("Login error:", error);
-      setApiError(error.message || "Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      setApiError(data.message || "Login failed");
+      return;
     }
-  };
+
+    setUser(data.data.user);
+    router.push("/dashboard");
+
+  } catch {
+    setApiError("Something went wrong. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
+useEffect(() => {
+  if (user) {
+    router.replace("/dashboard");
+  }
+}, [user, router]);
 
   return (
     <div className="relative min-h-screen overflow-hidden items-center justify-center bg-gray-100 isolate">
@@ -253,26 +258,37 @@ export default function LoginScreen() {
             </div> */}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className={cn(
-                "w-full flex items-center justify-center px-8 py-3 rounded-full font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all",
-                isLoading
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-purple-600 hover:bg-blue-700 focus:ring-blue-500",
-                "text-white"
-              )}
-            >
-              {isLoading ? (
-                <>
-                  <LoaderIcon className="w-5 h-5 mr-2 animate-spin" />
-                  Signing In...
-                </>
-              ) : (
-                "Sign In"
-              )}
-            </button>
+           {showSetupPassword ? (
+  <button
+    type="button"
+    onClick={() => router.push("/setup-password")}
+    className="w-full px-8 py-3 rounded-full font-medium bg-orange-500 hover:bg-orange-600 text-white transition-all"
+  >
+    Setup Password
+  </button>
+) : (
+  <button
+    type="submit"
+    disabled={isLoading}
+    className={cn(
+      "w-full flex items-center justify-center px-8 py-3 rounded-full font-medium transition-all",
+      isLoading
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-purple-600 hover:bg-blue-700",
+      "text-white"
+    )}
+  >
+    {isLoading ? (
+      <>
+        <LoaderIcon className="w-5 h-5 mr-2 animate-spin" />
+        Signing In...
+      </>
+    ) : (
+      "Sign In"
+    )}
+  </button>
+)}
+
           </form>
 
           {/* Signup Link */}

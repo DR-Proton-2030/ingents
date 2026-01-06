@@ -1,16 +1,21 @@
 "use client";
 import React from "react";
-import { ChevronDown, ChevronRight, MessageSquare, MoreHorizontal } from "lucide-react";
+import { ChevronDown, ChevronRight, MessageSquare, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressBar, AvatarGroup, PriorityBadge, TaskCheckbox } from ".";
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
+import StatusDropdown from "../statusDropdown/StatusDropdown";
 
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
   depth = 0,
   onToggle,
   onCheckChange,
+  handleOpenUpdateTask,
+  handleDeleteTask,
+  handleAddSubtask,
+  onStatusChange,
   isExpanded = false,
 }) => {
   const hasChildren = task.subtask && task.subtask.length > 0;
@@ -58,10 +63,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </div>
 
             {/* Checkbox */}
-            <TaskCheckbox
+            {/* <TaskCheckbox
               checked={task.completed}
               onChange={(checked) => onCheckChange?.(task._id, checked)}
-            />
+            /> */}
+            
 
             {/* Task Title */}
             <span
@@ -89,7 +95,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                     d="M8 7h12M8 12h12M8 17h12M4 7h.01M4 12h.01M4 17h.01"
                   />
                 </svg>
-                {task.subtaskCount}
+                {task.subtaskCount || 2}
               </span>
             )}
 
@@ -114,11 +120,24 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <td className="py-3 px-4">
           <AvatarGroup assignees={task.assignees || []} />
         </td>
+          {/* <td className="py-3 px-4">
+          <span className="text-sm text-gray-700">{task.status}</span>
+        </td> */}
+        <td className="py-3 px-4">
+  <StatusDropdown
+    taskId={task._id}
+    currentStatus={task.status}
+    onStatusChange={onStatusChange}
+  />
+</td>
+
 
         {/* Due Date Cell */}
         <td className="py-3 px-4">
           <span className="text-sm text-gray-700">{formatDate(task?.due_date)}</span>
         </td>
+
+       
 
         {/* Priority Cell */}
         <td className="py-3 px-4">
@@ -126,27 +145,21 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </td>
 
         {/* Progress Cell */}
-        <td className="py-3 px-4">
+        {/* <td className="py-3 px-4">
           <ProgressBar progress={task.progress} className="w-24" />
-        </td>
+        </td> */}
 
         {/* Actions Cell */}
         <td className="py-3 px-4">
-          <div className="flex items-center gap-2">
-            <button className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg
-                className="w-4 h-4 text-blue-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"
-                />
-              </svg>
+          <div className="flex items-center gap-2"   >
+             <button className="p-2 rounded-lg bg-blue-100 transition-colors cursor-pointer" onClick={() => handleAddSubtask(task._id)}>
+            <Plus size={14} className="text-blue-600"/>
+            </button>
+            <button className="p-2 rounded-lg bg-red-100 transition-colors cursor-pointer" onClick={() => {
+    console.log("🟢 Delete clicked:", task._id);
+    handleDeleteTask(task._id);
+  }}>
+             <Trash2 size={14} className="text-red-600"/>
             </button>
             <button className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity">
               <MoreHorizontal className="w-4 h-4 text-gray-500" />
@@ -164,7 +177,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
             task={child}
             depth={depth + 1}
             onToggle={onToggle}
+            handleOpenUpdateTask={handleOpenUpdateTask}
             onCheckChange={onCheckChange}
+            onStatusChange={onStatusChange}
+            handleDeleteTask={handleDeleteTask}
+            handleAddSubtask={handleAddSubtask}
           />
         ))}
     </>

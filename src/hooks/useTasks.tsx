@@ -22,6 +22,7 @@ export const useTasks = (): UseTasksReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
@@ -58,6 +59,7 @@ export const useTasks = (): UseTasksReturn => {
     }
   }, [fetchTasks]);
 
+  
   const handleUpdateTask = useCallback(async (taskId: string, payload: object) => {
     try {
       await updateTask(taskId, payload);

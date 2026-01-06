@@ -8,8 +8,8 @@ export type TaskStatus =
 export type ViewMode = "spreadsheet" | "timeline" | "calendar" | "board";
 
 export interface Assignee {
-  id: string;
-  name: string;
+  _id: string;
+  full_name: string;
   avatar?: string;
   initials: string;
   color: string;
@@ -33,6 +33,7 @@ export interface Task {
   company_object_id: string;
   assignees?: Assignee[];
   subtask?: Task[];
+  assigned_user_list?: any[];
 }
 
 export interface TaskSection {

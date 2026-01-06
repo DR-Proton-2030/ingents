@@ -3,16 +3,18 @@
 import React, { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import type {
+    CreateSubtaskModalProps,
   CreateTaskModalProps,
+  SubTaskFormData,
   TaskFormData,
 } from "@/types/interface/task-modal.interface";
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
+const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
 }) => {
-  const [formData, setFormData] = useState<TaskFormData>({
+  const [formData, setFormData] = useState<SubTaskFormData>({
     title: "",
     description: "",
     due_date: "",
@@ -140,7 +142,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-semibold text-gray-900">
-            Create New Task
+            Create New SubTask
           </h2>
           <button
             onClick={onClose}
@@ -320,7 +322,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               disabled={isSubmitting}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Creating..." : "Create Task"}
+              {isSubmitting ? "Creating..." : "Create Subtask"}
             </button>
           </div>
         </form>
@@ -329,4 +331,4 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   );
 };
 
-export default CreateTaskModal;
+export default CreateSubtaskModal;
