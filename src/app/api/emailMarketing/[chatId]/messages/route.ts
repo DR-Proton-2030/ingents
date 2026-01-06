@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const userToken = (await cookies()).get("token")?.value;
 
     const backendResp = await fetch(
-      `${process.env.BACKEND_URL}/api/v1/chat/${chatId}/messages`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/chat/${chatId}/messages`,
       {
         headers: {
           Authorization: `Bearer ${userToken}`,

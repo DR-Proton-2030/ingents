@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8989";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
 
 export async function DELETE(
   req: Request,
