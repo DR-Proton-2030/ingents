@@ -13,6 +13,7 @@ interface TaskSectionProps {
   expandedTasks?: Set<string>;
   handleStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   handleDeleteTask: (taskId: string) => void;
+  handleUnAssignTask: (taskId: string, userId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
 }
 
@@ -31,6 +32,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   handleStatusChange,
   handleDeleteTask,
   handleAddSubtask,
+  handleUnAssignTask,
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -132,6 +134,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                     isExpanded={expandedTasks.has(task._id)}
                     handleDeleteTask={handleDeleteTask}
                     handleAddSubtask={() => handleAddSubtask(task._id)}
+                    handleUnAssignTask={handleUnAssignTask}
                   />
                   {/* Render subtasks if any */}
                   {subTasksMap[task._id]?.map((subtask) => (
@@ -144,6 +147,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                       isExpanded={expandedTasks.has(subtask._id)}
                       handleDeleteTask={handleDeleteTask}
                       handleAddSubtask={() => handleAddSubtask(subtask._id)}
+                      handleUnAssignTask={handleUnAssignTask}
                     />
                   ))}
                 </React.Fragment>

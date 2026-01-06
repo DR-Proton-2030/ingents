@@ -67,3 +67,19 @@ export const deleteTask = async (taskId: string): Promise<any> => {
 };
 
 
+export const unassignTask = async (taskId: string, userId: string): Promise<any> => {
+  console.log("🚀 Calling delete task API...");
+
+  const res = await fetch(`/api/tasks/unassign/${taskId}/${userId}`, {
+    method: "DELETE",
+    credentials: "include", // 🔥 cookie auth
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error?.error || "Failed to delete task");
+  }
+
+  return res.json();
+};
+

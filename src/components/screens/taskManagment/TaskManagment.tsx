@@ -4,7 +4,11 @@ import Layout from "@/screens/layout/Layout";
 import TaskHeader from "./TaskHeader";
 import TaskSection from "./TaskSection";
 import CreateTaskModal from "./CreateTaskModal";
-import { ViewMode, Task as TaskType, TaskStatus } from "@/types/interface/task.interface";
+import {
+  ViewMode,
+  Task as TaskType,
+  TaskStatus,
+} from "@/types/interface/task.interface";
 import { useTasks } from "@/hooks/useTasks";
 import { TaskFormData } from "@/types/interface/task-modal.interface";
 import CreateSubtaskModal from "./createSubtaskModal";
@@ -17,7 +21,8 @@ const TaskManagement: React.FC = () => {
     handleUpdateTask,
     refetchTasks,
     handleCreateTask,
-    handleDeleteTask
+    handleDeleteTask,
+    handleUnassignTask,
   } = useTasks();
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
@@ -25,12 +30,13 @@ const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] = useState(false);
+  const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] =
+    useState(false);
 
   const handleAddSubtask = useCallback((taskId: string) => {
-  setParentTaskId(taskId);               
-  setIsCreateSubtaskModalOpen(true);    
-}, []);
+    setParentTaskId(taskId);
+    setIsCreateSubtaskModalOpen(true);
+  }, []);
 
   const handleToggleTask = useCallback((taskId: string) => {
     setExpandedTasks((prev) => {
@@ -58,8 +64,6 @@ const TaskManagement: React.FC = () => {
     [handleUpdateTask]
   );
 
- 
-
   const handleAddTask = useCallback((sectionId: string) => {
     console.log("Add task to section:", sectionId);
   }, []);
@@ -68,30 +72,41 @@ const TaskManagement: React.FC = () => {
     console.log("Open filter modal");
   }, []);
 
-const handleStatusChange = useCallback(
-  async (taskId: string, newStatus: TaskStatus) => {
-    try {
-      await handleUpdateTask(taskId, { status: newStatus });
-      // ✅ handleUpdateTask already refetches tasks
-    } catch (error) {
-      console.error("Failed to update task status:", error);
-    }
-  },
-  [handleUpdateTask]
-);
+  const handleStatusChange = useCallback(
+    async (taskId: string, newStatus: TaskStatus) => {
+      try {
+        await handleUpdateTask(taskId, { status: newStatus });
+        // ✅ handleUpdateTask already refetches tasks
+      } catch (error) {
+        console.error("Failed to update task status:", error);
+      }
+    },
+    [handleUpdateTask]
+  );
 
-const handleDeleteTaskById = useCallback(
-  async (taskId: string) => {
-    console.log("🔵 Parent delete handler called:", taskId);
-    try {
-      await handleDeleteTask(taskId);
-    } catch (error) {
-      console.error("Failed to delete task:", error);
-    }
-  },
-  [handleDeleteTask]
-);
+  const handleDeleteTaskById = useCallback(
+    async (taskId: string) => {
+      console.log("🔵 Parent delete handler called:", taskId);
+      try {
+        await handleDeleteTask(taskId);
+      } catch (error) {
+        console.error("Failed to delete task:", error);
+      }
+    },
+    [handleDeleteTask]
+  );
 
+  const handleUnassignTaskFromUser = useCallback(
+    async (taskId: string, userId: string) => {
+      console.log("🔵 Parent delete handler called:", taskId);
+      try {
+        await handleUnassignTask(taskId, userId);
+      } catch (error) {
+        console.error("Failed to delete task:", error);
+      }
+    },
+    [handleUnassignTask]
+  );
 
   const handleCreateProject = useCallback(() => {
     console.log("Create project");
@@ -124,31 +139,30 @@ const handleDeleteTaskById = useCallback(
   );
 
   const handleCreateSubtaskSubmit = useCallback(
-  async (taskData: TaskFormData) => {
-    if (!parentTaskId) return;
+    async (taskData: TaskFormData) => {
+      if (!parentTaskId) return;
 
-    const payload = {
-      title: taskData.title,
-      description: taskData.description,
-      due_date: taskData.due_date
-        ? new Date(taskData.due_date).toISOString()
-        : undefined,
-      priority: taskData.priority,
-      assigned_user_list: taskData.assigned_user_list,
+      const payload = {
+        title: taskData.title,
+        description: taskData.description,
+        due_date: taskData.due_date
+          ? new Date(taskData.due_date).toISOString()
+          : undefined,
+        priority: taskData.priority,
+        assigned_user_list: taskData.assigned_user_list,
 
-      // 🔥 THIS MAKES IT A SUBTASK
-      parent_task_object_id: parentTaskId,
-    };
+        // 🔥 THIS MAKES IT A SUBTASK
+        parent_task_object_id: parentTaskId,
+      };
 
-    await handleCreateTask(payload);
+      await handleCreateTask(payload);
 
-    // cleanup
-    setIsCreateSubtaskModalOpen(false);
-    setParentTaskId(null);
-  },
-  [handleCreateTask, parentTaskId]
-);
-
+      // cleanup
+      setIsCreateSubtaskModalOpen(false);
+      setParentTaskId(null);
+    },
+    [handleCreateTask, parentTaskId]
+  );
 
   // Filter tasks based on search query
   // const filteredSections = sections.map((section) => ({
@@ -214,6 +228,7 @@ const handleDeleteTaskById = useCallback(
               handleStatusChange={handleStatusChange}
               handleDeleteTask={handleDeleteTaskById}
               handleAddSubtask={handleAddSubtask}
+              handleUnAssignTask={handleUnassignTaskFromUser}
             />
           ))}
         </div>
@@ -224,15 +239,14 @@ const handleDeleteTaskById = useCallback(
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateTaskSubmit}
         />
-         <CreateSubtaskModal
-  isOpen={isCreateSubtaskModalOpen}
-  onClose={() => {
-    setIsCreateSubtaskModalOpen(false);
-    setParentTaskId(null);
-  }}
-  onSubmit={handleCreateSubtaskSubmit}
-/>
-
+        <CreateSubtaskModal
+          isOpen={isCreateSubtaskModalOpen}
+          onClose={() => {
+            setIsCreateSubtaskModalOpen(false);
+            setParentTaskId(null);
+          }}
+          onSubmit={handleCreateSubtaskSubmit}
+        />
       </div>
     </Layout>
   );
