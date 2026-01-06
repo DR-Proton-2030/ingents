@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   try {
     // Call backend API
-    const backendUrls = [`${process.env.BACKEND_URL}/api/v1/auth/logout`];
+    const backendUrls = [`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/logout`];
 
     let response: Response | null = null;
     const errors: Array<{ url: string; error: string }> = [];

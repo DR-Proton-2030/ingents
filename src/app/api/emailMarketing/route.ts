@@ -11,10 +11,10 @@ export async function GET(req: NextRequest) {
     console.log(userToken);
 
     const url = req.url.includes("/messages")
-      ? `${process.env.BACKEND_URL}/api/v1/chat/${req.nextUrl.searchParams.get(
+      ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/chat/${req.nextUrl.searchParams.get(
           "chatId"
         )}/messages`
-      : `${process.env.BACKEND_URL}/api/v1/chat`;
+      : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/chat`;
 
     console.log("[API LOG] Proxying GET request to:", url);
 
@@ -57,9 +57,9 @@ export async function GET(req: NextRequest) {
 //     const body = await req.json();
 
 //     // Determine which backend API to call
-//     let url = `${process.env.BACKEND_URL}/api/v1/chat`;
+//     let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/chat`;
 //     if (body.chatId && body.content) {
-//       url = `${process.env.BACKEND_URL}/api/v1/chat/send-message`;
+//       url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/chat/send-message`;
 //     }
 
 //     console.log("[API LOG] Proxying POST request to:", url);
@@ -118,9 +118,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Keep your original logic exactly the same
-    let url = `${process.env.BACKEND_URL}/api/v1/chat`;
+    let url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/chat`;
     if (body.chatId && body.content) {
-      url = `${process.env.BACKEND_URL}/api/v1/chat/send-message`;
+      url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/chat/send-message`;
     }
 
     console.log("[API LOG] Proxying POST request to:", url);
