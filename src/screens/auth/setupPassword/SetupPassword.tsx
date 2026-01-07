@@ -55,7 +55,7 @@ const SetupPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-orange-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-100 px-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
         {/* Header */}
         <div className="text-center mb-6">
@@ -72,7 +72,7 @@ const SetupPassword = () => {
 
         {/* Password */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Password
           </label>
 
@@ -82,8 +82,11 @@ const SetupPassword = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter password"
-              className="w-full px-4 py-3 border rounded-lg select-text
-                focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+             className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-800
+  shadow-[inset_4px_4px_8px_rgba(0,0,0,0.08),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]
+  focus:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-2px_-2px_4px_rgba(255,255,255,1)]
+  focus:outline-none transition-all duration-200"
+
             />
 
             <button
@@ -98,7 +101,7 @@ const SetupPassword = () => {
 
           {/* Constant helper */}
           <div
-            className={`mt-2 flex items-start gap-2 text-xs transition-colors
+            className={`mt-2 flex mb-2 items-start gap-2 text-xs transition-colors
               ${
                 password.length === 0
                   ? "text-gray-400"
@@ -124,7 +127,7 @@ const SetupPassword = () => {
 
         {/* Confirm Password */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Confirm Password
           </label>
 
@@ -134,8 +137,11 @@ const SetupPassword = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Confirm password"
-              className="w-full px-4 py-3 border rounded-lg select-text
-                focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+            className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-800
+  shadow-[inset_4px_4px_8px_rgba(0,0,0,0.08),inset_-4px_-4px_8px_rgba(255,255,255,0.9)]
+  focus:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1),inset_-2px_-2px_4px_rgba(255,255,255,1)]
+  focus:outline-none transition-all duration-200"
+
             />
 
             <button

@@ -13,5 +13,6 @@ export interface TaskCardProps {
   onStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   handleDeleteTask: (taskId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
+  handleUnAssignTask: (taskId: string, userId: string) => void;
   isExpanded?: boolean;
 }

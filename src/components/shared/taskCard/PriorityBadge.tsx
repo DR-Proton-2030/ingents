@@ -2,49 +2,43 @@ import { cn } from "@/lib/utils";
 import { PriorityBadgeProps } from "@/types/interface/props/TaskCard.props";
 
 export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
-  // const config = {
-  //   urgent: {
-  //     bg: "bg-red-100",
-  //     text: "text-red-700",
-  //     icon: "🚩",
-  //     label: "Urgent",
-  //   },
-  //   High: {
-  //     bg: "bg-orange-50",
-  //     text: "text-red-600",
-  //     icon: "🚩",
-  //     label: "High",
-  //   },
-  //   Normal: {
-  //     bg: "bg-blue-50",
-  //     text: "text-blue-600",
-  //     icon: "🔵",
-  //     label: "Normal",
-  //   },
-  //   Low: {
-  //     bg: "bg-yellow-50",
-  //     text: "text-yellow-600",
-  //     icon: "⚠️",
-  //     label: "Low",
-  //   },
-  // };
+  const config: Record<
+    string,
+    { icon: string; bg: string; text: string }
+  > = {
+    High: {
+      icon: "🔴",
+      bg: "bg-red-100",
+      text: "text-red-700",
+    },
+    Normal: {
+      icon: "🟢",
+      bg: "bg-green-100",
+      text: "text-green-700",
+    },
+    Low: {
+      icon: "🟡",
+      bg: "bg-yellow-100",
+      text: "text-yellow-700",
+    },
+  };
 
-  // const { bg, text, icon, label } =
-  //   config[priority] ?? {
-  //     bg: "bg-gray-600",
-  //     text: "text-gray-400",
-  //     icon: "❓",
-  //     label: "Unknown",
-  //   };
+  const current =
+    config[priority] ?? {
+      icon: "❓",
+      bg: "bg-gray-100",
+      text: "text-gray-600",
+    };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium",
-     
+        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+       
+        current.text
       )}
     >
-      {/* <span>{icon}</span> */}
+      <span>{current.icon}</span>
       {priority}
     </span>
   );

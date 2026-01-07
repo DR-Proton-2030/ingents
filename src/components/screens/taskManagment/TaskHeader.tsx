@@ -106,7 +106,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
         <QuickActionCard
           icon={
             <svg
-              className="w-5 h-5 text-blue-600"
+              className="w-5 h-5 text-orange-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -125,7 +125,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
         <QuickActionCard
           icon={
             <svg
-              className="w-5 h-5 text-blue-600"
+              className="w-5 h-5 bg-orange-500 rounded-lg text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -161,9 +161,9 @@ const QuickActionCard: React.FC<QuickActionCardProps> = ({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-sm transition-all min-w-48"
+      className="flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-xl hover:border-orange-300 hover:shadow-sm transition-all min-w-48"
     >
-      <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+      <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
         {icon}
       </div>
       <span className="text-sm font-medium text-gray-700">{label}</span>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import { getTasks, createTask, updateTask, deleteTask } from "@/utils/api/task/task.api";
+import { getTasks, createTask, updateTask, deleteTask, unassignTask } from "@/utils/api/task/task.api";
 import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
 import { api } from "@/utils/api";
@@ -14,6 +14,7 @@ interface UseTasksReturn {
   handleCreateTask: (payload: object) => Promise<void>;
   handleUpdateTask: (taskId: string, payload: object) => Promise<void>;
   handleDeleteTask: (taskId: string) => Promise<void>;
+  handleUnassignTask: (taskId: string, userId: string) => Promise<void>;
 }
 
 export const useTasks = (): UseTasksReturn => {
@@ -82,6 +83,17 @@ export const useTasks = (): UseTasksReturn => {
     }
   }, [fetchTasks]);
 
+    const handleUnassignTask = useCallback(async (taskId: string, userId: string) => {
+    try {
+      await unassignTask(taskId, userId);
+      toast.success("Task unassigned successfully");
+      await fetchTasks();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to unassign task");
+      throw err;
+    }
+  }, [fetchTasks]);
+
   return {
     tasks,
     sections,
@@ -91,6 +103,7 @@ export const useTasks = (): UseTasksReturn => {
     handleCreateTask,
     handleUpdateTask,
     handleDeleteTask,
+    handleUnassignTask,
   };
 };
 
