@@ -135,3 +135,23 @@ export const logoutUser = async (): Promise<any> => {
     throw new Error(error.response?.data?.message || "Logout failed");
   }
 };
+
+export const setupPassword = async (newPassword: string, token?: string | null): Promise<any> => {
+  try {
+
+    if(!token){
+      throw new Error("Token not found");
+    }
+    const response = await API.post(`${initialRoute}/setup-password`, {newPassword}, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    
+    console.log("✅ Token verification successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Token verification failed:", error.response?.data || error.message);
+    throw new Error(
+      error.response?.data?.message || "Token verification failed"
+    );
+  }
+};

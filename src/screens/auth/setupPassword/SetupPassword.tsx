@@ -10,16 +10,19 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { api } from "@/utils/api";
+import useQuerySearch from "@/hooks/querySearch/useQuerySearch";
 const SetupPassword = () => {
   const [password, setPassword] = useState("");
-  
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-    const router = useRouter();
+
+  const token = useQuerySearch("token");
+  const router = useRouter();
 
   // Validation rules
   const hasMinLength = password.length >= 6;
@@ -39,23 +42,11 @@ const SetupPassword = () => {
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
-
     try {
-      const res = await fetch("/api/auth/setup-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword: password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Failed to setup password");
+      const res = await api.auth.setupPassword(password, token);
+      if(res){
+        router.push("/login");
       }
-
-      setSuccessMsg(data.message || "Password set successfully");
-
-      router.push("/login");
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
@@ -150,30 +141,20 @@ const SetupPassword = () => {
             <button
               type="button"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() =>
-                setShowConfirmPassword(!showConfirmPassword)
-              }
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 select-none"
             >
-              {showConfirmPassword ? (
-                <EyeOff size={18} />
-              ) : (
-                <Eye size={18} />
-              )}
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
 
           {!isMatch && confirmPassword && (
-            <p className="text-xs text-red-500 mt-1">
-              Passwords do not match
-            </p>
+            <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
           )}
         </div>
 
         {/* Error / Success */}
-        {errorMsg && (
-          <p className="text-sm text-red-600 mb-3">{errorMsg}</p>
-        )}
+        {errorMsg && <p className="text-sm text-red-600 mb-3">{errorMsg}</p>}
         {successMsg && (
           <p className="text-sm text-green-600 mb-3">{successMsg}</p>
         )}

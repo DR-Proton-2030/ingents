@@ -6,7 +6,8 @@ import {
   getOtp, 
   googleSignUp, 
   createUsers, 
-  getUsers 
+  getUsers, 
+  setupPassword
 } from "./auth/auth.api";
 import { createTask, deleteTask, getTasks, updateTask } from "./task/task.api";
 import { sendMessage } from "./chat/chat.api";
@@ -21,7 +22,8 @@ export const api = {
     getOtp,
     googleSignUp,
     createUsers,
-    getUsers
+    getUsers,
+    setupPassword
   },
   task: {
     getTasks,
