@@ -7,6 +7,7 @@ import {
   deleteTask,
   unassignTask,
   assignTask,
+  updateTaskStatus,
 } from "@/utils/api/task/task.api";
 import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
@@ -57,7 +58,7 @@ export const useTasks = () => {
   };
 
   const handleUpdateTask = async (taskId: string, payload: object) => {
-    await updateTask(taskId, payload);
+    await updateTaskStatus(taskId, payload);
     toast.success("Task updated");
     fetchTasks();
   };
@@ -81,6 +82,11 @@ export const useTasks = () => {
     fetchTasks(); 
   };
 
+  const handleEditTask = async (taskId: string, payload: object) => {
+    await updateTask(taskId, payload);
+    toast.success("Task updated");
+    fetchTasks();
+  };
   return {
     tasks,
     sections,
@@ -92,6 +98,7 @@ export const useTasks = () => {
     handleDeleteTask,
     handleAssignTask,
     handleUnassignTask,
+    handleEditTask
   };
 };
 

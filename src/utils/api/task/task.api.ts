@@ -41,7 +41,7 @@ export const createTask = async (payload: object): Promise<any> => {
   }
 };
 
-export const updateTask = async (
+export const updateTaskStatus = async (
   taskId: string,
   payload: object
 ): Promise<any> => {
@@ -63,6 +63,27 @@ export const updateTask = async (
   }
 };
 
+export const updateTask = async (
+  taskId: string,
+  payload: object
+): Promise<any> => {
+  try {
+    console.log("🚀 Calling update task API...");
+    const response = await API.patch(
+      `/${initialRoute}/update-task/${taskId}`,
+     payload
+    );
+
+    console.log("✅ Task update successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Task update failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Task update failed");
+  }
+};
 export const deleteTask = async (taskId: string): Promise<any> => {
   try {
     console.log("🚀 Calling delete task API...");

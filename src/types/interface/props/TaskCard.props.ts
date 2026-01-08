@@ -16,5 +16,9 @@ export interface TaskCardProps {
   handleUnAssignTask: (taskId: string, userId: string) => void;
   handleAssignTask: (taskId: string, userId: string) => void;
   searchUsers: (query: string) => Promise<any[]>;
+  handleEditTask: (
+  taskId: string,
+  payload: Partial<Task>
+) => Promise<void>;
   isExpanded?: boolean;
 }

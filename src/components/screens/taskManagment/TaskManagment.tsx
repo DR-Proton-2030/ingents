@@ -24,7 +24,8 @@ const TaskManagement: React.FC = () => {
     handleCreateTask,
     handleDeleteTask,
     handleUnassignTask,
-    handleAssignTask
+    handleAssignTask,
+    handleEditTask
   } = useTasks();
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
@@ -244,7 +245,6 @@ const TaskManagement: React.FC = () => {
               key={section.id}
               section={section}
               onToggleTask={handleToggleTask}
-              onCheckTask={handleCheckTask}
               onAddTask={handleAddTask}
               expandedTasks={expandedTasks}
               handleStatusChange={handleStatusChange}
@@ -253,6 +253,7 @@ const TaskManagement: React.FC = () => {
               handleUnAssignTask={handleUnassignTaskFromUser}
               handleAssignTask={handleAssignTaskToUser}
               searchUsers={searchUsers}
+              handleEditTask={handleEditTask}
             />
           ))}
         </div>
