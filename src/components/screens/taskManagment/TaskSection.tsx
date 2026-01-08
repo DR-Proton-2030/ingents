@@ -14,7 +14,9 @@ interface TaskSectionProps {
   handleStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   handleDeleteTask: (taskId: string) => void;
   handleUnAssignTask: (taskId: string, userId: string) => void;
+  handleAssignTask: (taskId: string, userId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
+  searchUsers: (query: string) => Promise<any[]>;
 }
 
 const statusColors: Record<string, { bg: string; dot: string; text: string }> = {
@@ -33,6 +35,8 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   handleDeleteTask,
   handleAddSubtask,
   handleUnAssignTask,
+  handleAssignTask,
+  searchUsers,
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -134,8 +138,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                     isExpanded={expandedTasks.has(task._id)}
                     handleDeleteTask={handleDeleteTask}
                     handleAddSubtask={() => handleAddSubtask(task._id)}
-                    handleUnAssignTask={handleUnAssignTask}
-                  />
+                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers}                />
                   {/* Render subtasks if any */}
                   {subTasksMap[task._id]?.map((subtask) => (
                     <TaskCard
@@ -147,8 +150,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                       isExpanded={expandedTasks.has(subtask._id)}
                       handleDeleteTask={handleDeleteTask}
                       handleAddSubtask={() => handleAddSubtask(subtask._id)}
-                      handleUnAssignTask={handleUnAssignTask}
-                    />
+                      handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleUnAssignTask}    searchUsers={searchUsers}                />
                   ))}
                 </React.Fragment>
               ))}

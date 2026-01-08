@@ -14,5 +14,7 @@ export interface TaskCardProps {
   handleDeleteTask: (taskId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
   handleUnAssignTask: (taskId: string, userId: string) => void;
+  handleAssignTask: (taskId: string, userId: string) => void;
+  searchUsers: (query: string) => Promise<any[]>;
   isExpanded?: boolean;
 }

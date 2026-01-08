@@ -13,6 +13,7 @@ import { ProgressBar, AvatarGroup, PriorityBadge, TaskCheckbox } from ".";
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
 import StatusDropdown from "../statusDropdown/StatusDropdown";
+import { searchUsers } from "@/utils/api/user/user.api";
 
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
@@ -24,6 +25,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   handleAddSubtask,
   onStatusChange,
   handleUnAssignTask,
+  handleAssignTask,
+  searchUsers,
   isExpanded = false,
 }) => {
   const hasChildren = task.subtask && task.subtask.length > 0;
@@ -125,7 +128,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Assignee Cell */}
         <td className="py-3 px-4">
-          <AvatarGroup assignees={task.assignees || []} taskId={task._id} handleUnAssignTask={handleUnAssignTask} />
+          <AvatarGroup
+            assignees={task.assignees || []}
+            taskId={task._id}
+            handleUnAssignTask={handleUnAssignTask}
+            handleAssignTask={handleAssignTask}
+            searchUsers={searchUsers}
+          />
         </td>
         {/* <td className="py-3 px-4">
           <span className="text-sm text-gray-700">{task.status}</span>
@@ -228,6 +237,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
             handleDeleteTask={handleDeleteTask}
             handleAddSubtask={handleAddSubtask}
             handleUnAssignTask={handleUnAssignTask}
+            handleAssignTask={handleAssignTask}
+            searchUsers={searchUsers}
           />
         ))}
     </>
