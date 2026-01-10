@@ -13,7 +13,20 @@ import { ProgressBar, AvatarGroup, PriorityBadge, TaskCheckbox } from ".";
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
 import StatusDropdown from "../statusDropdown/StatusDropdown";
+import EditableText from "./EditableText";
+import EditableSelect from "./EditableSelect";
+import { TaskPriority } from "@/types/interface/task.interface";
 
+export const PRIORITY_OPTIONS: {
+  label: string;
+  value: TaskPriority;
+  icon: string;
+}[] = [
+  { value: "high", label: "High", icon: "🔴" },
+  { value: "normal", label: "Normal", icon: "🟢" },
+  { value: "low", label: "Low", icon: "🟡" },
+  { value: "urgent", label: "Urgent", icon: "🚩" },
+];
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
   depth = 0,
@@ -23,7 +36,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
   handleDeleteTask,
   handleAddSubtask,
   onStatusChange,
+  handleEditTask,
   handleUnAssignTask,
+  handleAssignTask,
+  searchUsers,
   isExpanded = false,
 }) => {
   const hasChildren = task.subtask && task.subtask.length > 0;
@@ -77,14 +93,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
             /> */}
 
             {/* Task Title */}
-            <span
-              className={cn(
-                "text-sm font-medium",
-                task.completed ? "text-gray-400 line-through" : "text-gray-900"
-              )}
-            >
-              {task.title}
-            </span>
+
+            <EditableText
+              value={task.title}
+              placeholder="-"
+              onSave={(value) => handleEditTask(task._id, { title: value })}
+            />
 
             {/* Subtask Count */}
             {task.subtaskCount && task.subtaskCount > 0 && (
@@ -118,14 +132,22 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Description Cell */}
         <td className="py-3 px-4">
-          <span className="text-sm text-gray-500 line-clamp-2">
-            {task.description || "-"}
-          </span>
+          <EditableText
+            value={task.description || ""}
+            onSave={(value) => handleEditTask(task._id, { description: value })}
+            placeholder="-"
+          />
         </td>
 
         {/* Assignee Cell */}
         <td className="py-3 px-4">
-          <AvatarGroup assignees={task.assignees || []} taskId={task._id} handleUnAssignTask={handleUnAssignTask} />
+          <AvatarGroup
+            assignees={task.assignees || []}
+            taskId={task._id}
+            handleUnAssignTask={handleUnAssignTask}
+            handleAssignTask={handleAssignTask}
+            searchUsers={searchUsers}
+          />
         </td>
         {/* <td className="py-3 px-4">
           <span className="text-sm text-gray-700">{task.status}</span>
@@ -149,6 +171,15 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <td className="py-3 px-4">
           <PriorityBadge priority={task.priority} />
         </td>
+        {/* <td>
+<EditableSelect<TaskPriority>
+  value={task.priority}
+  options={PRIORITY_OPTIONS}
+  onSave={(priority) =>
+    handleEditTask(task._id, { priority })
+  }
+/>
+        </td> */}
 
         {/* Progress Cell */}
         {/* <td className="py-3 px-4">
@@ -228,6 +259,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
             handleDeleteTask={handleDeleteTask}
             handleAddSubtask={handleAddSubtask}
             handleUnAssignTask={handleUnAssignTask}
+            handleAssignTask={handleAssignTask}
+            searchUsers={searchUsers}
+            handleEditTask={handleEditTask}
           />
         ))}
     </>

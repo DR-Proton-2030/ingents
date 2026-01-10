@@ -12,6 +12,7 @@ import {
 import { useTasks } from "@/hooks/useTasks";
 import { TaskFormData } from "@/types/interface/task-modal.interface";
 import CreateSubtaskModal from "./createSubtaskModal";
+import { UserOption } from "@/components/shared/userMultiSelectDropdown/UserMultiSelectDropdown";
 
 const TaskManagement: React.FC = () => {
   const {
@@ -23,6 +24,8 @@ const TaskManagement: React.FC = () => {
     handleCreateTask,
     handleDeleteTask,
     handleUnassignTask,
+    handleAssignTask,
+    handleEditTask
   } = useTasks();
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
@@ -108,6 +111,17 @@ const TaskManagement: React.FC = () => {
     [handleUnassignTask]
   );
 
+   const handleAssignTaskToUser = useCallback(
+    async (taskId: string, userId: string) => {
+      console.log("🔵 Parent delete handler called:", taskId);
+      try {
+        await handleAssignTask(taskId, userId);
+      } catch (error) {
+        console.error("Failed to delete task:", error);
+      }
+    },
+    [handleAssignTask]
+  );
   const handleCreateProject = useCallback(() => {
     console.log("Create project");
     // TODO: Implement create project
@@ -163,6 +177,15 @@ const TaskManagement: React.FC = () => {
     },
     [handleCreateTask, parentTaskId]
   );
+
+   const searchUsers = async (query: string): Promise<UserOption[]> => {
+    const res = await fetch(
+      `/api/users/search?query=${encodeURIComponent(query)}`,
+      { credentials: "include" }
+    );
+    const data = await res.json();
+    return data.data || [];
+  };
 
   // Filter tasks based on search query
   // const filteredSections = sections.map((section) => ({
@@ -222,13 +245,15 @@ const TaskManagement: React.FC = () => {
               key={section.id}
               section={section}
               onToggleTask={handleToggleTask}
-              onCheckTask={handleCheckTask}
               onAddTask={handleAddTask}
               expandedTasks={expandedTasks}
               handleStatusChange={handleStatusChange}
               handleDeleteTask={handleDeleteTaskById}
               handleAddSubtask={handleAddSubtask}
               handleUnAssignTask={handleUnassignTaskFromUser}
+              handleAssignTask={handleAssignTaskToUser}
+              searchUsers={searchUsers}
+              handleEditTask={handleEditTask}
             />
           ))}
         </div>

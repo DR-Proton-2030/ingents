@@ -25,7 +25,7 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
 
   const current =
     config[priority] ?? {
-      icon: "❓",
+      icon: "🚩",
       bg: "bg-gray-100",
       text: "text-gray-600",
     };
