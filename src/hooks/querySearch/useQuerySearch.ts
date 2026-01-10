@@ -1,6 +1,10 @@
+'use client';
+
+import { useSearchParams } from 'next/navigation';
+
 const useQuerySearch = (searchItem: string) => {
-	const queryParams = new URLSearchParams(window.location.search);
-	const searchvalue = queryParams.get(searchItem);
+	const searchParams = useSearchParams();
+	const searchvalue = searchParams?.get(searchItem) || null;
 	return searchvalue;
 };
 
