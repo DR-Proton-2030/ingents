@@ -17,7 +17,10 @@ export const searchUsers = async (query: Params): Promise<any> => {
 export const getUser = async (query: Params): Promise<IUser[]> => {
   try {
     const response = await API.get(`/${initialRoute}/getUser`, { params: query });
-    return response.data;
+    if(response.data){
+      return response.data.data;
+    }
+    throw new Error("No data found");
   } catch (error: any) {
     console.error("❌ Search failed:", error.response?.data || error.message);
     throw new Error(error.response?.data?.message || "Search failed");

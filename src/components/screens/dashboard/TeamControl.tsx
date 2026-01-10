@@ -33,13 +33,21 @@ export const TeamControl = () => {
         {users?.map((user: IUser, i) => (
           <div key={i} className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Image
-                src={user.profile_picture}
-                alt={user.full_name}
-                width={36}
-                height={36}
-                className="h-9 w-9 rounded-full object-cover"
-              />
+              {!user?.profile_picture ? (
+                <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center justify-center">
+                  <span className="text-black font-medium">
+                    {user.full_name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              ) : (
+                <Image
+                  src={user.profile_picture}
+                  alt={user.full_name}
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 rounded-full object-cover"
+                />
+              )}
               <div>
                 <div className="text-sm font-medium text-gray-900">
                   {user?.full_name}

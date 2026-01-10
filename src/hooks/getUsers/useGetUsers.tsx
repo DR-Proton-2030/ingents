@@ -8,7 +8,7 @@ const useGetUsers = () => {
 
   const fetchUsers = useCallback(async () => {
     const response = await api.user.getUser({});
-    console.log("response", response); 
+    console.log("----response", response); 
     setUsers(response);
   }, []);
 

@@ -1,4 +1,3 @@
-
 import React from "react";
 import Layout from "../layout/Layout";
 import { DashboardHeader } from "../../components/screens/dashboard/DashboardHeader";
@@ -26,17 +25,9 @@ export const Dashboard = () => {
 
           {/* Center content */}
           <section className="lg:col-span-6 space-y-5">
-            <AllUsers />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-              {/* Upcoming Event */}
-              <div className="h-full">
-                <UpcomingEvent />
-              </div>
-              {/* Project Progress */}
-              <div className="h-full">
-                <ProjectProgress />
-              </div>
-            </div>
+            {/* <AllUsers /> */}
+            <UpcomingEvent />
+            <ProjectProgress />
           </section>
 
           {/* Right column */}
