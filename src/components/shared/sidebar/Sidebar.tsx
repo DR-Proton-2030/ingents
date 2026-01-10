@@ -19,6 +19,12 @@ export default function Sidebar() {
       icon: undefined,
     },
     {
+      href: `/${site}/all-users`,
+      label: "Users",
+      imageUrl: assets.icons.dashboard,
+      icon: undefined,
+    },
+    {
       href: `/${site}/seo-management`,
       label: "Seomi Seo",
       imageUrl: assets.icons.graph,

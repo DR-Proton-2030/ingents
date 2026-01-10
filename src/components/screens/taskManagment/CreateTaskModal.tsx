@@ -6,6 +6,7 @@ import type {
   CreateTaskModalProps,
   TaskFormData,
 } from "@/types/interface/task-modal.interface";
+import UserMultiSelectDropdown, { UserOption } from "@/components/shared/userMultiSelectDropdown/UserMultiSelectDropdown";
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
@@ -17,106 +18,26 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     description: "",
     due_date: "",
     priority: "Normal",
-    // status: "pending",
     assigned_user_list: [],
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+
   const [userQuery, setUserQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  // ✅ Effect is ALWAYS called
   useEffect(() => {
     if (!userQuery.trim()) {
       setSearchResults([]);
       return;
     }
-
-    const timer = setTimeout(() => {
-      searchUsers(userQuery);
-    }, 400);
-
+    const timer = setTimeout(() => searchUsers(userQuery), 400);
     return () => clearTimeout(timer);
   }, [userQuery]);
 
   if (!isOpen) return null;
-  const searchUsers = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      setIsSearching(true);
-      const res = await fetch(
-        `/api/users/search?query=${encodeURIComponent(query)}`,
-        { credentials: "include" }
-      );
-      const data = await res.json();
-      setSearchResults(data.data || []);
-    } catch (err) {
-      console.error("User search failed", err);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // When a user is selected:
-  const handleUserSelect = (user: any) => {
-    setSelectedUser(user);
-    setFormData((prev) => ({
-      ...prev,
-      assigned_user_list: [user._id], // ← update state here
-    }));
-    setUserQuery("");
-    setSearchResults([]);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.title.trim()) {
-      alert("Title is required");
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      // Build payload explicitly
-      const payload = {
-        title: formData.title.trim(),
-        description: formData.description,
-        due_date: formData.due_date,
-        priority: formData.priority,
-        // ✅ Always include selected user's _id in assigned_user_list
-        assigned_user_list: selectedUser ? [selectedUser._id] : [],
-      };
-
-      console.log("Submitting task payload:", payload);
-
-      await onSubmit(payload);
-
-      // Reset form
-      setFormData({
-        title: "",
-        description: "",
-        due_date: "",
-        priority: "Normal",
-        // status: "pending",
-        assigned_user_list: [],
-      });
-      setSelectedUser(null);
-      setSearchResults([]);
-      setUserQuery("");
-      onClose();
-    } catch (error) {
-      console.error("Failed to create task:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -124,204 +45,152 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((p) => ({ ...p, [name]: value }));
+  };
+
+ const searchUsers = async (query: string): Promise<UserOption[]> => {
+  const res = await fetch(
+    `/api/users/search?query=${encodeURIComponent(query)}`,
+    { credentials: "include" }
+  );
+  const data = await res.json();
+  return data.data || [];
+};
+
+
+  const handleUserSelect = (user: any) => {
+    if (selectedUsers.some((u) => u._id === user._id)) return;
+    const updated = [...selectedUsers, user];
+    setSelectedUsers(updated);
+    setFormData((p) => ({
+      ...p,
+      assigned_user_list: updated.map((u) => u._id),
+    }));
+    setUserQuery("");
+    setSearchResults([]);
+  };
+
+  const removeUser = (id: string) => {
+    const updated = selectedUsers.filter((u) => u._id !== id);
+    setSelectedUsers(updated);
+    setFormData((p) => ({
+      ...p,
+      assigned_user_list: updated.map((u) => u._id),
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.title.trim()) return alert("Title is required");
+    setIsSubmitting(true);
+    await onSubmit({
+      ...formData,
+      assigned_user_list: selectedUsers.map((u) => u._id),
+    });
+    setIsSubmitting(false);
+    onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
       />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Create New Task
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
+      <div className="relative w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        {/* header */}
+        <div className="flex items-center justify-between p-4 ">
+          <h2 className="text-xl font-semibold">Create New Task</h2>
+          <button className="neu p-2 hover:scale-95 transition" onClick={onClose}>
+            <X size={14}/>
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Title */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* title */}
           <div>
-            <label
-              htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Title <span className="text-red-500">*</span>
-            </label>
+            <label className="block text-sm font-medium mb-2">Title *</label>
             <input
-              type="text"
-              id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              placeholder="Enter task title"
+              placeholder="Task title"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-300 outline-none transition shadow-sm"
             />
           </div>
 
-          {/* Description */}
+          {/* description */}
           <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Description
-            </label>
+            <label className="block text-sm font-medium mb-2">Description</label>
             <textarea
-              id="description"
               name="description"
+              rows={4}
               value={formData.description}
               onChange={handleChange}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none"
-              placeholder="Enter task description"
+              placeholder="Task description"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-gray-300 outline-none transition shadow-sm resize-none"
             />
           </div>
 
-          {/* Due Date and Priority Row */}
+          {/* due + priority */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Due Date */}
             <div>
-              <label
-                htmlFor="due_date"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Due Date
-              </label>
-              <input
-                type="datetime-local"
-                id="due_date"
-                name="due_date"
-                value={formData.due_date}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-              />
+              <label className="block text-sm font-medium mb-2">Due Date</label>
+ <input
+              type="datetime-local"
+              name="due_date"
+              value={formData.due_date}
+              onChange={handleChange}
+              className="px-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm"
+            />
             </div>
-
-            {/* Priority */}
+           
+            
             <div>
-              <label
-                htmlFor="priority"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Priority
-              </label>
-              <select
-                id="priority"
-                name="priority"
-                value={formData.priority}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors bg-white"
-              >
-                <option value="High">High</option>
-                <option value="Normal">Normal</option>
-                <option value="Low">Low</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Status */}
-
-          {/* Assign To */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Assign To
-            </label>
-
-            {/* Selected user */}
-            {formData.assigned_user_list.length > 0 && selectedUser && (
-              <div className="flex items-center justify-between mb-2 px-3 py-2 bg-gray-100 rounded">
-                <span className="text-sm">
-                  {selectedUser.full_name} ({selectedUser.email})
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedUser(null);
-                    setFormData((prev) => ({
-                      ...prev,
-                      assigned_user_list: [],
-                    }));
-                  }}
-                  className="text-gray-500 text-sm"
-                >
-                  <X />
-                </button>
-              </div>
-            )}
-
-            {/* Search input */}
-            {!selectedUser && (
-              <input
-                type="text"
-                placeholder="Search user by name or email"
-                value={userQuery}
-                onChange={(e) => setUserQuery(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            )}
-
-            {/* Searching indicator */}
-            {isSearching && (
-              <p className="text-sm text-gray-500 mt-2">Searching...</p>
-            )}
-
-            {/* Search results */}
-            {searchResults.length > 0 && !selectedUser && (
-              <div className="mt-2 border rounded-lg max-h-40 overflow-y-auto bg-white shadow">
-                {searchResults.map((user) => (
-                  <button
-                    type="button"
-                    key={user._id}
-                    onClick={() => {
-                      setSelectedUser(user);
-                      setFormData((prev) => ({
-                        ...prev,
-                        assigned_user_list: [user._id],
-                      }));
-
-                      setUserQuery("");
-                      setSearchResults([]);
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-gray-100"
-                  >
-                    <p className="text-sm font-medium">{user.full_name}</p>
-                    <p className="text-xs text-gray-500">{user.email}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+              <label className="block text-sm font-medium mb-2">Priority</label>
+  <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+              className="px-4 w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm bg-white"
             >
+              <option>High</option>
+              <option>Normal</option>
+              <option>Low</option>
+            </select>
+            </div>
+
+          
+          </div>
+
+          {/* assign */}
+       <UserMultiSelectDropdown
+  value={selectedUsers}
+  onChange={(users) => {
+    setSelectedUsers(users);
+    setFormData((p) => ({
+      ...p,
+      assigned_user_list: users.map((u) => u._id),
+    }));
+  }}
+  searchApi={searchUsers}
+/>
+
+
+          {/* actions */}
+          <div className="flex justify-end gap-3 pt-4">
+            <button type="button" onClick={onClose} className="neu neu-hover px-6 py-2">
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Creating..." : "Create Task"}
-            </button>
+         <button
+  type="submit"
+  disabled={isSubmitting}
+  className="rounded-xl shadow-lg px-6 py-2 bg-gradient-to-br from-orange-500 to-orange-600 text-white font-medium disabled:opacity-50"
+>
+  {isSubmitting ? "Creating..." : "Create Task"}
+</button>
+
           </div>
         </form>
       </div>

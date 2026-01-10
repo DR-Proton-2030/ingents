@@ -2,15 +2,18 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function POST(req: Request) {
   try {
     // Extract cookies from the incoming request
-    const cookies = req.headers.get("cookie") || "";
+    // const cookies = req.headers.get("cookie") || "";
     
     // Parse request body
     const body = await req.json();
+    const token = req.headers.get("Authorization");
+
+    console.log("Received setup password request with body:", body);
     
     const response = await axios.post(
       `${BACKEND_URL}/api/v1/auth/setup-password`,
@@ -18,9 +21,10 @@ export async function POST(req: Request) {
       {
         headers: {
           "Content-Type": "application/json",
-          "Cookie": cookies, // Forward cookies to backend
+          // Forward the Authorization header if present
+          ...(token ? { Authorization: token } : {}),
         },
-        withCredentials: true, // Important for cookie handling
+        // withCredentials: true, // Important for cookie handling
       }
     );
     console.log("response from setup password:", response.data);

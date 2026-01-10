@@ -1,12 +1,32 @@
 "use client";
 import React from "react";
-import { ChevronDown, ChevronRight, MessageSquare, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  MessageSquare,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProgressBar, AvatarGroup, PriorityBadge, TaskCheckbox } from ".";
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
 import StatusDropdown from "../statusDropdown/StatusDropdown";
+import EditableText from "./EditableText";
+import EditableSelect from "./EditableSelect";
+import { TaskPriority } from "@/types/interface/task.interface";
 
+export const PRIORITY_OPTIONS: {
+  label: string;
+  value: TaskPriority;
+  icon: string;
+}[] = [
+  { value: "high", label: "High", icon: "🔴" },
+  { value: "normal", label: "Normal", icon: "🟢" },
+  { value: "low", label: "Low", icon: "🟡" },
+  { value: "urgent", label: "Urgent", icon: "🚩" },
+];
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
   depth = 0,
@@ -16,6 +36,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
   handleDeleteTask,
   handleAddSubtask,
   onStatusChange,
+  handleEditTask,
+  handleUnAssignTask,
+  handleAssignTask,
+  searchUsers,
   isExpanded = false,
 }) => {
   const hasChildren = task.subtask && task.subtask.length > 0;
@@ -67,17 +91,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
               checked={task.completed}
               onChange={(checked) => onCheckChange?.(task._id, checked)}
             /> */}
-            
 
             {/* Task Title */}
-            <span
-              className={cn(
-                "text-sm font-medium",
-                task.completed ? "text-gray-400 line-through" : "text-gray-900"
-              )}
-            >
-              {task.title}
-            </span>
+
+            <EditableText
+              value={task.title}
+              placeholder="-"
+              onSave={(value) => handleEditTask(task._id, { title: value })}
+            />
 
             {/* Subtask Count */}
             {task.subtaskCount && task.subtaskCount > 0 && (
@@ -111,38 +132,54 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Description Cell */}
         <td className="py-3 px-4">
-          <span className="text-sm text-gray-500 line-clamp-2">
-            {task.description || "-"}
-          </span>
+          <EditableText
+            value={task.description || ""}
+            onSave={(value) => handleEditTask(task._id, { description: value })}
+            placeholder="-"
+          />
         </td>
 
         {/* Assignee Cell */}
         <td className="py-3 px-4">
-          <AvatarGroup assignees={task.assignees || []} />
+          <AvatarGroup
+            assignees={task.assignees || []}
+            taskId={task._id}
+            handleUnAssignTask={handleUnAssignTask}
+            handleAssignTask={handleAssignTask}
+            searchUsers={searchUsers}
+          />
         </td>
-          {/* <td className="py-3 px-4">
+        {/* <td className="py-3 px-4">
           <span className="text-sm text-gray-700">{task.status}</span>
         </td> */}
         <td className="py-3 px-4">
-  <StatusDropdown
-    taskId={task._id}
-    currentStatus={task.status}
-    onStatusChange={onStatusChange}
-  />
-</td>
-
+          <StatusDropdown
+            taskId={task._id}
+            currentStatus={task.status}
+            onStatusChange={onStatusChange}
+          />
+        </td>
 
         {/* Due Date Cell */}
         <td className="py-3 px-4">
-          <span className="text-sm text-gray-700">{formatDate(task?.due_date)}</span>
+          <span className="text-sm text-gray-700">
+            {formatDate(task?.due_date)}
+          </span>
         </td>
-
-       
 
         {/* Priority Cell */}
         <td className="py-3 px-4">
           <PriorityBadge priority={task.priority} />
         </td>
+        {/* <td>
+<EditableSelect<TaskPriority>
+  value={task.priority}
+  options={PRIORITY_OPTIONS}
+  onSave={(priority) =>
+    handleEditTask(task._id, { priority })
+  }
+/>
+        </td> */}
 
         {/* Progress Cell */}
         {/* <td className="py-3 px-4">
@@ -151,16 +188,55 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Actions Cell */}
         <td className="py-3 px-4">
-          <div className="flex items-center gap-2"   >
-             <button className="p-2 rounded-lg bg-blue-100 transition-colors cursor-pointer" onClick={() => handleAddSubtask(task._id)}>
-            <Plus size={14} className="text-blue-600"/>
-            </button>
-            <button className="p-2 rounded-lg bg-red-100 transition-colors cursor-pointer" onClick={() => {
-    console.log("🟢 Delete clicked:", task._id);
-    handleDeleteTask(task._id);
-  }}>
-             <Trash2 size={14} className="text-red-600"/>
-            </button>
+          <div className="flex items-center gap-2">
+            {/* ➕ Add Subtask */}
+            <div className="relative group/tooltip">
+              <button
+                className="p-2 rounded-lg bg-blue-100 transition-colors cursor-pointer"
+                onClick={() => handleAddSubtask(task._id)}
+              >
+                <Plus size={14} className="text-blue-600" />
+              </button>
+
+              {/* Tooltip */}
+              <span
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+        whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white
+        opacity-0 group-hover/tooltip:opacity-100 transition-opacity
+        pointer-events-none"
+              >
+                Add Subtask
+              </span>
+            </div>
+
+            {/* 🗑️ Delete Task */}
+            <div className="relative group/tooltip">
+              <button
+                className="p-2 rounded-lg bg-red-100 transition-colors cursor-pointer"
+                onClick={() => {
+                  const confirmed = window.confirm(
+                    "Are you sure you want to delete this task?"
+                  );
+                  if (!confirmed) return;
+
+                  handleDeleteTask(task._id);
+                }}
+              >
+                <Trash2 size={14} className="text-red-600" />
+              </button>
+
+              {/* Tooltip */}
+              <span
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+        whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white
+        opacity-0 group-hover/tooltip:opacity-100 transition-opacity
+        pointer-events-none"
+              >
+                Delete Task
+              </span>
+            </div>
+
+            {/* More */}
             <button className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity">
               <MoreHorizontal className="w-4 h-4 text-gray-500" />
             </button>
@@ -182,6 +258,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
             onStatusChange={onStatusChange}
             handleDeleteTask={handleDeleteTask}
             handleAddSubtask={handleAddSubtask}
+            handleUnAssignTask={handleUnAssignTask}
+            handleAssignTask={handleAssignTask}
+            searchUsers={searchUsers}
+            handleEditTask={handleEditTask}
           />
         ))}
     </>

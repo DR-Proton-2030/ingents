@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { TaskSection as TaskSectionType, TaskStatus } from "@/types/interface/task.interface";
+import { Task, TaskSection as TaskSectionType, TaskStatus } from "@/types/interface/task.interface";
 import TaskCard from "@/components/shared/taskCard/TaskCard";
 import { ChevronDown, ChevronRight, MoreHorizontal, Plus } from "lucide-react";
 
@@ -13,14 +13,22 @@ interface TaskSectionProps {
   expandedTasks?: Set<string>;
   handleStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   handleDeleteTask: (taskId: string) => void;
+  handleUnAssignTask: (taskId: string, userId: string) => void;
+  handleAssignTask: (taskId: string, userId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
+  searchUsers: (query: string) => Promise<any[]>;
+ handleEditTask: (
+  taskId: string,
+  payload: Partial<Task>
+) => Promise<void>;
+
 }
 
 const statusColors: Record<string, { bg: string; dot: string; text: string }> = {
-  "in-progress": { bg: "bg-orange-50", dot: "bg-orange-400", text: "text-orange-600" },
-  "ready-to-check": { bg: "bg-blue-50", dot: "bg-blue-400", text: "text-blue-600" },
-  completed: { bg: "bg-green-50", dot: "bg-green-400", text: "text-green-600" },
-  backlog: { bg: "bg-gray-50", dot: "bg-gray-400", text: "text-gray-600" },
+  "pending": { bg: "bg-purple-600", dot: "bg-white", text: "text-white" },
+  "ready-to-check": { bg: "bg-blue-500", dot: "bg-white", text: "text-white" },
+  "completed": { bg: "bg-green-500", dot: "bg-white", text: "text-white" },
+  "backlog": { bg: "bg-gray-500", dot: "bg-white", text: "text-white" },
 };
 
 const TaskSection: React.FC<TaskSectionProps> = ({
@@ -31,6 +39,10 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   handleStatusChange,
   handleDeleteTask,
   handleAddSubtask,
+  handleUnAssignTask,
+  handleAssignTask,
+  handleEditTask,
+  searchUsers,
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -69,9 +81,22 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         </div>
 
         {/* Task Count */}
-        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-          {section.count}
-        </span>
+      <span
+  className={cn(
+    "text-sm px-2 py-0.5 rounded-lg font-bold",
+    section.status === "pending" &&
+      "bg-purple-200 text-purple-800",
+    section.status === "completed" &&
+      "bg-green-200 text-green-700",
+    section.status === "backlog" &&
+      "bg-gray-200 text-gray-600",
+    section.status === "ready-to-check" &&
+      "bg-blue-200 text-blue-800"
+  )}
+>
+  {section.count}
+</span>
+
 
         {/* Section Actions */}
         <button className="p-1 hover:bg-gray-200 rounded">
@@ -104,7 +129,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                   Priority
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                  <Plus className="w-4 h-4" />
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -119,7 +144,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                     isExpanded={expandedTasks.has(task._id)}
                     handleDeleteTask={handleDeleteTask}
                     handleAddSubtask={() => handleAddSubtask(task._id)}
-                  />
+                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers}     handleEditTask={handleEditTask}           />
                   {/* Render subtasks if any */}
                   {subTasksMap[task._id]?.map((subtask) => (
                     <TaskCard
@@ -131,6 +156,10 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                       isExpanded={expandedTasks.has(subtask._id)}
                       handleDeleteTask={handleDeleteTask}
                       handleAddSubtask={() => handleAddSubtask(subtask._id)}
+                      handleUnAssignTask={handleUnAssignTask}
+                      handleAssignTask={handleUnAssignTask}
+                      searchUsers={searchUsers}
+                      handleEditTask={handleEditTask}
                     />
                   ))}
                 </React.Fragment>

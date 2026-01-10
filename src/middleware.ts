@@ -7,7 +7,7 @@ export function middleware(req: NextRequest) {
   console.log("🍪 All Cookies:", req.cookies.getAll());
 
   // Skip authentication for public routes
-  const publicRoutes = ["/login", "/signup", "/auth/login", "/auth/signup"];
+  const publicRoutes = ["/login", "/signup", "/auth/login", "/auth/signup", "/setup-password"];
   if (publicRoutes.includes(req.nextUrl.pathname)) {
     return NextResponse.next();
   }
