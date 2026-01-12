@@ -52,13 +52,13 @@ export const UpcomingEvent = () => {
     <div className="rounded-[18px] bg-white/30 backdrop-blur-[10px] shadow-[1px_1px_10px_4px_rgba(0,0,0,0.04)] p-4 overflow-x-auto">
       {/* Month Navigation */}
       <div className="flex items-center justify-between mb-4 min-w-[400px]">
-        <button className="rounded-full shadow bg-yellow-400  bg-white px-3 py-1.5 text-xs  font-medium text-black/80 shadow-sm">
+        <button className="rounded-full shadow bg--400  bg-white px-3 py-1.5 text-xs  font-medium text-black/80 shadow-sm">
           August
         </button>
         <h2 className="text-base font-semibold text-gray-800">
           {currentMonth} {currentYear}
         </h2>
-        <button className="rounded-full shadow bg-yellow-400  bg-white px-3 py-1.5 text-xs  font-medium text-black/80 shadow-sm">
+        <button className="rounded-full shadow bg--400  bg-white px-3 py-1.5 text-xs  font-medium text-black/80 shadow-sm">
           October
         </button>
       </div>
