@@ -91,7 +91,7 @@ export const TeamControl = () => {
                     className="h-9 w-9 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center
+                  <div className="h-9 w-9 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 shadow-lg flex items-center
                  justify-center text-sm font-semibold text-orange-100">
                     {user?.full_name ? user.full_name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : "U")}
                   </div>
@@ -106,11 +106,11 @@ export const TeamControl = () => {
                 </div>
               </div>
               <div className="flex items-center gap-2 text-gray-600">
-                <button className="rounded-lg p-2 hover:bg-gray-50">
-                  <MessageSquare className="h-4 w-4" />
+                <button className="rounded-lg p-2 bg-blue-500/20 hover:bg-blue-500/30">
+                  <MessageSquare className="h-4 w-4 text-blue-500" />
                 </button>
-                <button className="rounded-lg p-2 hover:bg-gray-50">
-                  <Video className="h-4 w-4" />
+                <button className="rounded-lg p-2 bg-green-500/20 hover:bg-green-500/30">
+                  <Video className="h-4 w-4 text-green-500" />
                 </button>
               </div>
             </div>
@@ -134,13 +134,7 @@ export const TeamControl = () => {
               }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              className="absolute left-4 top-4 z-10 rounded-full p-2 hover:bg-gray-100 transition-colors"
-              onClick={() => setModalOpen(false)}
-            >
-              <X className="h-5 w-5 text-gray-600" />
-            </button>
+
 
             {/* Drawer Content */}
             <div className="h-full overflow-auto">

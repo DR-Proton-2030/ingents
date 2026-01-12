@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Search, Eye, Mail, Users, UserPlus, X } from "lucide-react";
 
 interface TeamMember {
@@ -22,6 +23,7 @@ export const TeamMembersTable = ({ data, onClose }: TeamMembersTableProps) => {
     const [search, setSearch] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const router = useRouter();
 
     // Filter data based on search
     const filteredData = data.filter((member) => {
@@ -42,17 +44,13 @@ export const TeamMembersTable = ({ data, onClose }: TeamMembersTableProps) => {
         <div className="h-full flex flex-col bg-white">
             {/* Header */}
             <div className="flex-shrink-0 border-b border-gray-100">
-                {/* Gradient Bar */}
-                <div className="h-1 bg-gradient-to-r from-purple-400 via-pink-300 to-orange-200" />
 
                 {/* Title Section */}
                 <div className="px-5 pt-5 pb-4">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                            <Users className="h-5 w-5 text-purple-600" />
-                        </div>
+
                         <div>
-                            <h2 className="text-lg font-bold text-gray-900">Team Members</h2>
+                            <h2 className="text-2xl font-bold text-gray-800/90">Team Members</h2>
                             <p className="text-xs text-gray-500">Manage your team</p>
                         </div>
                     </div>
@@ -67,16 +65,12 @@ export const TeamMembersTable = ({ data, onClose }: TeamMembersTableProps) => {
                                 setSearch(e.target.value);
                                 setCurrentPage(1);
                             }}
-                            className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 text-sm text-gray-700 placeholder:text-gray-400 focus:border-purple-300 focus:outline-none focus:ring-2 focus:ring-purple-100"
+                            className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm text-gray-800/80 placeholder:text-gray-400 focus:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-100"
                         />
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 h-6 w-6 -translate-y-1/2 text-gray-400" />
                     </div>
 
-                    {/* Add Button */}
-                    <button className="mt-3 w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:brightness-105">
-                        <UserPlus className="h-4 w-4" />
-                        Add New Member
-                    </button>
+
                 </div>
             </div>
 
@@ -86,7 +80,7 @@ export const TeamMembersTable = ({ data, onClose }: TeamMembersTableProps) => {
                     {paginatedData.map((member, index) => (
                         <div
                             key={member._id || index}
-                            className="rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition-all hover:shadow-md hover:border-purple-100"
+                            className="rounded-[20px] bg-white px-3 py-2 shadow-sm transition-all hover:shadow-md hover:border-orange-100"
                         >
                             <div className="flex items-center gap-3">
                                 {/* Avatar */}
@@ -100,7 +94,7 @@ export const TeamMembersTable = ({ data, onClose }: TeamMembersTableProps) => {
                                             className="h-11 w-11 rounded-full object-cover ring-2 ring-gray-100"
                                         />
                                     ) : (
-                                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-sm font-bold text-white ring-2 ring-gray-100">
+                                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-500 text-sm font-bold text-white ring-2 ring-gray-100">
                                             {member.full_name?.charAt(0).toUpperCase() || "U"}
                                         </div>
                                     )}
@@ -113,7 +107,7 @@ export const TeamMembersTable = ({ data, onClose }: TeamMembersTableProps) => {
 
                                 {/* Info */}
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">{member.full_name}</p>
+                                    <p className="font-semibold text-gray-800/90 truncate">{member.full_name}</p>
                                     <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
                                         <Mail className="h-3 w-3 flex-shrink-0" />
                                         <span className="truncate">{member.email}</span>
@@ -128,9 +122,12 @@ export const TeamMembersTable = ({ data, onClose }: TeamMembersTableProps) => {
                                             : "bg-amber-100 text-amber-700"
                                             }`}
                                     >
-                                        {member.has_joined ? "Verified" : "Pending"}
+                                        {member.has_joined ? "Joined" : "Pending"}
                                     </span>
-                                    <button className="flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100 transition-colors">
+                                    <button
+                                        onClick={() => router.push(`/dashboard/user-details/${member._id}`)}
+                                        className="flex items-center gap-1 
+                                    rounded-xl bg-black/70 px-2.5 py-2 text-xs font-medium text-white hover:bg-black/60 transition-colors">
                                         <Eye className="h-3 w-3" />
                                         View
                                     </button>
