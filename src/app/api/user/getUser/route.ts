@@ -2,29 +2,22 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const access_token = searchParams.get("access_token");
-  const userId = searchParams.get("userId");
-  console.log("==========>", userId);
-  if (!access_token && !userId) {
-    return NextResponse.json(
-      { error: "Missing access_token & userId" },
-      { status: 400 }
-    );
-  }
-
+  // const { searchParams } = new URL(req.url);
   try {
+    // Extract cookies from the incoming request
+    const cookies = req.headers.get("cookie") || "";
+    
     const response = await axios.get(
-      `${BACKEND_URL}/api/v1/facebook/get-pages?userId=${userId}`,
+      `${BACKEND_URL}/api/v1/user/get-user`,
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${access_token}`,
+          "Cookie": cookies, // Forward cookies to backend
         },
+        withCredentials: true, // Important for cookie handling
       }
     );
     console.log("response from fetch profile back", response);

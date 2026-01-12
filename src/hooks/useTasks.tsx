@@ -1,45 +1,45 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
-import { getTasks, createTask, updateTask, deleteTask, unassignTask } from "@/utils/api/task/task.api";
+import {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask,
+  unassignTask,
+  assignTask,
+  updateTaskStatus,
+} from "@/utils/api/task/task.api";
 import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
 import { api } from "@/utils/api";
 
-interface UseTasksReturn {
-  tasks: Task[];
-  sections: TaskSection[];
-  loading: boolean;
-  error: string | null;
-  refetchTasks: () => Promise<void>;
-  handleCreateTask: (payload: object) => Promise<void>;
-  handleUpdateTask: (taskId: string, payload: object) => Promise<void>;
-  handleDeleteTask: (taskId: string) => Promise<void>;
-  handleUnassignTask: (taskId: string, userId: string) => Promise<void>;
-}
-
-export const useTasks = (): UseTasksReturn => {
+export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sections, setSections] = useState<TaskSection[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  
+  const normalizeTask = (task: any): Task => ({
+    ...task,
+    assignees: task.assignees ?? [],
+  });
+
   const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+
       const response = await api.task.getTasks();
+
       if (response?.data) {
-        // console.log("response data", response.data);
-        setTasks(response.data);
-        const grouped = groupTasksByStatus(response.data);
-        // console.log("grouped sections", grouped);
-        setSections(grouped);
+        const normalized = response.data.map(normalizeTask);
+        setTasks(normalized);
+        setSections(groupTasksByStatus(normalized));
       }
     } catch (err: any) {
-      const errorMessage = err.message || "Failed to fetch tasks";
-      setError(errorMessage);
-      toast.error(errorMessage);
+      const msg = err.message || "Failed to fetch tasks";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -49,51 +49,44 @@ export const useTasks = (): UseTasksReturn => {
     fetchTasks();
   }, [fetchTasks]);
 
-  const handleCreateTask = useCallback(async (payload: object) => {
-    try {
-      await createTask(payload);
-      toast.success("Task created successfully");
-      await fetchTasks();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create task");
-      throw err;
-    }
-  }, [fetchTasks]);
 
-  
-  const handleUpdateTask = useCallback(async (taskId: string, payload: object) => {
-    try {
-      await updateTask(taskId, payload);
-      toast.success("Task updated successfully");
-      await fetchTasks();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update task");
-      throw err;
-    }
-  }, [fetchTasks]);
 
-  const handleDeleteTask = useCallback(async (taskId: string) => {
-    try {
-      await deleteTask(taskId);
-      toast.success("Task deleted successfully");
-      await fetchTasks();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete task");
-      throw err;
-    }
-  }, [fetchTasks]);
+  const handleCreateTask = async (payload: object) => {
+    await createTask(payload);
+    toast.success("Task created");
+    fetchTasks();
+  };
 
-    const handleUnassignTask = useCallback(async (taskId: string, userId: string) => {
-    try {
-      await unassignTask(taskId, userId);
-      toast.success("Task unassigned successfully");
-      await fetchTasks();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to unassign task");
-      throw err;
-    }
-  }, [fetchTasks]);
+  const handleUpdateTask = async (taskId: string, payload: object) => {
+    await updateTaskStatus(taskId, payload);
+    toast.success("Task updated");
+    fetchTasks();
+  };
 
+  const handleDeleteTask = async (taskId: string) => {
+    await deleteTask(taskId);
+    toast.success("Task deleted");
+    fetchTasks();
+  };
+
+
+  const handleAssignTask = async (taskId: string, userId: string) => {
+    await assignTask(taskId, userId);
+    toast.success("User assigned");
+    fetchTasks(); 
+  };
+
+  const handleUnassignTask = async (taskId: string, userId: string) => {
+    await unassignTask(taskId, userId);
+    toast.success("User unassigned");
+    fetchTasks(); 
+  };
+
+  const handleEditTask = async (taskId: string, payload: object) => {
+    await updateTask(taskId, payload);
+    toast.success("Task updated");
+    fetchTasks();
+  };
   return {
     tasks,
     sections,
@@ -103,7 +96,9 @@ export const useTasks = (): UseTasksReturn => {
     handleCreateTask,
     handleUpdateTask,
     handleDeleteTask,
+    handleAssignTask,
     handleUnassignTask,
+    handleEditTask
   };
 };
 
@@ -143,10 +138,8 @@ function groupTasksByStatus(tasks: Task[]): TaskSection[] {
       tasks: [],
     },
   ];
-
   // Filter only parent tasks (those without parent_task_object_id)
-  const parentTasks = tasks.filter(task => !task.parent_task_object_id);
-
+  const parentTasks = tasks.filter((task) => !task.parent_task_object_id);
   parentTasks.forEach((task) => {
     const section = sections.find((s) => s.status === task.status);
     if (section) {
@@ -154,7 +147,6 @@ function groupTasksByStatus(tasks: Task[]): TaskSection[] {
       section.count++;
     }
   });
-
   // Filter out empty sections
   return sections.filter((section) => section.count > 0);
-}
+} 

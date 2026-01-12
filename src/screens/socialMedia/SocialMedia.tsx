@@ -9,7 +9,7 @@ import AccountSelection from "./components/AccountSelection";
 import AiSidebar from "@/components/shared/aiSidebar/AiSidebar";
 import { getCompanyDetails, storeDefaultCompanyDetails } from "@/lib/storage";
 import Layout from "../layout/Layout";
-import FacebookPostForm from "@/Testing/FacebookPostForm";
+
 
 // Data for the page (kept local for now)
 
@@ -78,7 +78,6 @@ export default function SocialMediaDashboard() {
             selectedCompany={selectedCompany}
             setSelectedCompany={setSelectedCompany}
           />
-          <FacebookPostForm />
           <AccountSelection />
           <main className="mt-8 space-y-6 pr-2">
             <FollowersChart />

@@ -6,6 +6,7 @@ import type {
   CreateTaskModalProps,
   TaskFormData,
 } from "@/types/interface/task-modal.interface";
+import UserMultiSelectDropdown, { UserOption } from "@/components/shared/userMultiSelectDropdown/UserMultiSelectDropdown";
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
@@ -21,9 +22,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+
   const [userQuery, setUserQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
@@ -46,19 +48,15 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     setFormData((p) => ({ ...p, [name]: value }));
   };
 
-  const searchUsers = async (query: string) => {
-    try {
-      setIsSearching(true);
-      const res = await fetch(
-        `/api/users/search?query=${encodeURIComponent(query)}`,
-        { credentials: "include" }
-      );
-      const data = await res.json();
-      setSearchResults(data.data || []);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+ const searchUsers = async (query: string): Promise<UserOption[]> => {
+  const res = await fetch(
+    `/api/users/search?query=${encodeURIComponent(query)}`,
+    { credentials: "include" }
+  );
+  const data = await res.json();
+  return data.data || [];
+};
+
 
   const handleUserSelect = (user: any) => {
     if (selectedUsers.some((u) => u._id === user._id)) return;
@@ -167,53 +165,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           </div>
 
           {/* assign */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Assign To</label>
+       <UserMultiSelectDropdown
+  value={selectedUsers}
+  onChange={(users) => {
+    setSelectedUsers(users);
+    setFormData((p) => ({
+      ...p,
+      assigned_user_list: users.map((u) => u._id),
+    }));
+  }}
+  searchApi={searchUsers}
+/>
 
-            <input
-              value={userQuery}
-              onChange={(e) => setUserQuery(e.target.value)}
-              placeholder="Search user..."
-              className="w-full px-4 py-2 neu-inset focus:outline-none transition"
-            />
-
-            {/* selected users */}
-            {selectedUsers.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {selectedUsers.map((u) => (
-                  <div
-                    key={u._id}
-                    className="neu px-4 py-1 flex items-center gap-2 text-sm"
-                  >
-                    {u.full_name}
-                    <button
-                      type="button"
-                      onClick={() => removeUser(u._id)}
-                      className="text-gray-500 hover:text-red-500"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {searchResults.length > 0 && (
-              <div className="mt-3 border rounded-lg overflow-hidden">
-                {searchResults.map((u) => (
-                  <button
-                    key={u._id}
-                    type="button"
-                    onClick={() => handleUserSelect(u)}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-50 transition"
-                  >
-                    <p className="text-sm font-medium">{u.full_name}</p>
-                    <p className="text-xs text-gray-500">{u.email}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* actions */}
           <div className="flex justify-end gap-3 pt-4">

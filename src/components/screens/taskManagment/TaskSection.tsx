@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { TaskSection as TaskSectionType, TaskStatus } from "@/types/interface/task.interface";
+import { Task, TaskSection as TaskSectionType, TaskStatus } from "@/types/interface/task.interface";
 import TaskCard from "@/components/shared/taskCard/TaskCard";
 import { ChevronDown, ChevronRight, MoreHorizontal, Plus } from "lucide-react";
 
@@ -14,7 +14,14 @@ interface TaskSectionProps {
   handleStatusChange: (taskId: string, newStatus: TaskStatus) => void;
   handleDeleteTask: (taskId: string) => void;
   handleUnAssignTask: (taskId: string, userId: string) => void;
+  handleAssignTask: (taskId: string, userId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
+  searchUsers: (query: string) => Promise<any[]>;
+ handleEditTask: (
+  taskId: string,
+  payload: Partial<Task>
+) => Promise<void>;
+
 }
 
 const statusColors: Record<string, { bg: string; dot: string; text: string }> = {
@@ -33,6 +40,9 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   handleDeleteTask,
   handleAddSubtask,
   handleUnAssignTask,
+  handleAssignTask,
+  handleEditTask,
+  searchUsers,
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -134,8 +144,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                     isExpanded={expandedTasks.has(task._id)}
                     handleDeleteTask={handleDeleteTask}
                     handleAddSubtask={() => handleAddSubtask(task._id)}
-                    handleUnAssignTask={handleUnAssignTask}
-                  />
+                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers}     handleEditTask={handleEditTask}           />
                   {/* Render subtasks if any */}
                   {subTasksMap[task._id]?.map((subtask) => (
                     <TaskCard
@@ -148,6 +157,9 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                       handleDeleteTask={handleDeleteTask}
                       handleAddSubtask={() => handleAddSubtask(subtask._id)}
                       handleUnAssignTask={handleUnAssignTask}
+                      handleAssignTask={handleUnAssignTask}
+                      searchUsers={searchUsers}
+                      handleEditTask={handleEditTask}
                     />
                   ))}
                 </React.Fragment>
