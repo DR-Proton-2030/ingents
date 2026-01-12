@@ -23,10 +23,10 @@ const socials = [
     description: "Reach billions of users with targeted content",
   },
   {
-    id: "twitter",
+    id: "X",
     src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/X_logo.jpg/250px-X_logo.jpg",
     href: "https://x.com",
-    alt: "Twitter / X",
+    alt: "X",
     description: "Share real-time updates and trending content",
   },
   {
@@ -267,7 +267,7 @@ export default function AccountSelection() {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
         {socials.map((social, index) => (
           <IntegrationCard
             key={social.id}

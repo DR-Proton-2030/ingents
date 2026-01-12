@@ -74,23 +74,12 @@ export default function SocialMediaDashboard() {
     <Layout>
       <div className="mx-auto px-5 max-w-7xl font-sans gap-5 flex flex-col lg:flex-row  grid grid-cols-1  lg:grid-cols-12">
         <div className="flex-grow  lg:col-span-8 h-[87vh] overflow-y-auto pb-10 hidescroll">
-          <Header
+          {/* <Header
             selectedCompany={selectedCompany}
             setSelectedCompany={setSelectedCompany}
-          />
+          /> */}
           <AccountSelection />
-          <main className="mt-8 space-y-6 pr-2">
-            <FollowersChart />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {stats.map((stat) => (
-                <StatCard key={stat.title} {...stat} />
-              ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TotalMessagesCard />
-              <FollowersOverviewCard />
-            </div>
-          </main>
+
         </div>
         <div className="w-full   flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
           <AiSidebar aiUrl="social" context={companyDetails} />
