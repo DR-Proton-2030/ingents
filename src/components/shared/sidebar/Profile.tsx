@@ -22,7 +22,8 @@ export default function Profile() {
               className="rounded-full object-cover h-10 w-10 border-2 border-white/50"
             />
           ) : (
-            <div className="h-10 w-10 rounded-full border-2 border-white/50 bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white font-semibold">
+            <div className="h-10 w-10 rounded-full border-2 border-white/50 
+            bg-gradient-to-br from-black/60 -400 to-black/80 -500 flex items-center justify-center text-white font-semibold">
               {avatarInitial}
             </div>
           )}
@@ -31,7 +32,7 @@ export default function Profile() {
         <span className="font-semibold text-gray-800">{user?.full_name}</span>
       </div>
 
-      <div className="p-2 rounded-full bg-gradient-to-r from-blue-500/10 to-purple-500/10 hover:from-blue-500/20 hover:to-purple-500/20 transition-all">
+      <div className="p-2 rounded-full bg-gradient-to-r from-gray-500/10 to-gray-500/10 hover:from-blue-500/20 hover:to-purple-500/20 transition-all">
         <Settings className="w-4 h-4 text-gray-600 hover:text-purple-600 transition-colors" />
       </div>
     </Link>

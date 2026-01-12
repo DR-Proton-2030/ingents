@@ -21,11 +21,11 @@ export const DashboardHeader = () => {
     <>
     <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <div>
-        <p className="text-sm text-gray-500">
+        {/* <p className="text-sm text-gray-500">
           Manage and track your beloved project
-        </p>
+        </p> */}
         <div className="mt-1 flex items-center gap-3">
-          <div className="text-5xl  font-semibold  text-gray-900 flex items-center gap-3">
+          <div className="text-4xl w-[70%] font-semibold  text-gray-900 flex items-center gap-3">
             <img src={user?.company_details?.logo || "/default-logo.png"} alt=""  className="h-8"/>
             {user?.company_details?.company_name || "Ingents"}
           </div>
@@ -42,7 +42,7 @@ export const DashboardHeader = () => {
           </span>
         </div>
         <div className="flex -space-x-2">
-          {[1, 2, 3, 4, 5].map((i) => (
+          {[1, 2, 3].map((i) => (
             <Image
               key={i}
               src={`https://i.pravatar.cc/64?img=${i}`}
@@ -56,8 +56,9 @@ export const DashboardHeader = () => {
             8+
           </span>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50" onClick={handleInviteClick}>
-          <Plus className="h-4 w-4" /> Invite Member
+        <button className="inline-flex items-center gap-2 rounded-full border 
+        border-gray-200 bg-black/80 px-3 py-2 text-sm font-medium text-gray-100 shadow-lg hover:bg-gray-50" onClick={handleInviteClick}>
+          <Plus className="h-4 w-4" /> Invite
         </button>
       
       </div>
