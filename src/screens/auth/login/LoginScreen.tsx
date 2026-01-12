@@ -149,7 +149,7 @@ useEffect(() => {
         exit={{ opacity: 0, y: 40 }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
       >
-        <AuthHeader onPress={() => {}} btn={false} />
+        <AuthHeader onPress={() => {}} btn={false} login={true} />
       </motion.div>
       <motion.div
         key="body"
