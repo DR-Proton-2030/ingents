@@ -42,7 +42,7 @@ export const TeamControl = () => {
 
   return (
     <>
-      <div className="rounded-2xl border border-gray-200 bg-white p-4">
+      <div className="rounded-[18px] bg-white/30 backdrop-blur-[10px] shadow-[1px_1px_10px_4px_rgba(0,0,0,0.04)] p-4 overflow-x-auto">
         <div className="mb-3 flex items-center justify-between relative">
           <h3 className="text-base font-semibold text-gray-900">Team Control</h3>
           <div className="relative">

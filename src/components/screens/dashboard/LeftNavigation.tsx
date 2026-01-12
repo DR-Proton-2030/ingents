@@ -18,17 +18,15 @@ export const LeftNavigation = () => {
           ].map((item, idx) => (
             <button
               key={idx}
-              className={`flex w-full items-center justify-between rounded-full px-3 py-3 text-sm ${
-                item.active
+              className={`flex w-full items-center justify-between rounded-full px-3 py-3 text-sm ${item.active
                   ? "bg-purple-400 text-white"
                   : "text-gray-700 hover:bg-gray-100"
-              }`}
+                }`}
             >
               <span>{item.label}</span>
               <ChevronDown
-                className={`h-4 w-4 ${
-                  item.active ? "text-white" : "text-gray-400"
-                }`}
+                className={`h-4 w-4 ${item.active ? "text-white" : "text-gray-400"
+                  }`}
               />
             </button>
           ))}
