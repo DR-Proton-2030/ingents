@@ -95,9 +95,9 @@ export const UpcomingEvent = () => {
                     >
                       {event && (
                         <div
-                          className={`rounded-xl p-2 h-full flex ${event.dark
-                            ? "bg-gray-800 text-white"
-                            : "bg-white border border-gray-100 shadow-sm"
+                          className={`rounded-lg p-2 h-full flex ${event.dark
+                            ? "bg-gray-800 text-white shadow-lg shadow-black/30"
+                            : "bg-white border border-gray-100 shadow-lg"
                             }`}
                         >
                           <div className="pt-1">

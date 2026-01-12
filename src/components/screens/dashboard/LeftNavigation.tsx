@@ -56,7 +56,7 @@ export const LeftNavigation = () => {
   return (
     <aside className="space-y-4">
       {/* Container Card */}
-      <div className="rounded-[22px] bg-white shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-gray-100/50 p-4">
+      <div className="rounded-[18px] bg-white/30 backdrop-blur-[10px] shadow-[1px_1px_10px_4px_rgba(0,0,0,0.04)] p-4 overflow-x-auto">
 
         {/* Header */}
         <div className="flex items-center justify-between mb-6 px-1">
@@ -70,7 +70,7 @@ export const LeftNavigation = () => {
         </div>
 
         {/* Progress Card (Compact) */}
-        <div className="mb-8 rounded-[24px] bg-gradient-to-br from-orange-300 to-orange-600 p-5 text-white shadow-[0_10px_20px_rgba(249,115,22,0.2)] relative overflow-hidden group">
+        <div className="mb-8 rounded-[24px] bg-gradient-to-br from-orange-400 to-orange-500 p-5 text-white shadow-[0_10px_20px_rgba(249,115,22,0.2)] relative overflow-hidden group">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
           <div className="relative z-10 flex items-center justify-between">
             <div>

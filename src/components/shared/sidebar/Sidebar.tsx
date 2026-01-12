@@ -25,12 +25,12 @@ export default function Sidebar() {
       label: "Dashboard",
       icon: Home,
     },
- 
-    {
-      href: `/${site}/seo-management`,
-      label: "Seomi Seo",
-      icon: GraphUp,
-    },
+
+    // {
+    //   href: `/${site}/seo-management`,
+    //   label: "Seomi Seo",
+    //   icon: GraphUp,
+    // },
     // {
     //   href: `/${site}/finance-ai`,
     //   label: "Finance AI",
