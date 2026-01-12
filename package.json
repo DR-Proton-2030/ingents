@@ -44,6 +44,7 @@
     "react-toastify": "^11.0.5",
     "recharts": "^3.2.0",
     "socket.io-client": "^4.8.1",
+    "solar-icon-set": "^2.0.1",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {

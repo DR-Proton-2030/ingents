@@ -5,7 +5,17 @@ import Header from "./Header";
 import NavList from "./NavList";
 import Profile from "./Profile";
 import { useSite } from "@/contexts/SiteContext";
-import { assets } from "@/assets";
+import {
+  CardBold,
+  ChecklistBold,
+  GraphBold,
+  HelpBold,
+  HomeBold,
+  LetterBold,
+  PresentationGraphBold,
+  ShareBold,
+  WalletBold,
+} from "solar-icon-set";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -15,50 +25,45 @@ export default function Sidebar() {
     {
       href: `/${site}`,
       label: "Dashboard",
-      imageUrl: assets.icons.dashboard,
-      icon: undefined,
+      icon: HomeBold,
     },
-    {
-      href: `/${site}/all-users`,
-      label: "Users",
-      imageUrl: assets.icons.dashboard,
-      icon: undefined,
-    },
+ 
     {
       href: `/${site}/seo-management`,
       label: "Seomi Seo",
-      imageUrl: assets.icons.graph,
+      icon: PresentationGraphBold,
     },
     {
       href: `/${site}/finance-ai`,
       label: "Finance AI",
-      imageUrl: assets.icons.finance,
+      icon: WalletBold,
     },
     {
       href: `/${site}/tasks`,
       label: "Task Management",
-      imageUrl: assets.icons.socialMedia,
+      icon: ChecklistBold,
     },
     {
       href: `/${site}/social-media`,
       label: "Social Media",
-      imageUrl: assets.icons.socialMedia,
+      icon: ShareBold,
     },
     {
       href: `/${site}/email-marketing`,
       label: "Email Marketing",
-      imageUrl: assets.icons.email,
+      icon: LetterBold,
     },
   ];
 
   const bottomItems = [
-    { href: `/${site}/analytics`, label: "Analytics" },
-    { href: `/${site}/support`, label: "Support" },
-    { href: `/${site}/subscription`, label: "Subscription" },
+    { href: `/${site}/settings`, label: "Settings", icon: CardBold },
+    // { href: `/${site}/analytics`, label: "Analytics", icon: GraphBold },
+    // { href: `/${site}/support`, label: "Support", icon: HelpBold },
+    // { href: `/${site}/subscription`, label: "Subscription", icon: CardBold },
   ];
 
   return (
-    <aside className="w-56 2xl:w-68 min-h-screen overflow-y-auto flex-shrink-0 relative">
+    <aside className="w-66 2xl:w-72 min-h-screen overflow-y-auto flex-shrink-0 relative">
       <div className="relative z-10">
         <Header />
 
@@ -69,8 +74,7 @@ export default function Sidebar() {
           <NavList items={todayItems} pathname={pathname} />
         </div>
 
-        <div className="mt-5 2xl:mt-16 px-4 pb-6">
-          <NavList items={bottomItems} pathname={pathname} itemHeight={44} />
+        <div className="absolute w-full mt-10 2xl:mt-24 px-4 pb-6">
           <Profile />
         </div>
       </div>
