@@ -182,3 +182,39 @@ export const getCurrentWeekDates = (): { fromDate: string; toDate: string } => {
   };
 };
 
+export interface CreateMeetingPayload {
+  title: string;
+  description: string;
+  scheduled_start_time: string;
+  scheduled_end_time: string;
+  duration_minutes: number;
+  timezone: string;
+  meeting_type: string;
+  is_recurring: boolean;
+  reminder_minutes_before: number;
+  notes: string;
+  participants: {
+    user_object_id?: string;
+    is_optional?: boolean;
+    external_email?: string;
+    external_name?: string;
+  }[];
+}
+
+export const createMeeting = async (
+  payload: CreateMeetingPayload
+): Promise<any> => {
+  try {
+    const response = await API.post(`/${initialRoute}/create`, payload);
+
+    console.log("✅ Meeting creation successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Meeting creation failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Meeting creation failed");
+  }
+};
+
