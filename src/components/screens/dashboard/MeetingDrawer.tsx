@@ -305,8 +305,7 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                                 </h4>
                                 <div className="flex items-center gap-2">
                                     <a
-                                        href={meeting.meeting_link}
-                                        target="_blank"
+                                        href={`http://localhost:3000/meeting/${meeting.meeting_code}`}
                                         rel="noopener noreferrer"
                                         className="flex-1 bg-gradient-to-r from-black/70 to-black/80 text-white text-sm font-medium py-2.5 px-4
                                          rounded-lg hover:from-black/80 hover:to-black/90 transition-all shadow-md hover:shadow-lg text-center"
