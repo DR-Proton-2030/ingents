@@ -5,6 +5,7 @@ import {
   Meeting,
   Participant,
 } from "@/utils/api/meeting/meeting.api";
+import MeetingDrawer from "./MeetingDrawer";
 
 // Avatar colors for participants
 const avatarColors = [
@@ -88,6 +89,19 @@ export const UpcomingEvent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = prev week, 1 = next week
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // Handle meeting click
+  const handleMeetingClick = (meetingId: string) => {
+    setSelectedMeetingId(meetingId);
+    setIsDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+    setSelectedMeetingId(null);
+  };
 
   // Get week dates based on offset
   const weekInfo = useMemo(() => {
@@ -323,6 +337,7 @@ export const UpcomingEvent = () => {
                     >
                       {event && (
                         <div
+                          onClick={() => handleMeetingClick(event._id)}
                           className={`rounded-lg p-2 h-full flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.02] ${isDark
                             ? "bg-gray-800 text-white shadow-lg shadow-black/30"
                             : "bg-white border border-gray-100 shadow-lg"
@@ -401,6 +416,13 @@ export const UpcomingEvent = () => {
           No meetings scheduled for this week
         </div>
       )}
+
+      {/* Meeting Details Drawer */}
+      <MeetingDrawer
+        meetingId={selectedMeetingId}
+        isOpen={isDrawerOpen}
+        onClose={handleDrawerClose}
+      />
     </div>
   );
 };

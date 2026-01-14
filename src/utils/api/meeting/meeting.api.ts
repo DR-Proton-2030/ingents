@@ -76,6 +76,66 @@ export const getMeetings = async (
   }
 };
 
+// Meeting Details Response Interface
+export interface MeetingDetails {
+  _id: string;
+  title: string;
+  description: string;
+  scheduled_start_time: string;
+  scheduled_end_time: string;
+  duration_minutes: number;
+  timezone: string;
+  host_user_object_id: string;
+  meeting_link: string;
+  meeting_code: string;
+  meeting_type: string;
+  is_recurring: boolean;
+  recurrence_rule: string | null;
+  parent_meeting_id: string | null;
+  occurrence_index: number | null;
+  status: string;
+  reminder_minutes_before: number;
+  is_reminder_sent: boolean;
+  company_object_id: string;
+  created_by_user_object_id: string;
+  notes: string;
+  attachments: string[];
+  createdAt: string;
+  updatedAt: string;
+  parent_meeting: any | null;
+  host_details: {
+    _id: string;
+    full_name: string;
+    email: string;
+  };
+}
+
+export interface MeetingDetailsResponse {
+  message: string;
+  data: {
+    meeting: MeetingDetails;
+    participants: Participant[];
+    instances: any[];
+  };
+}
+
+export const getMeetingById = async (
+  meetingId: string
+): Promise<MeetingDetailsResponse> => {
+  try {
+    const response = await API.get(`/${initialRoute}/${meetingId}`);
+
+    console.log("✅ Meeting details fetch successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Meeting details fetch failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Meeting details fetch failed");
+  }
+};
+
 // Helper function to get the start and end of the current week
 export const getCurrentWeekDates = (): { fromDate: string; toDate: string } => {
   const now = new Date();
@@ -105,3 +165,4 @@ export const getCurrentWeekDates = (): { fromDate: string; toDate: string } => {
     toDate: formatDate(endOfWeek),
   };
 };
+
