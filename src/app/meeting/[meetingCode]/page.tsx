@@ -16,6 +16,8 @@ export interface PeerStream {
     stream: MediaStream;
     isVideoOff?: boolean;
     isMuted?: boolean;
+    reaction?: string | null;
+    isHandRaised?: boolean;
 }
 
 export interface ChatMessage {
@@ -44,12 +46,16 @@ export default function MeetingPage() {
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
 
+    // Feature State
+    const [isHandRaised, setIsHandRaised] = useState(false);
+    const [localReaction, setLocalReaction] = useState<string | null>(null);
+
     // Chat State
     const [showChat, setShowChat] = useState(false);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [hasUnreadMsg, setHasUnreadMsg] = useState(false);
 
-    // Refs for stable state access in callbacks
+    // Refs
     const peerRef = useRef<any>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const callsRef = useRef<any[]>([]);
@@ -57,7 +63,14 @@ export default function MeetingPage() {
     const connectedPeersRef = useRef<Set<string>>(new Set());
     const isMutedRef = useRef(false);
     const isVideoOffRef = useRef(false);
+    const isHandRaisedRef = useRef(false);
     const peerIdRef = useRef("");
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Initialize audio for notifications
+    useEffect(() => {
+        audioRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3");
+    }, []);
 
     // Initialize media on mount
     useEffect(() => {
@@ -106,7 +119,7 @@ export default function MeetingPage() {
     function handleRemoteStream(peerId: string, stream: MediaStream) {
         setRemoteStreams((prev) => {
             if (prev.find((p) => p.peerId === peerId)) return prev;
-            return [...prev, { peerId, stream, isVideoOff: false, isMuted: false }];
+            return [...prev, { peerId, stream, isVideoOff: false, isMuted: false, isHandRaised: false, reaction: null }];
         });
     }
 
@@ -123,7 +136,12 @@ export default function MeetingPage() {
         conn.on("open", () => {
             conn.send({
                 type: "media-state",
-                payload: { peerId: peerIdRef.current, isMuted: isMutedRef.current, isVideoOff: isVideoOffRef.current }
+                payload: {
+                    peerId: peerIdRef.current,
+                    isMuted: isMutedRef.current,
+                    isVideoOff: isVideoOffRef.current,
+                    isHandRaised: isHandRaisedRef.current
+                }
             });
         });
 
@@ -139,9 +157,39 @@ export default function MeetingPage() {
             if (data.type === "media-state") {
                 setRemoteStreams(prev => prev.map(p =>
                     p.peerId === data.payload.peerId
-                        ? { ...p, isMuted: data.payload.isMuted, isVideoOff: data.payload.isVideoOff }
+                        ? {
+                            ...p,
+                            isMuted: data.payload.isMuted,
+                            isVideoOff: data.payload.isVideoOff,
+                            isHandRaised: data.payload.isHandRaised
+                        }
                         : p
                 ));
+            }
+            if (data.type === "hand-raise") {
+                if (data.payload.isHandRaised && audioRef.current) {
+                    audioRef.current.play().catch(e => console.log("Audio play failed", e));
+                }
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === data.payload.peerId
+                        ? { ...p, isHandRaised: data.payload.isHandRaised }
+                        : p
+                ));
+            }
+            if (data.type === "reaction") {
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === data.payload.peerId
+                        ? { ...p, reaction: data.payload.reaction }
+                        : p
+                ));
+                // Remove reaction after 2s
+                setTimeout(() => {
+                    setRemoteStreams(prev => prev.map(p =>
+                        p.peerId === data.payload.peerId
+                            ? { ...p, reaction: null }
+                            : p
+                    ));
+                }, 2000);
             }
         });
         conn.on("close", () => removePeer(conn.peer));
@@ -201,7 +249,12 @@ export default function MeetingPage() {
             isMutedRef.current = newState;
             broadcastData({
                 type: "media-state",
-                payload: { peerId: peerIdRef.current, isMuted: newState, isVideoOff: isVideoOffRef.current }
+                payload: {
+                    peerId: peerIdRef.current,
+                    isMuted: newState,
+                    isVideoOff: isVideoOffRef.current,
+                    isHandRaised: isHandRaisedRef.current
+                }
             });
         }
     }, [isMuted]);
@@ -216,10 +269,34 @@ export default function MeetingPage() {
             isVideoOffRef.current = newState;
             broadcastData({
                 type: "media-state",
-                payload: { peerId: peerIdRef.current, isMuted: isMutedRef.current, isVideoOff: newState }
+                payload: {
+                    peerId: peerIdRef.current,
+                    isMuted: isMutedRef.current,
+                    isVideoOff: newState,
+                    isHandRaised: isHandRaisedRef.current
+                }
             });
         }
     }, [isVideoOff]);
+
+    const toggleHandRaise = useCallback(() => {
+        const newState = !isHandRaised;
+        setIsHandRaised(newState);
+        isHandRaisedRef.current = newState;
+        broadcastData({
+            type: "hand-raise",
+            payload: { peerId: peerIdRef.current, isHandRaised: newState }
+        });
+    }, [isHandRaised]);
+
+    const sendReaction = useCallback((emoji: string) => {
+        setLocalReaction(emoji);
+        broadcastData({
+            type: "reaction",
+            payload: { peerId: peerIdRef.current, reaction: emoji }
+        });
+        setTimeout(() => setLocalReaction(null), 2000);
+    }, []);
 
     const initGuestMode = useCallback(() => {
         if (!window.Peer) return;
@@ -381,12 +458,16 @@ export default function MeetingPage() {
                         isMuted={isMuted}
                         isVideoOff={isVideoOff}
                         isScreenSharing={isScreenSharing}
+                        isHandRaised={isHandRaised}
+                        localReaction={localReaction}
                         showChat={showChat}
                         chatMessages={chatMessages}
                         hasUnreadMsg={hasUnreadMsg}
                         onToggleMute={toggleMute}
                         onToggleVideo={toggleVideo}
                         onToggleScreenShare={toggleScreenShare}
+                        onToggleHandRaise={toggleHandRaise}
+                        onSendReaction={sendReaction}
                         onToggleChat={() => {
                             setShowChat(!showChat);
                             if (!showChat) setHasUnreadMsg(false);

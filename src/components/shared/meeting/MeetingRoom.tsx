@@ -22,13 +22,17 @@ import {
     Sparkles,
     Pin,
     PinOff,
+    HandFist,
 } from "lucide-react";
+import { UserHandUp } from "@solar-icons/react/ssr";
 
 interface PeerStream {
     peerId: string;
     stream: MediaStream;
     isVideoOff?: boolean;
     isMuted?: boolean;
+    reaction?: string | null;
+    isHandRaised?: boolean;
 }
 
 interface ChatMessage {
@@ -48,6 +52,8 @@ interface MeetingRoomProps {
     isMuted: boolean;
     isVideoOff: boolean;
     isScreenSharing: boolean;
+    isHandRaised: boolean;
+    localReaction: string | null;
     showChat: boolean;
     chatMessages: ChatMessage[];
     hasUnreadMsg: boolean;
@@ -56,6 +62,8 @@ interface MeetingRoomProps {
     onToggleScreenShare: () => void;
     onToggleChat: () => void;
     onSendMessage: (text: string) => void;
+    onSendReaction: (emoji: string) => void;
+    onToggleHandRaise: () => void;
     onLeave: () => void;
 }
 
@@ -67,6 +75,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     isMuted,
     isVideoOff,
     isScreenSharing,
+    isHandRaised,
+    localReaction,
     showChat,
     chatMessages,
     hasUnreadMsg,
@@ -75,11 +85,14 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     onToggleScreenShare,
     onToggleChat,
     onSendMessage,
+    onSendReaction,
+    onToggleHandRaise,
     onLeave,
 }) => {
     const [chatInput, setChatInput] = useState("");
     const [showPeople, setShowPeople] = useState(false);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
+    const [showReactionPicker, setShowReactionPicker] = useState(false);
     const [layout, setLayout] = useState<LayoutType>("sidebar");
     const [pinnedPeerId, setPinnedPeerId] = useState<string | null>(null);
     const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -139,7 +152,9 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             name: "You",
             fullName: "You",
             isVideoOff: isVideoOff,
-            isMuted: isMuted
+            isMuted: isMuted,
+            reaction: localReaction,
+            isHandRaised: isHandRaised
         },
         ...remoteStreams.map((p) => ({
             id: p.peerId,
@@ -149,6 +164,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             fullName: `Participant ${p.peerId.substring(0, 4)}`,
             isVideoOff: p.isVideoOff || false,
             isMuted: p.isMuted || false,
+            reaction: p.reaction || null,
+            isHandRaised: p.isHandRaised || false,
         })),
     ];
 
@@ -196,6 +213,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                         avatarColor={avatarColors[0]}
                         isPinned={pinnedPeerId === allParticipants[0].id}
                         onTogglePin={() => togglePin(allParticipants[0].id)}
+                        reaction={allParticipants[0].reaction}
+                        isHandRaised={allParticipants[0].isHandRaised}
                     />
                 </div>
             );
@@ -227,6 +246,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                                     avatarColor={avatarColors[i % avatarColors.length]}
                                     isPinned={pinnedPeerId === p.id}
                                     onTogglePin={() => togglePin(p.id)}
+                                    reaction={p.reaction}
+                                    isHandRaised={p.isHandRaised}
                                 />
                             </div>
                         ))}
@@ -247,6 +268,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                             avatarColor={avatarColors[0]}
                             isPinned={pinnedPeerId === mainSpeaker.id}
                             onTogglePin={() => togglePin(mainSpeaker.id)}
+                            reaction={mainSpeaker.reaction}
+                            isHandRaised={mainSpeaker.isHandRaised}
                         />
                     </div>
                 );
@@ -268,6 +291,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                                 avatarColor={avatarColors[0]}
                                 isPinned={pinnedPeerId === mainSpeaker.id}
                                 onTogglePin={() => togglePin(mainSpeaker.id)}
+                                reaction={mainSpeaker.reaction}
+                                isHandRaised={mainSpeaker.isHandRaised}
                             />
                         </div>
                         {layoutParticipants.length > 1 && (
@@ -284,6 +309,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                                             avatarColor={avatarColors[(i + 1) % avatarColors.length]}
                                             isPinned={pinnedPeerId === p.id}
                                             onTogglePin={() => togglePin(p.id)}
+                                            reaction={p.reaction}
+                                            isHandRaised={p.isHandRaised}
                                         />
                                     </div>
                                 ))}
@@ -580,9 +607,30 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                         <MonitorUp className="w-5 h-5" />
                     </button>
 
-                    <button className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-700">
-                        <Smile className="w-5 h-5" />
-                    </button>
+                    <div className="relative">
+                        {showReactionPicker && (
+                            <div className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 bg-[#202124] rounded-full p-1.5 flex items-center gap-1 shadow-2xl border border-white/10 z-[100]">
+                                {["💖", "👍", "🎉", "👏", "😂", "😮", "😢", "🤔", "👎"].map((emoji) => (
+                                    <button
+                                        key={emoji}
+                                        onClick={() => {
+                                            onSendReaction(emoji);
+                                            setShowReactionPicker(false);
+                                        }}
+                                        className="w-9 h-9 flex items-center justify-center text-xl hover:bg-white/10 rounded-full transition-colors"
+                                    >
+                                        {emoji}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        <button
+                            onClick={() => setShowReactionPicker(!showReactionPicker)}
+                            className={`p-3 rounded-full transition-all ${showReactionPicker ? "bg-blue-100 text-blue-600" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}
+                        >
+                            <Smile className="w-5 h-5" />
+                        </button>
+                    </div>
 
                     <button
                         onClick={() => setShowLayoutModal(true)}
@@ -591,7 +639,10 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                         <LayoutGrid className="w-5 h-5" />
                     </button>
 
-                    <button className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-700">
+                    <button
+                        onClick={onToggleHandRaise}
+                        className={`p-3 rounded-full transition-all ${isHandRaised ? "bg-yellow-400 text-white shadow-lg" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}
+                    >
                         <Hand className="w-5 h-5" />
                     </button>
 
@@ -653,7 +704,9 @@ const VideoTile: React.FC<{
     avatarColor: string;
     isPinned: boolean;
     onTogglePin: () => void;
-}> = ({ id, stream, name, isLocal, isVideoOff, isMuted, isScreenSharing, avatarColor, isPinned, onTogglePin }) => {
+    reaction?: string | null;
+    isHandRaised?: boolean;
+}> = ({ id, stream, name, isLocal, isVideoOff, isMuted, isScreenSharing, avatarColor, isPinned, onTogglePin, reaction, isHandRaised }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isHovered, setIsHovered] = useState(false);
 
@@ -679,8 +732,23 @@ const VideoTile: React.FC<{
 
             {isVideoOff && (
                 <div className="absolute inset-0 flex items-center justify-center bg-[#3c4043]">
-                    <div className={`w-20 h-20 rounded-full ${avatarColor} flex items-center justify-center ring-4 ring-white/20`}>
-                        <span className="text-3xl text-white font-medium">{name.charAt(0).toUpperCase()}</span>
+                    {reaction ? (
+                        <div className="text-6xl animate-bounce">
+                            {reaction}
+                        </div>
+                    ) : (
+                        <div className={`w-20 h-20 rounded-full ${avatarColor} flex items-center justify-center ring-4 ring-white/20`}>
+                            <span className="text-3xl text-white font-medium">{name.charAt(0).toUpperCase()}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Reaction Overlay when Video is ON */}
+            {!isVideoOff && reaction && (
+                <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
+                    <div className="text-7xl animate-bounce drop-shadow-2xl">
+                        {reaction}
                     </div>
                 </div>
             )}
@@ -688,6 +756,12 @@ const VideoTile: React.FC<{
             {isMuted && (
                 <div className="absolute top-2 right-2 p-1 bg-red-500 rounded-full z-10">
                     <MicOff className="w-3 h-3 text-white" />
+                </div>
+            )}
+
+            {isHandRaised && (
+                <div className="absolute top-2 right-2 p-1.5 bg-yellow-400 rounded-full z-10 shadow-lg border-2 border-white animate-pulse">
+                    <UserHandUp className="w-4 h-4 text-white" fill="white" />
                 </div>
             )}
 
