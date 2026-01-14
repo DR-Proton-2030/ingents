@@ -27,6 +27,8 @@ import {
 interface PeerStream {
     peerId: string;
     stream: MediaStream;
+    isVideoOff?: boolean;
+    isMuted?: boolean;
 }
 
 interface ChatMessage {
@@ -130,13 +132,23 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     };
 
     const allParticipants = [
-        { id: "local", stream: localStream, isLocal: true, name: "You", fullName: "You" },
+        {
+            id: "local",
+            stream: localStream,
+            isLocal: true,
+            name: "You",
+            fullName: "You",
+            isVideoOff: isVideoOff,
+            isMuted: isMuted
+        },
         ...remoteStreams.map((p) => ({
             id: p.peerId,
             stream: p.stream,
             isLocal: false,
             name: p.peerId.substring(0, 8),
             fullName: `Participant ${p.peerId.substring(0, 4)}`,
+            isVideoOff: p.isVideoOff || false,
+            isMuted: p.isMuted || false,
         })),
     ];
 
@@ -178,8 +190,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                         stream={allParticipants[0].stream}
                         name={allParticipants[0].name}
                         isLocal={allParticipants[0].isLocal}
-                        isVideoOff={allParticipants[0].isLocal ? isVideoOff : false}
-                        isMuted={allParticipants[0].isLocal ? isMuted : false}
+                        isVideoOff={allParticipants[0].isVideoOff}
+                        isMuted={allParticipants[0].isMuted}
                         isScreenSharing={isScreenSharing}
                         avatarColor={avatarColors[0]}
                         isPinned={pinnedPeerId === allParticipants[0].id}
@@ -209,8 +221,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                                     stream={p.stream}
                                     name={p.name}
                                     isLocal={p.isLocal}
-                                    isVideoOff={p.isLocal ? isVideoOff : false}
-                                    isMuted={p.isLocal ? isMuted : false}
+                                    isVideoOff={p.isVideoOff}
+                                    isMuted={p.isMuted}
                                     isScreenSharing={p.isLocal && isScreenSharing}
                                     avatarColor={avatarColors[i % avatarColors.length]}
                                     isPinned={pinnedPeerId === p.id}
@@ -229,8 +241,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                             stream={mainSpeaker.stream}
                             name={mainSpeaker.name}
                             isLocal={mainSpeaker.isLocal}
-                            isVideoOff={mainSpeaker.isLocal ? isVideoOff : false}
-                            isMuted={mainSpeaker.isLocal ? isMuted : false}
+                            isVideoOff={mainSpeaker.isVideoOff}
+                            isMuted={mainSpeaker.isMuted}
                             isScreenSharing={mainSpeaker.isLocal && isScreenSharing}
                             avatarColor={avatarColors[0]}
                             isPinned={pinnedPeerId === mainSpeaker.id}
@@ -250,8 +262,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                                 stream={mainSpeaker.stream}
                                 name={mainSpeaker.name}
                                 isLocal={mainSpeaker.isLocal}
-                                isVideoOff={mainSpeaker.isLocal ? isVideoOff : false}
-                                isMuted={mainSpeaker.isLocal ? isMuted : false}
+                                isVideoOff={mainSpeaker.isVideoOff}
+                                isMuted={mainSpeaker.isMuted}
                                 isScreenSharing={mainSpeaker.isLocal && isScreenSharing}
                                 avatarColor={avatarColors[0]}
                                 isPinned={pinnedPeerId === mainSpeaker.id}
@@ -267,8 +279,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                                             stream={p.stream}
                                             name={p.name}
                                             isLocal={p.isLocal}
-                                            isVideoOff={false}
-                                            isMuted={false}
+                                            isVideoOff={p.isVideoOff}
+                                            isMuted={p.isMuted}
                                             avatarColor={avatarColors[(i + 1) % avatarColors.length]}
                                             isPinned={pinnedPeerId === p.id}
                                             onTogglePin={() => togglePin(p.id)}

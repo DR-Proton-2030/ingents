@@ -14,6 +14,8 @@ declare global {
 export interface PeerStream {
     peerId: string;
     stream: MediaStream;
+    isVideoOff?: boolean;
+    isMuted?: boolean;
 }
 
 export interface ChatMessage {
@@ -47,12 +49,15 @@ export default function MeetingPage() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [hasUnreadMsg, setHasUnreadMsg] = useState(false);
 
-    // Refs
+    // Refs for stable state access in callbacks
     const peerRef = useRef<any>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const callsRef = useRef<any[]>([]);
     const dataConnsRef = useRef<any[]>([]);
     const connectedPeersRef = useRef<Set<string>>(new Set());
+    const isMutedRef = useRef(false);
+    const isVideoOffRef = useRef(false);
+    const peerIdRef = useRef("");
 
     // Initialize media on mount
     useEffect(() => {
@@ -84,68 +89,140 @@ export default function MeetingPage() {
         };
     }, []);
 
-    // Toggle mute
-    const toggleMute = useCallback(() => {
-        if (localStreamRef.current) {
-            localStreamRef.current.getAudioTracks().forEach((track) => {
-                track.enabled = !track.enabled;
+    // --- Peer Management Functions (Hoisted) ---
+    function broadcastData(data: any) {
+        dataConnsRef.current.forEach((conn) => {
+            if (conn.open) conn.send(data);
+        });
+    }
+
+    function removePeer(id: string) {
+        setRemoteStreams((prev) => prev.filter((p) => p.peerId !== id));
+        callsRef.current = callsRef.current.filter((c) => c.peer !== id);
+        dataConnsRef.current = dataConnsRef.current.filter((c) => c.peer !== id);
+        connectedPeersRef.current.delete(id);
+    }
+
+    function handleRemoteStream(peerId: string, stream: MediaStream) {
+        setRemoteStreams((prev) => {
+            if (prev.find((p) => p.peerId === peerId)) return prev;
+            return [...prev, { peerId, stream, isVideoOff: false, isMuted: false }];
+        });
+    }
+
+    function subscribeToCallEvents(call: any) {
+        call.on("stream", (remoteStream: MediaStream) => {
+            handleRemoteStream(call.peer, remoteStream);
+        });
+        call.on("close", () => removePeer(call.peer));
+        call.on("error", () => removePeer(call.peer));
+    }
+
+    function setupDataConnection(conn: any) {
+        dataConnsRef.current.push(conn);
+        conn.on("open", () => {
+            conn.send({
+                type: "media-state",
+                payload: { peerId: peerIdRef.current, isMuted: isMutedRef.current, isVideoOff: isVideoOffRef.current }
             });
-            setIsMuted((prev) => !prev);
-        }
-    }, []);
-
-    // Toggle video
-    const toggleVideo = useCallback(() => {
-        if (localStreamRef.current) {
-            localStreamRef.current.getVideoTracks().forEach((track) => {
-                track.enabled = !track.enabled;
-            });
-            setIsVideoOff((prev) => !prev);
-        }
-    }, []);
-
-    // Join room
-    const joinRoom = useCallback(() => {
-        if (!meetingCode || !localStreamRef.current || !window.Peer) return;
-        setIsLoading(true);
-        setStatusMsg("Connecting to meeting...");
-
-        const peer = new window.Peer(meetingCode, {
-            debug: 1,
-            config: {
-                iceServers: [
-                    { urls: "stun:stun.l.google.com:19302" },
-                    { urls: "stun:global.stun.twilio.com:3478" },
-                ],
-            },
         });
 
-        peer.on("open", (id: string) => {
-            console.log("Opened as Host:", id);
-            setPeerId(id);
-            setIsInCall(true);
-            setIsLoading(false);
-            setStatusMsg("");
-            setupHostLogic(peer);
-        });
-
-        peer.on("error", (err: any) => {
-            if (err.type === "unavailable-id") {
-                console.log("Room ID taken, joining as Guest...");
-                peer.destroy();
-                initGuestMode();
-            } else {
-                console.error("Peer Error:", err);
-                setStatusMsg(`Connection Error: ${err.type}`);
-                setIsLoading(false);
+        conn.on("data", (data: any) => {
+            if (data.type === "chat") {
+                setChatMessages((prev) => [...prev, data.payload]);
+                if (!showChat) setHasUnreadMsg(true);
+            }
+            if (data.type === "room-info" && data.peers) {
+                connectToPeers(data.peers);
+                initiateMediaCall(conn.peer);
+            }
+            if (data.type === "media-state") {
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === data.payload.peerId
+                        ? { ...p, isMuted: data.payload.isMuted, isVideoOff: data.payload.isVideoOff }
+                        : p
+                ));
             }
         });
+        conn.on("close", () => removePeer(conn.peer));
+    }
 
-        peerRef.current = peer;
-    }, [meetingCode]);
+    function initiateMediaCall(targetId: string) {
+        if (!localStreamRef.current || !peerRef.current) return;
+        if (callsRef.current.find((c) => c.peer === targetId)) return;
+        const call = peerRef.current.call(targetId, localStreamRef.current);
+        callsRef.current.push(call);
+        subscribeToCallEvents(call);
+    }
 
-    // Guest mode
+    function connectToPeers(peers: string[]) {
+        peers.forEach((targetId) => {
+            if (targetId === peerIdRef.current) return;
+            if (callsRef.current.find((c) => c.peer === targetId)) return;
+            if (!peerRef.current) return;
+            const conn = peerRef.current.connect(targetId);
+            setupDataConnection(conn);
+            initiateMediaCall(targetId);
+        });
+    }
+
+    function setupCommonPeerEvents(peer: any) {
+        peer.on("call", (call: any) => {
+            call.answer(localStreamRef.current);
+            callsRef.current.push(call);
+            subscribeToCallEvents(call);
+        });
+
+        peer.on("connection", (conn: any) => {
+            setupDataConnection(conn);
+        });
+    }
+
+    function setupHostLogic(peer: any) {
+        setupCommonPeerEvents(peer);
+        peer.on("connection", (conn: any) => {
+            conn.on("open", () => {
+                const peersList = Array.from(connectedPeersRef.current);
+                conn.send({ type: "room-info", peers: peersList });
+                connectedPeersRef.current.add(conn.peer);
+                setupDataConnection(conn);
+            });
+        });
+    }
+
+    // --- State-based Action Callbacks ---
+    const toggleMute = useCallback(() => {
+        if (localStreamRef.current) {
+            const newState = !isMuted;
+            localStreamRef.current.getAudioTracks().forEach((track) => {
+                track.enabled = !newState;
+            });
+            setIsMuted(newState);
+            isMutedRef.current = newState;
+            broadcastData({
+                type: "media-state",
+                payload: { peerId: peerIdRef.current, isMuted: newState, isVideoOff: isVideoOffRef.current }
+            });
+        }
+    }, [isMuted]);
+
+    const toggleVideo = useCallback(() => {
+        if (localStreamRef.current) {
+            const newState = !isVideoOff;
+            localStreamRef.current.getVideoTracks().forEach((track) => {
+                track.enabled = !newState;
+            });
+            setIsVideoOff(newState);
+            isVideoOffRef.current = newState;
+            broadcastData({
+                type: "media-state",
+                payload: { peerId: peerIdRef.current, isMuted: isMutedRef.current, isVideoOff: newState }
+            });
+        }
+    }, [isVideoOff]);
+
     const initGuestMode = useCallback(() => {
+        if (!window.Peer) return;
         const peer = new window.Peer(undefined, {
             debug: 1,
             config: {
@@ -157,8 +234,8 @@ export default function MeetingPage() {
         });
 
         peer.on("open", (id: string) => {
-            console.log("Opened as Guest:", id);
             setPeerId(id);
+            peerIdRef.current = id;
             setIsInCall(true);
             setIsLoading(false);
             setStatusMsg("");
@@ -176,148 +253,77 @@ export default function MeetingPage() {
         peerRef.current = peer;
     }, [meetingCode]);
 
-    // Setup host logic
-    const setupHostLogic = useCallback((peer: any) => {
-        setupCommonPeerEvents(peer);
-        peer.on("connection", (conn: any) => {
-            conn.on("open", () => {
-                const peersList = Array.from(connectedPeersRef.current);
-                conn.send({ type: "room-info", peers: peersList });
-                connectedPeersRef.current.add(conn.peer);
-                setupDataConnection(conn);
-            });
-        });
-    }, []);
+    const joinRoom = useCallback(() => {
+        if (!meetingCode || !localStreamRef.current || !window.Peer) return;
+        setIsLoading(true);
+        setStatusMsg("Connecting to meeting...");
 
-    // Common peer events
-    const setupCommonPeerEvents = useCallback((peer: any) => {
-        peer.on("call", (call: any) => {
-            call.answer(localStreamRef.current);
-            callsRef.current.push(call);
-            subscribeToCallEvents(call);
+        const peer = new window.Peer(meetingCode, {
+            debug: 1,
+            config: {
+                iceServers: [
+                    { urls: "stun:stun.l.google.com:19302" },
+                    { urls: "stun:global.stun.twilio.com:3478" },
+                ],
+            },
         });
 
-        peer.on("connection", (conn: any) => {
-            setupDataConnection(conn);
+        peer.on("open", (id: string) => {
+            setPeerId(id);
+            peerIdRef.current = id;
+            setIsInCall(true);
+            setIsLoading(false);
+            setStatusMsg("");
+            setupHostLogic(peer);
         });
-    }, []);
 
-    // Subscribe to call events
-    const subscribeToCallEvents = useCallback((call: any) => {
-        call.on("stream", (remoteStream: MediaStream) => {
-            handleRemoteStream(call.peer, remoteStream);
-        });
-        call.on("close", () => removePeer(call.peer));
-        call.on("error", () => removePeer(call.peer));
-    }, []);
-
-    // Setup data connection
-    const setupDataConnection = useCallback((conn: any) => {
-        dataConnsRef.current.push(conn);
-        conn.on("data", (data: any) => {
-            if (data.type === "chat") {
-                setChatMessages((prev) => [...prev, data.payload]);
-                if (!showChat) setHasUnreadMsg(true);
-            }
-            if (data.type === "room-info" && data.peers) {
-                connectToPeers(data.peers);
-                initiateMediaCall(conn.peer);
+        peer.on("error", (err: any) => {
+            if (err.type === "unavailable-id") {
+                peer.destroy();
+                initGuestMode();
+            } else {
+                console.error("Peer Error:", err);
+                setStatusMsg(`Connection Error: ${err.type}`);
+                setIsLoading(false);
             }
         });
-        conn.on("close", () => removePeer(conn.peer));
-    }, [showChat]);
 
-    // Broadcast data
-    const broadcastData = useCallback((data: any) => {
-        dataConnsRef.current.forEach((conn) => {
-            if (conn.open) conn.send(data);
-        });
-    }, []);
+        peerRef.current = peer;
+    }, [meetingCode, initGuestMode]);
 
-    // Connect to peers
-    const connectToPeers = useCallback((peers: string[]) => {
-        peers.forEach((targetId) => {
-            if (targetId === peerId) return;
-            if (callsRef.current.find((c) => c.peer === targetId)) return;
-            const conn = peerRef.current.connect(targetId);
-            setupDataConnection(conn);
-            initiateMediaCall(targetId);
-        });
-    }, [peerId, setupDataConnection]);
-
-    // Initiate media call
-    const initiateMediaCall = useCallback((targetId: string) => {
-        if (!localStreamRef.current) return;
-        if (callsRef.current.find((c) => c.peer === targetId)) return;
-        const call = peerRef.current.call(targetId, localStreamRef.current);
-        callsRef.current.push(call);
-        subscribeToCallEvents(call);
-    }, [subscribeToCallEvents]);
-
-    // Handle remote stream
-    const handleRemoteStream = useCallback((peerId: string, stream: MediaStream) => {
-        setRemoteStreams((prev) => {
-            if (prev.find((p) => p.peerId === peerId)) return prev;
-            return [...prev, { peerId, stream }];
-        });
-    }, []);
-
-    // Remove peer
-    const removePeer = useCallback((id: string) => {
-        setRemoteStreams((prev) => prev.filter((p) => p.peerId !== id));
-        callsRef.current = callsRef.current.filter((c) => c.peer !== id);
-        dataConnsRef.current = dataConnsRef.current.filter((c) => c.peer !== id);
-        connectedPeersRef.current.delete(id);
-    }, []);
-
-    // Send chat message
     const sendChatMessage = useCallback((text: string) => {
         if (!text.trim()) return;
         const msg: ChatMessage = {
             id: Date.now().toString(),
-            senderId: peerId,
+            senderId: peerIdRef.current,
             text,
             timestamp: Date.now(),
         };
         setChatMessages((prev) => [...prev, msg]);
         broadcastData({ type: "chat", payload: msg });
-    }, [peerId, broadcastData]);
+    }, []);
 
-    // Leave meeting
     const leaveMeeting = useCallback(() => {
-        if (peerRef.current) {
-            peerRef.current.destroy();
-        }
-        if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach((track) => track.stop());
-        }
+        if (peerRef.current) peerRef.current.destroy();
+        if (localStreamRef.current) localStreamRef.current.getTracks().forEach((track) => track.stop());
         router.push("/");
     }, [router]);
 
-    // Toggle screen share
     const toggleScreenShare = useCallback(async () => {
         if (!localStreamRef.current) return;
 
         if (isScreenSharing) {
-            // Stop screen sharing, revert to camera
             try {
-                const newStream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true,
-                });
+                const newStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 const videoTrack = newStream.getVideoTracks()[0];
 
                 callsRef.current.forEach((call) => {
-                    const sender = call.peerConnection
-                        ?.getSenders()
-                        .find((s: any) => s.track?.kind === "video");
+                    const sender = call.peerConnection?.getSenders().find((s: any) => s.track?.kind === "video");
                     if (sender) sender.replaceTrack(videoTrack);
                 });
 
-                // Update local stream
                 const oldVideoTrack = localStreamRef.current?.getVideoTracks()[0];
                 if (oldVideoTrack) oldVideoTrack.stop();
-
                 localStreamRef.current?.removeTrack(oldVideoTrack!);
                 localStreamRef.current?.addTrack(videoTrack);
                 setLocalStream(localStreamRef.current);
@@ -327,26 +333,17 @@ export default function MeetingPage() {
             }
         } else {
             try {
-                const displayStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true,
-                });
+                const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 const screenTrack = displayStream.getVideoTracks()[0];
-
-                screenTrack.onended = () => {
-                    toggleScreenShare();
-                };
+                screenTrack.onended = () => toggleScreenShare();
 
                 callsRef.current.forEach((call) => {
-                    const sender = call.peerConnection
-                        ?.getSenders()
-                        .find((s: any) => s.track?.kind === "video");
+                    const sender = call.peerConnection?.getSenders().find((s: any) => s.track?.kind === "video");
                     if (sender) sender.replaceTrack(screenTrack);
                 });
 
-                // Update local stream
                 const oldVideoTrack = localStreamRef.current?.getVideoTracks()[0];
                 if (oldVideoTrack) oldVideoTrack.stop();
-
                 localStreamRef.current?.removeTrack(oldVideoTrack!);
                 localStreamRef.current?.addTrack(screenTrack);
                 setLocalStream(localStreamRef.current);
@@ -360,11 +357,7 @@ export default function MeetingPage() {
 
     return (
         <>
-            <Script
-                src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"
-                onLoad={() => setIsPeerJsLoaded(true)}
-            />
-
+            <Script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" onLoad={() => setIsPeerJsLoaded(true)} />
             <div className="min-h-screen bg-[#0a0f16] text-white">
                 {!isInCall ? (
                     <MeetingLobby
