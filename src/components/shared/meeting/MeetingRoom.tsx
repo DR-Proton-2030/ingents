@@ -777,7 +777,7 @@ const VideoTile: React.FC<{
         if (videoRef.current && stream) {
             videoRef.current.srcObject = stream;
         }
-    }, [stream]);
+    }, [stream, isVideoOff]);
 
     return (
         <div

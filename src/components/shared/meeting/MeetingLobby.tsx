@@ -10,7 +10,10 @@ import {
     MicOff,
     VideoOff,
     Wand2,
-    Link as LinkIcon
+    Lock,
+    Settings,
+    ChevronRight,
+    Monitor
 } from "lucide-react";
 import { MeetingDetails, Participant } from "@/utils/api/meeting/meeting.api";
 
@@ -30,14 +33,13 @@ interface MeetingLobbyProps {
     onJoin: () => void;
 }
 
-// Avatar colors for participants
 const avatarColors = [
-    "bg-gradient-to-br from-indigo-500 to-purple-600",
-    "bg-gradient-to-br from-emerald-500 to-teal-600",
-    "bg-gradient-to-br from-orange-500 to-red-600",
-    "bg-gradient-to-br from-cyan-500 to-blue-600",
-    "bg-gradient-to-br from-pink-500 to-rose-600",
-    "bg-gradient-to-br from-amber-500 to-yellow-600",
+    "bg-[#3B82F6]",
+    "bg-[#10B981]",
+    "bg-[#F59E0B]",
+    "bg-[#6366F1]",
+    "bg-[#EC4899]",
+    "bg-[#8B5CF6]",
 ];
 
 export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
@@ -61,15 +63,15 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
         if (videoRef.current && localStream) {
             videoRef.current.srcObject = localStream;
         }
-    }, [localStream]);
+    }, [localStream, isVideoOff]);
 
     const formatMeetingDate = (dateString: string) => {
         if (!dateString) return "Today";
         const date = new Date(dateString);
         return date.toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "short",
             day: "numeric",
+            month: "long",
+            year: "numeric"
         });
     };
 
@@ -83,267 +85,240 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#F8F9FB]">
-            {/* Header */}
-            <header className="h-16 flex items-center justify-between px-8 bg-white border-b border-gray-100 shadow-sm z-10">
+        <div className="min-h-screen flex flex-col bg-[#F8F9FB] text-[#1E293B] font-sans selection:bg-orange-500/10">
+            {/* Minimal Top Bar */}
+            <header className="h-14 flex items-center justify-between px-6 border-b border-gray-200 bg-white/80 backdrop-blur-xl z-50">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-400 rounded-xl shadow-md">
-                        <Video className="text-white w-5 h-5 shadow-sm" />
+                    <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shadow-[0_4px_12px_rgba(249,115,22,0.2)]">
+                        <Video className="text-white w-4 h-4 fill-current" />
                     </div>
-                    <span className="font-extrabold text-xl tracking-tight text-gray-900">
+                    <span className="font-bold text-sm tracking-tight text-gray-900 uppercase letter-spacing-wider">
                         Ingents <span className="text-orange-500">Meet</span>
                     </span>
                 </div>
 
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-widest px-3 py-1.5 bg-gray-50 rounded-full border border-gray-100">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-                        System Ready
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-gray-200 border border-gray-100 shadow-inner" />
+                <div className="flex items-center gap-4 text-[11px] font-medium text-gray-500">
+                    <span className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                        Network Stable
+                    </span>
+                    <div className="w-px h-3 bg-gray-200" />
+                    <button className="hover:text-gray-900 transition-colors">
+                        <Settings className="w-4 h-4" />
+                    </button>
+                    <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200" />
                 </div>
             </header>
 
-            {/* Main Content */}
-            <div className="flex-1 flex items-center justify-center p-6 lg:p-12 relative overflow-hidden">
-                {/* Decorative Elements */}
-                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-orange-100/30 rounded-full blur-[120px] -mr-64 -mt-64 z-0" />
-                <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-100/20 rounded-full blur-[120px] -ml-64 -mb-64 z-0" />
+            {/* Main Area */}
+            <main className="flex-1 flex overflow-hidden">
+                {/* Left: Video & Controls */}
+                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-b from-white to-[#F8F9FB] relative">
+                    {/* Decorative blurred background shapes */}
+                    <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-orange-100 rounded-full blur-[100px] opacity-20 pointer-events-none" />
+                    <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-blue-100 rounded-full blur-[100px] opacity-20 pointer-events-none" />
 
-                <div className="flex flex-col lg:flex-row gap-12 w-full max-w-7xl items-stretch justify-center z-10">
-                    {/* Left: Video Preview */}
-                    <div className="flex-1 flex flex-col justify-center">
+                    <div className="w-full max-w-[750px] z-10">
+                        {/* Video Wrapper */}
                         <div className="relative group">
-                            {/* Glow Effect */}
-                            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 to-orange-400/20 rounded-[32px] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            {/* Subtle Inner Glow */}
+                            {/* <div className="absolute -inset-4 bg-orange-500/[0.03] rounded-[40px] blur-3xl pointer-events-none group-hover:bg-orange-500/[0.05] transition-all duration-700" /> */}
 
-                            <div className="relative rounded-[32px] bg-white p-5 shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white">
-                                {/* Video Container */}
-                                <div className="relative aspect-video bg-[#1A1C1E] rounded-[24px] overflow-hidden shadow-2xl">
-                                    {/* Preview Label */}
-                                    <div className="absolute top-5 left-5 z-20 flex items-center gap-2 px-4 py-2 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10">
-                                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                        <span className="text-[11px] font-bold text-white uppercase tracking-widest">
-                                            Live Preview
-                                        </span>
+                            <div className="relative aspect-video  rounded-[22px] bg-[#1E2124] overflow-hidden border border-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] group flex items-center justify-center">
+                                {/* Video Surface */}
+                                {localStream ? (
+                                    <video
+                                        ref={videoRef}
+                                        autoPlay
+                                        muted
+                                        playsInline
+                                        className={`w-full h-full object-cover scale-x-[-1] transition-all duration-1000 ${isVideoOff ? "opacity-0 scale-100" : "opacity-100 scale-100"}`}
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-4 animate-pulse">
+                                        <div className="w-10 h-10 border-2 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+                                        <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Initializing Stream</span>
                                     </div>
+                                )}
 
-                                    {localStream ? (
-                                        <video
-                                            ref={videoRef}
-                                            autoPlay
-                                            muted
-                                            playsInline
-                                            className={`w-full h-full object-cover scale-x-[-1] transition-opacity duration-700 ${isVideoOff ? "opacity-0" : "opacity-100"}`}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <div className="w-12 h-12 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
+                                {/* Camera Off State */}
+                                {isVideoOff && (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/10">
+                                        <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 border border-gray-100 flex items-center justify-center shadow-sm transition-transform duration-500 group-hover:scale-105">
+                                            <span className="text-5xl text-gray-100 font-bold">
+                                                {(meetingInfo?.title || "M").charAt(0).toUpperCase()}
+                                            </span>
                                         </div>
-                                    )}
+                                        <p className="mt-8 text-gray-400 text-xs font-semibold ">Camera is Disconnected</p>
+                                    </div>
+                                )}
 
-                                    {isVideoOff && (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-[#2D3135] to-[#1A1C1E]">
-                                            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-orange-500 to-orange-400 flex items-center justify-center shadow-2xl ring-8 ring-white/5 animate-in fade-in zoom-in duration-500">
-                                                <span className="text-5xl text-white font-black drop-shadow-lg">
-                                                    {(meetingInfo?.title || "M").charAt(0).toUpperCase()}
-                                                </span>
-                                            </div>
-                                            <p className="mt-6 text-gray-400 text-sm font-medium tracking-wide">Camera is off</p>
+                                {/* Floating Labels */}
+                                <div className="absolute top-6 left-6 flex items-center gap-3">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-lg border border-white/10 shadow-lg">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">Preview Mode</span>
+                                    </div>
+                                    {isMuted && (
+                                        <div className="px-3 py-1.5 bg-red-500/10 backdrop-blur-md rounded-lg border border-red-500/20 text-red-600 text-[10px] font-bold uppercase tracking-wider">
+                                            Microphone Muted
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Controls */}
-                                <div className="flex items-center justify-center gap-5 mt-8">
+                                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-4">
                                     <button
                                         onClick={onToggleMute}
-                                        className={`group p-5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 border ${isMuted
-                                            ? "bg-red-50 to-red-100 text-red-600 border-red-200 shadow-lg shadow-red-200/50"
-                                            : "bg-white text-gray-700 hover:bg-gray-50 border-gray-100 shadow-sm"
+                                        className={`group w-14 h-14 rounded-full flex shadow-sm shadow-black/80 items-center justify-center transition-all duration-300 border ${isMuted
+                                            ? "bg-red-600 text-white hover:bg-red-500 "
+                                            : "bg-white/10 border-white text-white hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 "
                                             }`}
                                     >
-                                        {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6 group-hover:text-orange-500 transition-colors" />}
+                                        {isMuted ? <MicOff className="w-6 h-6 stroke-[1.5]" /> : <Mic className="w-6 h-6 stroke-[1.5]" />}
                                     </button>
 
                                     <button
                                         onClick={onToggleVideo}
-                                        className={`group p-5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 border ${isVideoOff
-                                            ? "bg-red-50 to-red-100 text-red-600 border-red-200 shadow-lg shadow-red-200/50"
-                                            : "bg-white text-gray-700 hover:bg-gray-50 border-gray-100 shadow-sm"
+                                        className={`group w-14 h-14 rounded-full flex items-center  shadow-sm shadow-black/80 justify-center transition-all duration-300 border ${isVideoOff
+                                            ? "bg-red-600 text-white hover:bg-red-500 "
+                                            : "bg-white/10 border-white text-white hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 "
                                             }`}
                                     >
-                                        {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6 group-hover:text-orange-500 transition-colors" />}
+                                        {isVideoOff ? <VideoOff className="w-6 h-6 stroke-[1.5]" /> : <Video className="w-6 h-6 stroke-[1.5]" />}
                                     </button>
 
-                                    <button className="group p-5 rounded-2xl bg-white text-gray-400 hover:text-orange-500 hover:bg-gray-50 border border-gray-100 shadow-sm transition-all duration-300 hover:scale-105 active:scale-95">
-                                        <Wand2 className="w-6 h-6" />
-                                    </button>
+
                                 </div>
                             </div>
+
+                            {/* Control Pill */}
+
                         </div>
                     </div>
+                </div>
 
-                    {/* Right: Meeting Details Card */}
-                    <div className="w-full lg:w-[480px] flex flex-col justify-center">
-                        <div className="rounded-[40px] bg-white shadow-[0_30px_60px_rgba(0,0,0,0.06)] border border-white p-10 flex flex-col">
-                            {isFetchingInfo ? (
-                                <div className="py-20 flex flex-col items-center justify-center space-y-6">
-                                    <div className="relative">
-                                        <div className="w-16 h-16 border-4 border-orange-100 border-t-orange-500 rounded-full animate-spin" />
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="w-2 h-2 bg-orange-500 rounded-full animate-ping" />
-                                        </div>
+                {/* Right: Join Panel */}
+                <div className="w-[450px] bg-white border-l border-gray-100 flex flex-col shadow-[-10px_0_30px_-15px_rgba(0,0,0,0.05)]">
+                    {/* Upper Section */}
+                    <div className="p-10 flex-1 overflow-y-auto scrollbar-hide">
+                        {isFetchingInfo ? (
+                            <div className="h-full flex flex-col items-center justify-center gap-6 animate-in fade-in duration-700">
+                                <div className="w-8 h-8 border-[3px] border-orange-500/10 border-t-orange-500 rounded-full animate-spin" />
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em]">Connecting</span>
+                            </div>
+                        ) : (
+                            <div className="space-y-10 animate-in slide-in-from-right-4 duration-700">
+                                {/* Meeting Meta */}
+                                <div className="space-y-4">
+                                    <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-orange-50 border border-orange-100 rounded-full">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgb(249,115,22,0.4)]" />
+                                        <span className="text-[9px] font-black uppercase text-orange-600 tracking-wider">Scheduled Session</span>
                                     </div>
-                                    <p className="text-gray-400 text-sm font-bold uppercase tracking-widest animate-pulse font-mono">Loading Meeting Details</p>
+                                    <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight leading-tight">
+                                        {meetingInfo?.title || "Meeting Lobby"}
+                                    </h1>
+                                    {meetingInfo?.description && (
+                                        <p className="text-gray-500 text-[15px] font-medium leading-relaxed">
+                                            {meetingInfo.description}
+                                        </p>
+                                    )}
                                 </div>
-                            ) : (
-                                <>
-                                    <div className="mb-10 text-center flex flex-col items-center">
-                                        {/* Status Badge */}
-                                        <div className="mb-5 inline-flex items-center gap-2 px-3 py-1 bg-orange-50 text-orange-600 rounded-full border border-orange-100">
-                                            <Clock className="w-3.5 h-3.5" />
-                                            <span className="text-[10px] font-bold uppercase tracking-widest">
-                                                {meetingInfo?.status === "scheduled" ? "Scheduled" : "Live Now"}
-                                            </span>
-                                        </div>
 
-                                        <h2 className="text-3xl font-extrabold text-gray-900 leading-[1.2] mb-4 tracking-tight">
-                                            {meetingInfo?.title || "Ready to Join"}
-                                        </h2>
+                                {/* Logistics Cards */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-4 bg-gray-50 border border-transparent rounded-2xl flex flex-col gap-1 hover:border-orange-200 hover:bg-orange-50/10 transition-all duration-300">
+                                        <Clock className="w-3.5 h-3.5 text-gray-400 mb-1" />
+                                        <span className="text-xs font-bold text-gray-900">
+                                            {formatMeetingTime(meetingInfo?.scheduled_start_time || "")}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Session Start</span>
+                                    </div>
+                                    <div className="p-4 bg-gray-50 border border-transparent rounded-2xl flex flex-col gap-1 hover:border-orange-200 hover:bg-orange-50/10 transition-all duration-300">
+                                        <Users className="w-3.5 h-3.5 text-gray-400 mb-1" />
+                                        <span className="text-xs font-bold text-gray-900">
+                                            {participants.length} Invited
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active Roster</span>
+                                    </div>
+                                </div>
 
-                                        {meetingInfo?.description && (
-                                            <p className="text-gray-500 text-base leading-relaxed max-w-[320px]">
-                                                {meetingInfo.description}
-                                            </p>
-                                        )}
+                                {/* Participants Section */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Invited Participants</span>
+                                        <div className="h-px flex-1 mx-4 bg-gray-100" />
                                     </div>
 
-                                    {/* Detailed Stats */}
-                                    <div className="grid grid-cols-3 gap-3 mb-8">
-                                        <div className="p-4 bg-[#F8F9FB] rounded-2xl border border-gray-100 flex flex-col items-center justify-center text-center group hover:bg-white hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300">
-                                            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center mb-2 shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">
-                                                <Calendar className="w-4 h-4 text-orange-500" />
-                                            </div>
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Date</p>
-                                            <p className="text-[11px] font-bold text-gray-800">
-                                                {formatMeetingDate(meetingInfo?.scheduled_start_time || "")}
-                                            </p>
-                                        </div>
-
-                                        <div className="p-4 bg-[#F8F9FB] rounded-2xl border border-gray-100 flex flex-col items-center justify-center text-center group hover:bg-white hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300">
-                                            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center mb-2 shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">
-                                                <Clock className="w-4 h-4 text-blue-500" />
-                                            </div>
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Time</p>
-                                            <p className="text-[11px] font-bold text-gray-800">
-                                                {formatMeetingTime(meetingInfo?.scheduled_start_time || "")}
-                                            </p>
-                                        </div>
-
-                                        <div className="p-4 bg-[#F8F9FB] rounded-2xl border border-gray-100 flex flex-col items-center justify-center text-center group hover:bg-white hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300">
-                                            <div className="w-8 h-8 bg-white rounded-xl flex items-center justify-center mb-2 shadow-sm border border-gray-100 group-hover:scale-110 transition-transform">
-                                                <ShieldCheck className="w-4 h-4 text-green-500" />
-                                            </div>
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Duration</p>
-                                            <p className="text-[11px] font-bold text-gray-800">
-                                                {meetingInfo?.duration_minutes || "30"} Mins
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Host & Info */}
-                                    <div className="space-y-4 mb-10">
+                                    <div className="space-y-3">
                                         {meetingInfo?.host_details && (
-                                            <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-[24px] border border-gray-100 group hover:border-orange-200 hover:bg-orange-50/30 transition-all">
-                                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gray-800 to-black flex items-center justify-center text-white text-lg font-black shadow-lg shadow-gray-200">
+                                            <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] rounded-2xl group transition-all hover:border-orange-200 hover:bg-orange-50/10">
+                                                <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center text-xs font-bold text-white shadow-lg overflow-hidden relative">
                                                     {meetingInfo.host_details.full_name.charAt(0)}
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-[10px] font-bold text-orange-600 uppercase tracking-widest mb-0.5">Meeting Host</p>
-                                                    <p className="text-base font-extrabold text-gray-900 truncate">{meetingInfo.host_details.full_name}</p>
+                                                    <p className="text-[13px] font-bold text-gray-900 truncate">{meetingInfo.host_details.full_name}</p>
+                                                    <p className="text-[9px] text-orange-600 font-black uppercase tracking-widest">Meeting Host</p>
                                                 </div>
-                                                <div className="p-2 bg-white rounded-xl border border-gray-100 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <ShieldCheck className="w-4 h-4 text-green-500" />
-                                                </div>
+                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
                                             </div>
                                         )}
 
-                                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-[24px] border border-gray-100">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm">
-                                                    <Users className="w-5 h-5 text-gray-400" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Participants</p>
-                                                    <p className="text-sm font-bold text-gray-800">{participants.length > 0 ? `${participants.length} Invited` : "No participants yet"}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex -space-x-2.5">
-                                                {participants.slice(0, 3).map((p, i) => (
+                                        <div className="flex items-center gap-2 px-2 pt-1">
+                                            <div className="flex -space-x-3">
+                                                {participants.slice(0, 5).map((p, i) => (
                                                     <div
                                                         key={p._id}
-                                                        className={`w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-black shadow-sm ring-1 ring-gray-100 ${avatarColors[i % avatarColors.length]}`}
+                                                        className={`w-9 h-9 rounded-full border-2 border-white flex items-center justify-center text-white text-[10px] font-black shadow-md ${avatarColors[i % avatarColors.length]}`}
                                                     >
                                                         {(p.user_details?.full_name || p.external_name || "?").charAt(0)}
                                                     </div>
                                                 ))}
-                                                {participants.length > 3 && (
-                                                    <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-gray-500 text-[10px] font-black shadow-sm ring-1 ring-gray-100">
-                                                        +{participants.length - 3}
+                                                {participants.length > 5 && (
+                                                    <div className="w-9 h-9 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-gray-500 text-[9px] font-black shadow-sm">
+                                                        +{participants.length - 5}
                                                     </div>
                                                 )}
                                             </div>
+                                            <ChevronRight className="w-3 h-3 text-gray-300 ml-auto" />
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
-                                    {/* Action Section */}
-                                    <div className="space-y-4">
-                                        <button
-                                            onClick={onJoin}
-                                            disabled={!isPeerJsLoaded || !localStream || isLoading}
-                                            className="group relative w-full py-5 bg-gradient-to-r from-orange-600 to-orange-500 text-white font-black rounded-[24px] shadow-2xl shadow-orange-500/30 hover:shadow-orange-500/40 hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-4 overflow-hidden"
-                                        >
-                                            <div className="p-1.5 bg-white/20 rounded-xl group-hover:rotate-12 transition-transform duration-500">
-                                                {isLoading ? (
-                                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <Video className="w-5 h-5 shadow-sm" />
-                                                )}
-                                            </div>
-                                            <span className="text-lg tracking-wide drop-shadow-sm">
-                                                {isLoading ? "Joining Meeting..." : "Join Meeting Now"}
-                                            </span>
-                                        </button>
+                    {/* Lower Section: Controls */}
+                    <div className="p-8 space-y-6 bg-gray-50/50 border-t border-gray-100">
+                        <div className="space-y-4">
+                            <button
+                                onClick={onJoin}
+                                disabled={!isPeerJsLoaded || !localStream || isLoading}
+                                className="group relative w-full h-14 bg-gray-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 hover:bg-orange-500 disabled:opacity-30 disabled:hover:bg-gray-900 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] hover:shadow-orange-500/20 active:scale-[0.98]"
+                            >
+                                {isLoading ? (
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <span className="text-[13px] uppercase tracking-widest font-black">Enter Workspace</span>
+                                        <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                                    </>
+                                )}
+                            </button>
 
-                                        <p className="text-center text-[10px] font-bold text-gray-300 uppercase tracking-widest font-mono">
-                                            Secure Meeting Code: {meetingCode}
-                                        </p>
-
-                                        {statusMsg && !isLoading && (
-                                            <div className="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 text-xs font-bold text-center">
-                                                {statusMsg}
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            )}
-
-                            {/* Trust Footer */}
-                            <div className="mt-auto pt-8 flex justify-center gap-8 text-[10px] font-black text-gray-300 uppercase tracking-widest">
-                                <span className="flex items-center gap-2 group cursor-help">
-                                    <ShieldCheck className="w-4 h-4 text-green-500/50 group-hover:text-green-500 transition-colors" />
-                                    Encrypted
-                                </span>
-                                <span className="flex items-center gap-2 group cursor-help">
-                                    <LinkIcon className="w-4 h-4 text-blue-500/50 group-hover:text-blue-500 transition-colors" />
-                                    Private
-                                </span>
+                            {/* Security Footer */}
+                            <div className="flex items-center justify-between border-t border-gray-100 pt-6">
+                                <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                                    <Lock className="w-3 h-3" />
+                                    End-to-End Encryption
+                                </div>
+                                <ShieldCheck className="w-4 h-4 text-green-500 opacity-60" />
                             </div>
                         </div>
+
+
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 };

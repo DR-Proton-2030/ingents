@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Script from "next/script";
 import MeetingLobby from "@/components/shared/meeting/MeetingLobby";
-import MeetingRoom from "@/components/shared/meeting/MeetingRoom";
 import { getMeetingByCode, MeetingDetails, Participant } from "@/utils/api/meeting/meeting.api";
+import { MeetingRoom } from "@/components/shared/meeting";
 
 declare global {
     interface Window {
@@ -284,12 +284,42 @@ export default function MeetingPage() {
         }
     }, [isMuted]);
 
-    const toggleVideo = useCallback(() => {
+    const toggleVideo = useCallback(async () => {
         if (localStreamRef.current) {
             const newState = !isVideoOff;
-            localStreamRef.current.getVideoTracks().forEach((track) => {
-                track.enabled = !newState;
-            });
+
+            if (newState) {
+                // Turning OFF: Stop all video tracks to kill the hardware light
+                localStreamRef.current.getVideoTracks().forEach((track) => {
+                    track.stop();
+                    localStreamRef.current?.removeTrack(track);
+                });
+            } else {
+                // Turning ON: Re-acquire the video track
+                try {
+                    const newStream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" }
+                    });
+                    const newTrack = newStream.getVideoTracks()[0];
+                    localStreamRef.current.addTrack(newTrack);
+
+                    // Update all active PeerJS calls with the new track
+                    callsRef.current.forEach(call => {
+                        const peerConnection = call.peerConnection;
+                        if (peerConnection) {
+                            const senders = peerConnection.getSenders();
+                            const videoSender = senders.find((s: any) => s.track && s.track.kind === "video");
+                            if (videoSender) {
+                                videoSender.replaceTrack(newTrack);
+                            }
+                        }
+                    });
+                } catch (err) {
+                    console.error("❌ Error re-acquiring video track:", err);
+                    return;
+                }
+            }
+
             setIsVideoOff(newState);
             isVideoOffRef.current = newState;
             broadcastData({
@@ -302,7 +332,7 @@ export default function MeetingPage() {
                 }
             });
         }
-    }, [isVideoOff]);
+    }, [isVideoOff, broadcastData]);
 
     const toggleHandRaise = useCallback(() => {
         const newState = !isHandRaised;
