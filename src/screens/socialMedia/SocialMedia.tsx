@@ -6,6 +6,7 @@ import StatCard from "./components/StatCard";
 import TotalMessagesCard from "./components/TotalMessagesCard";
 import FollowersOverviewCard from "./components/FollowersOverviewCard";
 import AccountSelection from "./components/AccountSelection";
+import PostComposer from "./components/PostComposer";
 import AiSidebar from "@/components/shared/aiSidebar/AiSidebar";
 import { getCompanyDetails, storeDefaultCompanyDetails } from "@/lib/storage";
 import Layout from "../layout/Layout";
@@ -79,7 +80,9 @@ export default function SocialMediaDashboard() {
             setSelectedCompany={setSelectedCompany}
           /> */}
           <AccountSelection />
-
+          <div className="mt-6">
+            <PostComposer />
+          </div>
         </div>
         <div className="w-full   flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
           <AiSidebar aiUrl="social" context={companyDetails} />
