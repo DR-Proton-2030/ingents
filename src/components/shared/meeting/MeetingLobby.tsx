@@ -87,28 +87,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
     return (
         <div className="min-h-screen flex flex-col bg-[#F8F9FB] text-[#1E293B] font-sans selection:bg-orange-500/10">
             {/* Minimal Top Bar */}
-            <header className="h-14 flex items-center justify-between px-6 border-b border-gray-200 bg-white/80 backdrop-blur-xl z-50">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center shadow-[0_4px_12px_rgba(249,115,22,0.2)]">
-                        <Video className="text-white w-4 h-4 fill-current" />
-                    </div>
-                    <span className="font-bold text-sm tracking-tight text-gray-900 uppercase letter-spacing-wider">
-                        Ingents <span className="text-orange-500">Meet</span>
-                    </span>
-                </div>
 
-                <div className="flex items-center gap-4 text-[11px] font-medium text-gray-500">
-                    <span className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-                        Network Stable
-                    </span>
-                    <div className="w-px h-3 bg-gray-200" />
-                    <button className="hover:text-gray-900 transition-colors">
-                        <Settings className="w-4 h-4" />
-                    </button>
-                    <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200" />
-                </div>
-            </header>
 
             {/* Main Area */}
             <main className="flex-1 flex overflow-hidden">
@@ -124,7 +103,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                             {/* Subtle Inner Glow */}
                             {/* <div className="absolute -inset-4 bg-orange-500/[0.03] rounded-[40px] blur-3xl pointer-events-none group-hover:bg-orange-500/[0.05] transition-all duration-700" /> */}
 
-                            <div className="relative aspect-video  rounded-[22px] bg-[#1E2124] overflow-hidden border border-white shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] group flex items-center justify-center">
+                            <div className="relative aspect-video shadow-[-10px_0_30px_-15px_rgba(0,0,0,0.05)]  rounded-[22px] bg-[#1E2124] overflow-hidden  group flex items-center justify-center">
                                 {/* Video Surface */}
                                 {localStream ? (
                                     <video
@@ -140,6 +119,13 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                                         <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Initializing Stream</span>
                                     </div>
                                 )}
+
+                                {/* Cinematic Vignette Overlay */}
+                                <div className="absolute inset-0 pointer-events-none z-0">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+                                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/10" />
+                                    {/* <div className="absolute inset-0 bg-[radial-gradient(circle,_transparent_40%,_rgba(0,0,0,0.3)_100%)]" /> */}
+                                </div>
 
                                 {/* Camera Off State */}
                                 {isVideoOff && (
@@ -168,9 +154,9 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                                 <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-4">
                                     <button
                                         onClick={onToggleMute}
-                                        className={`group w-14 h-14 rounded-full flex shadow-sm shadow-black/80 items-center justify-center transition-all duration-300 border ${isMuted
+                                        className={`group w-14 h-14 rounded-full cursor-pointer flex shadow-sm shadow-black/80 items-center justify-center transition-all duration-300 border ${isMuted
                                             ? "bg-red-600 text-white hover:bg-red-500 "
-                                            : "bg-white/10 border-white text-white hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 "
+                                            : "bg-transparent backdrop-blur-sm border-white text-white hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 "
                                             }`}
                                     >
                                         {isMuted ? <MicOff className="w-6 h-6 stroke-[1.5]" /> : <Mic className="w-6 h-6 stroke-[1.5]" />}
@@ -178,9 +164,9 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
 
                                     <button
                                         onClick={onToggleVideo}
-                                        className={`group w-14 h-14 rounded-full flex items-center  shadow-sm shadow-black/80 justify-center transition-all duration-300 border ${isVideoOff
+                                        className={`group w-14 h-14 rounded-full cursor-pointer flex items-center  shadow-sm shadow-black/80 justify-center transition-all duration-300 border ${isVideoOff
                                             ? "bg-red-600 text-white hover:bg-red-500 "
-                                            : "bg-white/10 border-white text-white hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 "
+                                            : "bg-transparent backdrop-blur-sm border-white text-white hover:text-gray-900 hover:border-gray-300 hover:bg-gray-50 "
                                             }`}
                                     >
                                         {isVideoOff ? <VideoOff className="w-6 h-6 stroke-[1.5]" /> : <Video className="w-6 h-6 stroke-[1.5]" />}
@@ -197,7 +183,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                 </div>
 
                 {/* Right: Join Panel */}
-                <div className="w-[450px] bg-white border-l border-gray-100 flex flex-col shadow-[-10px_0_30px_-15px_rgba(0,0,0,0.05)]">
+                <div className="w-[450px] bg-gray-100 border-l border-gray-100 flex flex-col ">
                     {/* Upper Section */}
                     <div className="p-10 flex-1 overflow-y-auto scrollbar-hide">
                         {isFetchingInfo ? (
@@ -293,13 +279,14 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                             <button
                                 onClick={onJoin}
                                 disabled={!isPeerJsLoaded || !localStream || isLoading}
-                                className="group relative w-full h-14 bg-gray-900 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 hover:bg-orange-500 disabled:opacity-30 disabled:hover:bg-gray-900 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] hover:shadow-orange-500/20 active:scale-[0.98]"
+                                className="group relative w-full h-14 bg-black/80 text-white font-bold rounded-xl
+                                 flex items-center justify-center gap-3 transition-all duration-300 hover:bg-orange-500 disabled:opacity-30 disabled:hover:bg-gray-900 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] hover:shadow-orange-500/20 active:scale-[0.98]"
                             >
                                 {isLoading ? (
                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                                 ) : (
                                     <>
-                                        <span className="text-[13px] uppercase tracking-widest font-black">Enter Workspace</span>
+                                        <span className="text-[13px]  font-black">Join Meeting</span>
                                         <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                                     </>
                                 )}
