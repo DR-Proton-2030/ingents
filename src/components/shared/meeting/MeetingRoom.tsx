@@ -7,10 +7,20 @@ import {
     VideoOff,
     MonitorUp,
     MessageSquare,
-    PhoneOff,
-    User,
+    Phone,
     Send,
     X,
+    MoreVertical,
+    ChevronUp,
+    Smile,
+    LayoutGrid,
+    Hand,
+    Info,
+    Users,
+    Grid3X3,
+    UserPlus,
+    Search,
+    ChevronDown,
 } from "lucide-react";
 
 interface PeerStream {
@@ -63,7 +73,19 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     onLeave,
 }) => {
     const [chatInput, setChatInput] = useState("");
+    const [showPeople, setShowPeople] = useState(false);
     const chatScrollRef = useRef<HTMLDivElement>(null);
+
+    // Get current time
+    const [currentTime, setCurrentTime] = useState(new Date());
+    useEffect(() => {
+        const interval = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const formatTime = (date: Date) => {
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    };
 
     // Auto-scroll chat
     useEffect(() => {
@@ -79,244 +101,387 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         }
     };
 
+    // Toggle people panel (close chat if opening people)
+    const togglePeople = () => {
+        if (!showPeople) {
+            onToggleChat(); // Close chat if open
+        }
+        setShowPeople(!showPeople);
+    };
+
+    // Toggle chat (close people if opening chat)
+    const handleToggleChat = () => {
+        if (!showChat) {
+            setShowPeople(false); // Close people if open
+        }
+        onToggleChat();
+    };
+
+    const allParticipants = [
+        { id: "local", stream: localStream, isLocal: true, name: "You", fullName: "You" },
+        ...remoteStreams.map((p) => ({
+            id: p.peerId,
+            stream: p.stream,
+            isLocal: false,
+            name: p.peerId.substring(0, 8),
+            fullName: `Participant ${p.peerId.substring(0, 4)}`,
+        })),
+    ];
+
+    const mainSpeaker = allParticipants[0];
+
+    // Avatar colors for participants
+    const avatarColors = [
+        "bg-blue-600",
+        "bg-green-600",
+        "bg-purple-600",
+        "bg-orange-600",
+        "bg-pink-600",
+        "bg-teal-600",
+    ];
+
     return (
-        <div className="min-h-screen flex flex-col bg-[#0a0f16] relative overflow-hidden">
-            {/* Background Grid */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(30,41,59,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(30,41,59,0.05)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none opacity-50" />
+        <div className="h-screen flex flex-col bg-[#f8f9fa] overflow-hidden">
+            {/* Main Content Area */}
+            <div className="flex-1 flex min-h-0 p-2 gap-2">
+                {/* Main Video Area - Full Width */}
+                <div className="flex-1 relative rounded-lg overflow-hidden bg-[#3c4043] min-h-0">
+                    <MainVideoFrame
+                        stream={mainSpeaker?.stream || null}
+                        name={mainSpeaker?.name || "You"}
+                        isLocal={mainSpeaker?.isLocal || true}
+                        isVideoOff={mainSpeaker?.isLocal ? isVideoOff : false}
+                        isMuted={mainSpeaker?.isLocal ? isMuted : false}
+                        isScreenSharing={isScreenSharing}
+                    />
 
-            {/* Header */}
-            <header className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-900/50 backdrop-blur-md z-20">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-cyan-500/20 rounded-lg">
-                        <Video className="text-cyan-400 w-5 h-5" />
-                    </div>
-                    <span className="font-bold text-lg tracking-widest text-slate-200">
-                        INGENTS MEET
-                    </span>
+                    {/* Mute indicator on main video */}
+                    {isMuted && mainSpeaker?.isLocal && (
+                        <div className="absolute top-3 right-3 p-1.5 bg-red-500 rounded-full">
+                            <MicOff className="w-3 h-3 text-white" />
+                        </div>
+                    )}
                 </div>
 
-                <div className="flex items-center gap-4">
-                    {/* Room ID */}
-                    <div className="px-3 py-1 bg-slate-800 rounded border border-slate-700 flex items-center gap-2">
-                        <span className="text-[10px] text-slate-500 uppercase">Room:</span>
-                        <span className="text-xs font-mono text-white font-bold">
-                            {meetingCode}
-                        </span>
-                    </div>
+                {/* People Panel (Google Meet style) */}
+                {showPeople && (
+                    <div className="w-96 flex-shrink-0 bg-white rounded-2xl shadow-lg flex flex-col">
+                        {/* Header */}
+                        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 className="font-medium text-gray-900">People</h3>
+                            <button
+                                onClick={togglePeople}
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-600" />
+                            </button>
+                        </div>
 
-                    {/* Status */}
-                    <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        Encrypted Mesh
-                    </div>
-                </div>
-            </header>
+                        {/* Add People Button */}
+                        <div className="px-4 pt-4 pb-2">
+                            <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors text-sm font-medium">
+                                <UserPlus className="w-4 h-4" />
+                                Add people
+                            </button>
+                        </div>
 
-            {/* Main Content */}
-            <div className="flex-1 flex overflow-hidden relative">
-                {/* Video Grid */}
-                <div className="flex-1 flex flex-col relative p-4 gap-4 overflow-hidden">
-                    <div className="flex-1 overflow-y-auto min-h-0 p-2">
-                        <div
-                            className={`grid gap-4 h-full ${remoteStreams.length === 0
-                                ? "grid-cols-1"
-                                : remoteStreams.length === 1
-                                    ? "grid-cols-1 md:grid-cols-2"
-                                    : remoteStreams.length <= 3
-                                        ? "grid-cols-2"
-                                        : "grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                                }`}
-                        >
-                            {/* Local Video */}
-                            <VideoFrame
-                                stream={localStream}
-                                isVideoOff={isVideoOff}
-                                isMuted={isMuted}
-                                label="You"
-                                isLocal
-                                isScreenSharing={isScreenSharing}
-                            />
-
-                            {/* Remote Videos */}
-                            {remoteStreams.map((peer) => (
-                                <VideoFrame
-                                    key={peer.peerId}
-                                    stream={peer.stream}
-                                    label={peer.peerId.substring(0, 8)}
+                        {/* Search */}
+                        <div className="px-4 py-2">
+                            <div className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 rounded-full border border-gray-200">
+                                <Search className="w-4 h-4 text-gray-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Search for people"
+                                    className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-500 focus:outline-none"
                                 />
+                            </div>
+                        </div>
+
+                        {/* In Meeting Section */}
+                        <div className="flex-1 overflow-y-auto px-4 py-2">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">
+                                In the meeting
+                            </p>
+
+                            {/* Contributors */}
+                            <div className="border border-gray-200 rounded-lg">
+                                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors">
+                                    <span className="font-medium text-gray-900">Contributors</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-600">{allParticipants.length}</span>
+                                        <ChevronUp className="w-4 h-4 text-gray-500" />
+                                    </div>
+                                </button>
+
+                                {/* Participant List */}
+                                <div className="border-t border-gray-100">
+                                    {allParticipants.map((participant, index) => (
+                                        <div
+                                            key={participant.id}
+                                            className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                                        >
+                                            {/* Avatar */}
+                                            <div
+                                                className={`w-9 h-9 rounded-full ${avatarColors[index % avatarColors.length]
+                                                    } flex items-center justify-center text-white font-medium text-sm flex-shrink-0`}
+                                            >
+                                                {participant.name.charAt(0).toUpperCase()}
+                                            </div>
+
+                                            {/* Name */}
+                                            <div className="flex-1 min-w-0">
+                                                <span className="text-sm text-gray-900 truncate block">
+                                                    {participant.fullName}
+                                                    {participant.isLocal && " (You)"}
+                                                </span>
+                                            </div>
+
+                                            {/* Mute Status */}
+                                            <div className="flex items-center gap-2 flex-shrink-0">
+                                                {(participant.isLocal ? isMuted : false) && (
+                                                    <MicOff className="w-4 h-4 text-gray-400" />
+                                                )}
+                                                <button className="p-1 hover:bg-gray-100 rounded-full">
+                                                    <MoreVertical className="w-4 h-4 text-gray-400" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Chat Panel (Google Meet style) */}
+                {showChat && (
+                    <div className="w-96 flex-shrink-0 bg-white rounded-2xl shadow-lg flex flex-col">
+                        {/* Chat Header */}
+                        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 className="font-medium text-gray-900">In-call messages</h3>
+                            <button
+                                onClick={handleToggleChat}
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5 text-gray-600" />
+                            </button>
+                        </div>
+
+                        {/* Chat Info */}
+                        <div className="px-4 py-3 bg-gray-50 border-b border-gray-100">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <MessageSquare className="w-4 h-4" />
+                                <span>Continuous chat is OFF</span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Messages won&apos;t be saved when the call ends.
+                            </p>
+                        </div>
+
+                        {/* Messages */}
+                        <div
+                            className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
+                            ref={chatScrollRef}
+                        >
+                            {chatMessages.length === 0 && (
+                                <div className="text-center text-gray-400 text-sm mt-8">
+                                    No messages yet
+                                </div>
+                            )}
+                            {chatMessages.map((msg, index) => (
+                                <div key={msg.id} className="flex gap-3">
+                                    <div
+                                        className={`w-8 h-8 rounded-full ${avatarColors[
+                                            allParticipants.findIndex((p) => p.id === msg.senderId) %
+                                            avatarColors.length || 0
+                                        ]
+                                            } flex items-center justify-center text-xs font-medium text-white flex-shrink-0`}
+                                    >
+                                        {msg.senderId === peerId
+                                            ? "Y"
+                                            : msg.senderId.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-sm font-medium text-gray-900">
+                                                {msg.senderId === peerId ? "You" : msg.senderId.substring(0, 8)}
+                                            </span>
+                                            <span className="text-xs text-gray-500">
+                                                {new Date(msg.timestamp).toLocaleTimeString([], {
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                })}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-700 break-words">{msg.text}</p>
+                                    </div>
+                                </div>
                             ))}
                         </div>
-                    </div>
 
-                    {/* Controls Bar */}
-                    <div className="h-20 flex items-center justify-center gap-4 shrink-0">
-                        <div className="flex items-center gap-2 px-6 py-3 bg-slate-900/80 backdrop-blur-md border border-slate-700 rounded-full shadow-2xl">
-                            {/* Mic */}
-                            <button
-                                onClick={onToggleMute}
-                                className={`p-3 rounded-full transition-all ${isMuted
-                                    ? "bg-red-500 text-white"
-                                    : "bg-slate-700 text-slate-200 hover:bg-slate-600"
-                                    }`}
-                                title={isMuted ? "Unmute" : "Mute"}
-                            >
-                                {isMuted ? (
-                                    <MicOff className="w-5 h-5" />
-                                ) : (
-                                    <Mic className="w-5 h-5" />
-                                )}
-                            </button>
-
-                            {/* Video */}
-                            <button
-                                onClick={onToggleVideo}
-                                className={`p-3 rounded-full transition-all ${isVideoOff
-                                    ? "bg-red-500 text-white"
-                                    : "bg-slate-700 text-slate-200 hover:bg-slate-600"
-                                    }`}
-                                title={isVideoOff ? "Turn on camera" : "Turn off camera"}
-                            >
-                                {isVideoOff ? (
-                                    <VideoOff className="w-5 h-5" />
-                                ) : (
-                                    <Video className="w-5 h-5" />
-                                )}
-                            </button>
-
-                            {/* Screen Share */}
-                            <button
-                                onClick={onToggleScreenShare}
-                                className={`p-3 rounded-full transition-all ${isScreenSharing
-                                    ? "bg-green-500 text-white"
-                                    : "bg-slate-700 text-slate-200 hover:bg-slate-600"
-                                    }`}
-                                title={isScreenSharing ? "Stop sharing" : "Share screen"}
-                            >
-                                <MonitorUp className="w-5 h-5" />
-                            </button>
-
-                            {/* Chat */}
-                            <button
-                                onClick={onToggleChat}
-                                className={`p-3 rounded-full transition-all relative ${showChat
-                                    ? "bg-cyan-500 text-white"
-                                    : "bg-slate-700 text-slate-200 hover:bg-slate-600"
-                                    }`}
-                                title="Chat"
-                            >
-                                <MessageSquare className="w-5 h-5" />
-                                {hasUnreadMsg && (
-                                    <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-900" />
-                                )}
-                            </button>
-
-                            <div className="w-[1px] h-8 bg-slate-700 mx-2" />
-
-                            {/* Leave */}
-                            <button
-                                onClick={onLeave}
-                                className="px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-full font-bold text-sm tracking-wide transition-colors flex items-center gap-2"
-                            >
-                                <PhoneOff className="w-5 h-5" />
-                                Leave
-                            </button>
+                        {/* Chat Input */}
+                        <div className="p-3 border-t border-gray-200">
+                            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
+                                <input
+                                    type="text"
+                                    value={chatInput}
+                                    onChange={(e) => setChatInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                                    placeholder="Send a message"
+                                    className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-500 focus:outline-none"
+                                />
+                                <button
+                                    onClick={handleSendChat}
+                                    disabled={!chatInput.trim()}
+                                    className="text-blue-600 hover:text-blue-700 disabled:text-gray-400 transition-colors"
+                                >
+                                    <Send className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                     </div>
+                )}
+            </div>
+
+            {/* Bottom Control Bar (Google Meet style) */}
+            <div className="h-16 flex-shrink-0 bg-white border-t border-gray-200 flex items-center justify-between px-4">
+                {/* Left - Time and Meeting ID */}
+                <div className="flex items-center gap-3 text-sm text-gray-700">
+                    <span className="font-medium">{formatTime(currentTime)}</span>
+                    <span className="text-gray-400">|</span>
+                    <span>{meetingCode}</span>
                 </div>
 
-                {/* Chat Sidebar */}
-                <div
-                    className={`transition-all duration-300 ease-in-out border-l border-slate-800 bg-slate-900/95 backdrop-blur-xl flex flex-col ${showChat
-                        ? "w-80 translate-x-0"
-                        : "w-0 translate-x-full opacity-0 overflow-hidden"
-                        }`}
-                >
-                    <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-black/20">
-                        <span className="font-bold text-slate-200 tracking-wider">
-                            CHAT
-                        </span>
+                {/* Center - Main Controls */}
+                <div className="flex items-center gap-2">
+                    {/* Mic Toggle */}
+                    <div className="flex items-center">
+                        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <ChevronUp className="w-4 h-4 text-gray-600" />
+                        </button>
                         <button
-                            onClick={onToggleChat}
-                            className="text-slate-500 hover:text-white"
+                            onClick={onToggleMute}
+                            className={`p-3 rounded-full transition-all ${isMuted
+                                ? "bg-red-500 hover:bg-red-600 text-white"
+                                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                                }`}
                         >
-                            <X className="w-5 h-5" />
+                            {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                         </button>
                     </div>
 
-                    <div
-                        className="flex-1 overflow-y-auto p-4 space-y-4"
-                        ref={chatScrollRef}
-                    >
-                        {chatMessages.length === 0 && (
-                            <div className="text-center text-slate-600 text-xs font-mono mt-10">
-                                No messages yet.
-                            </div>
-                        )}
-                        {chatMessages.map((msg) => (
-                            <div
-                                key={msg.id}
-                                className={`flex flex-col ${msg.senderId === peerId ? "items-end" : "items-start"
-                                    }`}
-                            >
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] text-slate-500 font-mono">
-                                        {msg.senderId === peerId
-                                            ? "You"
-                                            : `${msg.senderId.substring(0, 4)}...`}
-                                    </span>
-                                    <span className="text-[9px] text-slate-700">
-                                        {new Date(msg.timestamp).toLocaleTimeString([], {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                        })}
-                                    </span>
-                                </div>
-                                <div
-                                    className={`px-3 py-2 rounded-lg text-sm max-w-[90%] break-words ${msg.senderId === peerId
-                                        ? "bg-cyan-600/20 border border-cyan-500/30 text-cyan-100"
-                                        : "bg-slate-800 border border-slate-700 text-slate-300"
-                                        }`}
-                                >
-                                    {msg.text}
-                                </div>
-                            </div>
-                        ))}
+                    {/* Video Toggle */}
+                    <div className="flex items-center">
+                        <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <ChevronUp className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                            onClick={onToggleVideo}
+                            className={`p-3 rounded-full transition-all ${isVideoOff
+                                ? "bg-red-500 hover:bg-red-600 text-white"
+                                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                                }`}
+                        >
+                            {isVideoOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
+                        </button>
                     </div>
 
-                    <div className="p-4 border-t border-slate-800 bg-black/20">
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
-                                placeholder="Type message..."
-                                className="flex-1 bg-slate-800 border-slate-700 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500 font-mono"
-                            />
-                            <button
-                                onClick={handleSendChat}
-                                disabled={!chatInput.trim()}
-                                className="p-2 bg-cyan-600 text-white rounded-md hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Send className="w-5 h-5" />
-                            </button>
+                    {/* Screen Share */}
+                    <button
+                        onClick={onToggleScreenShare}
+                        className={`p-3 rounded-full transition-all ${isScreenSharing
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                            }`}
+                    >
+                        <MonitorUp className="w-5 h-5" />
+                    </button>
+
+                    {/* Emoji */}
+                    <button className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-700">
+                        <Smile className="w-5 h-5" />
+                    </button>
+
+                    {/* Layout */}
+                    <button className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-700">
+                        <LayoutGrid className="w-5 h-5" />
+                    </button>
+
+                    {/* Hand */}
+                    <button className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-700">
+                        <Hand className="w-5 h-5" />
+                    </button>
+
+                    {/* More */}
+                    <button className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors text-gray-700">
+                        <MoreVertical className="w-5 h-5" />
+                    </button>
+
+                    {/* Leave Call */}
+                    <button
+                        onClick={onLeave}
+                        className="px-5 py-3 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors ml-2"
+                    >
+                        <Phone className="w-5 h-5 rotate-[135deg]" />
+                    </button>
+                </div>
+
+                {/* Right - Additional Controls with Participant Avatars */}
+                <div className="flex items-center gap-1">
+                    <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
+                        <Info className="w-5 h-5" />
+                    </button>
+
+                    {/* Participants Button with Avatars */}
+                    <button
+                        onClick={togglePeople}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${showPeople ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+                            }`}
+                    >
+                        {/* Stacked Avatars */}
+                        <div className="flex -space-x-2">
+                            {allParticipants.slice(0, 3).map((p, i) => (
+                                <div
+                                    key={p.id}
+                                    className={`w-6 h-6 rounded-full ${avatarColors[i % avatarColors.length]
+                                        } border-2 border-white flex items-center justify-center text-[10px] font-medium text-white`}
+                                >
+                                    {p.name.charAt(0).toUpperCase()}
+                                </div>
+                            ))}
                         </div>
-                    </div>
+                        <span className="text-sm font-medium">{allParticipants.length}</span>
+                    </button>
+
+                    <button
+                        onClick={handleToggleChat}
+                        className={`p-2.5 rounded-full transition-colors relative ${showChat ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-600"
+                            }`}
+                    >
+                        <MessageSquare className="w-5 h-5" />
+                        {hasUnreadMsg && (
+                            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                        )}
+                    </button>
+
+                    <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
+                        <Grid3X3 className="w-5 h-5" />
+                    </button>
                 </div>
             </div>
         </div>
     );
 };
 
-// Video Frame Component
-const VideoFrame: React.FC<{
+// Main Video Frame Component
+const MainVideoFrame: React.FC<{
     stream: MediaStream | null;
-    label: string;
-    isVideoOff?: boolean;
-    isMuted?: boolean;
-    isLocal?: boolean;
-    isScreenSharing?: boolean;
-}> = ({ stream, label, isVideoOff, isMuted, isLocal, isScreenSharing }) => {
+    name: string;
+    isLocal: boolean;
+    isVideoOff: boolean;
+    isMuted: boolean;
+    isScreenSharing: boolean;
+}> = ({ stream, name, isLocal, isVideoOff, isMuted, isScreenSharing }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
@@ -326,34 +491,31 @@ const VideoFrame: React.FC<{
     }, [stream]);
 
     return (
-        <div className="relative bg-black rounded-2xl overflow-hidden border border-slate-700 shadow-lg group aspect-video">
+        <>
             <video
                 ref={videoRef}
                 autoPlay
                 muted={isLocal}
                 playsInline
-                className={`w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""
+                className={`absolute inset-0 w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""
                     } ${isVideoOff ? "opacity-0" : "opacity-100"}`}
             />
 
-            {/* Video Off Placeholder */}
             {isVideoOff && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
-                    <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
-                        <User className="w-6 h-6 text-slate-600" />
+                <div className="absolute inset-0 flex items-center justify-center bg-[#3c4043]">
+                    <div className="w-24 h-24 rounded-full bg-blue-600 flex items-center justify-center ring-4 ring-blue-400/30">
+                        <span className="text-4xl text-white font-medium">
+                            {name.charAt(0).toUpperCase()}
+                        </span>
                     </div>
                 </div>
             )}
 
-            {/* Label */}
-            <div className="absolute bottom-4 left-4 px-3 py-1 bg-black/60 backdrop-blur rounded text-white text-xs font-bold flex items-center gap-2">
-                <span>{label}</span>
-                {isScreenSharing && (
-                    <MonitorUp className="w-3 h-3 text-green-400" />
-                )}
-                {isMuted && <MicOff className="w-3 h-3 text-red-400" />}
+            {/* Name Label */}
+            <div className="absolute bottom-3 left-3">
+                <span className="text-sm font-medium text-white drop-shadow-lg">{name}</span>
             </div>
-        </div>
+        </>
     );
 };
 
