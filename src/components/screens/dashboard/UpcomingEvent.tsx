@@ -130,7 +130,7 @@ export const UpcomingEvent = () => {
     };
   }, []);
 
-  // Time slots from 8am to 6pm (covering typical work hours)
+  // Time slots (compact view with 4 slots)
   const timeSlots = useMemo(() => [
     "8:00 am",
     "9:00 am",
@@ -142,6 +142,13 @@ export const UpcomingEvent = () => {
     "3:00 pm",
     "4:00 pm",
     "5:00 pm",
+    "6:00 pm",
+    "7:00 pm",
+    "8:00 pm",
+    "9:00 pm",
+    "10:00 pm",
+    "11:00 pm",
+    "12:00 am",
   ], []);
 
   // Fetch meetings on component mount
@@ -212,9 +219,9 @@ export const UpcomingEvent = () => {
   let eventIndex = 0;
 
   return (
-    <div className="rounded-[18px] bg-white/30 backdrop-blur-[10px] shadow-[1px_1px_10px_4px_rgba(0,0,0,0.04)] p-4 overflow-x-auto">
+    <div className="rounded-[18px] bg-white/30 backdrop-blur-[10px] shadow-[1px_1px_10px_4px_rgba(0,0,0,0.04)] p-4 overflow-hidden">
       {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-4 min-w-[400px]">
+      <div className="flex items-center justify-between mb-4">
         <button className="rounded-full shadow bg-white px-3 py-1.5 text-xs font-medium text-black/80 shadow-sm hover:bg-gray-50 transition-colors">
           {weekInfo.prevMonthName}
         </button>
@@ -227,7 +234,7 @@ export const UpcomingEvent = () => {
       </div>
 
       {/* Calendar Table */}
-      <div className="min-w-[400px]">
+      <div className="max-h-[280px] overflow-auto hidescroll scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent">
         <table className="w-full border-collapse">
           {/* Days Header */}
           <thead>
@@ -240,8 +247,8 @@ export const UpcomingEvent = () => {
                   </div>
                   <div
                     className={`text-sm font-semibold ${day.isToday
-                        ? "text-white bg-orange-500 rounded-full w-6 h-6 flex items-center justify-center mx-auto"
-                        : "text-gray-700"
+                      ? "text-white bg-orange-500 rounded-full w-6 h-6 flex items-center justify-center mx-auto"
+                      : "text-gray-700"
                       }`}
                   >
                     {day.date}
@@ -274,8 +281,8 @@ export const UpcomingEvent = () => {
                       {event && (
                         <div
                           className={`rounded-lg p-2 h-full flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.02] ${isDark
-                              ? "bg-gray-800 text-white shadow-lg shadow-black/30"
-                              : "bg-white border border-gray-100 shadow-lg"
+                            ? "bg-gray-800 text-white shadow-lg shadow-black/30"
+                            : "bg-white border border-gray-100 shadow-lg"
                             }`}
                           title={event.title}
                         >
@@ -326,8 +333,8 @@ export const UpcomingEvent = () => {
                             {event.participants.length > 3 && (
                               <div
                                 className={`h-6 w-6 rounded-full flex items-center justify-center text-[8px] font-semibold border-2 ${isDark
-                                    ? "bg-gray-700 text-gray-300 border-gray-800"
-                                    : "bg-gray-100 text-gray-600 border-white"
+                                  ? "bg-gray-700 text-gray-300 border-gray-800"
+                                  : "bg-gray-100 text-gray-600 border-white"
                                   }`}
                               >
                                 +{event.participants.length - 3}
