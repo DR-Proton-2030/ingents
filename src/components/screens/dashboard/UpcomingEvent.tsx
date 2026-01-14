@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   getMeetings,
-  getCurrentWeekDates,
   Meeting,
   Participant,
 } from "@/utils/api/meeting/meeting.api";
@@ -88,14 +87,19 @@ export const UpcomingEvent = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = prev week, 1 = next week
 
-  // Get current week dates dynamically
+  // Get week dates based on offset
   const weekInfo = useMemo(() => {
     const now = new Date();
     const dayOfWeek = now.getDay();
     const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() + diff);
+    const startOfCurrentWeek = new Date(now);
+    startOfCurrentWeek.setDate(now.getDate() + diff);
+
+    // Apply week offset
+    const startOfWeek = new Date(startOfCurrentWeek);
+    startOfWeek.setDate(startOfCurrentWeek.getDate() + (weekOffset * 7));
 
     const days = [];
     const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -107,28 +111,38 @@ export const UpcomingEvent = () => {
         name: dayNames[i],
         date: date.getDate(),
         fullDate: date,
-        isToday:
-          date.toDateString() === now.toDateString(),
+        isToday: date.toDateString() === now.toDateString(),
       });
     }
 
     const monthName = startOfWeek.toLocaleString("default", { month: "long" });
     const year = startOfWeek.getFullYear();
 
-    // Get previous and next month names
-    const prevMonth = new Date(startOfWeek);
-    prevMonth.setMonth(prevMonth.getMonth() - 1);
-    const nextMonth = new Date(startOfWeek);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    // Calculate end of week for display
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const endMonthName = endOfWeek.toLocaleString("default", { month: "long" });
+    const endYear = endOfWeek.getFullYear();
+
+    // Format date range for API
+    const formatDate = (date: Date): string => {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    };
 
     return {
       days,
       monthName,
       year,
-      prevMonthName: prevMonth.toLocaleString("default", { month: "long" }),
-      nextMonthName: nextMonth.toLocaleString("default", { month: "long" }),
+      endMonthName,
+      endYear,
+      fromDate: formatDate(startOfWeek),
+      toDate: formatDate(endOfWeek),
+      isCurrentWeek: weekOffset === 0,
     };
-  }, []);
+  }, [weekOffset]);
 
   // Time slots (compact view with 4 slots)
   const timeSlots = useMemo(() => [
@@ -151,14 +165,13 @@ export const UpcomingEvent = () => {
     "12:00 am",
   ], []);
 
-  // Fetch meetings on component mount
+  // Fetch meetings when week changes
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
         setIsLoading(true);
         setError(null);
-        const { fromDate, toDate } = getCurrentWeekDates();
-        const response = await getMeetings(fromDate, toDate, 1, 50);
+        const response = await getMeetings(weekInfo.fromDate, weekInfo.toDate, 1, 50);
         setMeetings(response.data || []);
       } catch (err) {
         console.error("Failed to fetch meetings:", err);
@@ -169,7 +182,12 @@ export const UpcomingEvent = () => {
     };
 
     fetchMeetings();
-  }, []);
+  }, [weekInfo.fromDate, weekInfo.toDate]);
+
+  // Navigation handlers
+  const goToPreviousWeek = () => setWeekOffset((prev) => prev - 1);
+  const goToNextWeek = () => setWeekOffset((prev) => prev + 1);
+  const goToCurrentWeek = () => setWeekOffset(0);
 
   // Get meeting for a specific slot
   const getEventForSlot = (timeSlotIndex: number, dayIndex: number) => {
@@ -220,21 +238,46 @@ export const UpcomingEvent = () => {
 
   return (
     <div className="rounded-[18px] bg-white/30 backdrop-blur-[10px] shadow-[1px_1px_10px_4px_rgba(0,0,0,0.04)] p-4 overflow-hidden">
-      {/* Month Navigation */}
+      {/* Week Navigation */}
       <div className="flex items-center justify-between mb-4">
-        <button className="rounded-full shadow bg-white px-3 py-1.5 text-xs font-medium text-black/80 shadow-sm hover:bg-gray-50 transition-colors">
-          {weekInfo.prevMonthName}
+        <button
+          onClick={goToPreviousWeek}
+          className="rounded-full shadow bg-white px-3 py-1.5 text-xs font-medium text-black/80 shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-1"
+        >
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Prev Week
         </button>
-        <h2 className="text-base font-semibold text-gray-800">
-          {weekInfo.monthName} {weekInfo.year}
-        </h2>
-        <button className="rounded-full shadow bg-white px-3 py-1.5 text-xs font-medium text-black/80 shadow-sm hover:bg-gray-50 transition-colors">
-          {weekInfo.nextMonthName}
+        <div className="text-center">
+          <h2 className="text-base font-semibold text-gray-800">
+            {weekInfo.monthName === weekInfo.endMonthName
+              ? `${weekInfo.monthName} ${weekInfo.year}`
+              : `${weekInfo.monthName} - ${weekInfo.endMonthName} ${weekInfo.year}`
+            }
+          </h2>
+          {!weekInfo.isCurrentWeek && (
+            <button
+              onClick={goToCurrentWeek}
+              className="text-[10px] text-orange-500 hover:text-orange-600 font-medium"
+            >
+              Go to current week
+            </button>
+          )}
+        </div>
+        <button
+          onClick={goToNextWeek}
+          className="rounded-full shadow bg-white px-3 py-1.5 text-xs font-medium text-black/80 shadow-sm hover:bg-gray-50 transition-colors flex items-center gap-1"
+        >
+          Next Week
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
 
       {/* Calendar Table */}
-      <div className="max-h-[280px] overflow-auto hidescroll scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent">
+      <div className="max-h-[300px] overflow-auto hidescroll scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent">
         <table className="w-full border-collapse">
           {/* Days Header */}
           <thead>
