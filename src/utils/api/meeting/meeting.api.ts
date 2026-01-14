@@ -135,6 +135,22 @@ export const getMeetingById = async (
     throw new Error(error.response?.data?.message || "Meeting details fetch failed");
   }
 };
+export const getMeetingByCode = async (
+  meetingId: string
+): Promise<MeetingDetailsResponse> => {
+  try {
+    const response = await API.get(`/${initialRoute}/code/${meetingId}`);
+
+    console.log("✅ Meeting details fetch successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Meeting details fetch failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Meeting details fetch failed");
+  }
+};
 
 // Helper function to get the start and end of the current week
 export const getCurrentWeekDates = (): { fromDate: string; toDate: string } => {

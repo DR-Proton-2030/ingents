@@ -16,15 +16,19 @@ import {
     LayoutGrid,
     Hand,
     Info,
-    Grid3X3,
-    UserPlus,
-    Search,
     Sparkles,
     Pin,
     PinOff,
     HandFist,
+    BrainCircuit,
+    ScrollText,
+    Bot,
+    UserPlus,
+    Search,
 } from "lucide-react";
 import { UserHandUp } from "@solar-icons/react/ssr";
+
+import { MeetingDetails, Participant as MeetingParticipant } from "@/utils/api/meeting/meeting.api";
 
 interface PeerStream {
     peerId: string;
@@ -48,6 +52,8 @@ interface MeetingRoomProps {
     meetingCode: string;
     peerId: string;
     localStream: MediaStream | null;
+    meetingInfo: MeetingDetails | null;
+    participants: MeetingParticipant[];
     remoteStreams: PeerStream[];
     isMuted: boolean;
     isVideoOff: boolean;
@@ -71,6 +77,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     meetingCode,
     peerId,
     localStream,
+    meetingInfo,
+    participants,
     remoteStreams,
     isMuted,
     isVideoOff,
@@ -91,6 +99,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 }) => {
     const [chatInput, setChatInput] = useState("");
     const [showPeople, setShowPeople] = useState(false);
+    const [showSummary, setShowSummary] = useState(false);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
     const [showReactionPicker, setShowReactionPicker] = useState(false);
     const [layout, setLayout] = useState<LayoutType>("sidebar");
@@ -125,6 +134,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     // Close all panels
     const closeAllPanels = () => {
         setShowPeople(false);
+        setShowSummary(false);
         if (showChat) onToggleChat();
     };
 
@@ -136,10 +146,18 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         setShowPeople(!showPeople);
     };
 
+    // Toggle summary panel
+    const toggleSummary = () => {
+        if (!showSummary) {
+            closeAllPanels();
+        }
+        setShowSummary(!showSummary);
+    };
+
     // Toggle chat
     const handleToggleChat = () => {
         if (!showChat) {
-            setShowPeople(false);
+            closeAllPanels();
         }
         onToggleChat();
     };
@@ -149,24 +167,28 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             id: "local",
             stream: localStream,
             isLocal: true,
-            name: "You",
-            fullName: "You",
+            name: meetingInfo?.host_details?.full_name?.split(" ")[0] || "You",
+            fullName: meetingInfo?.host_details?.full_name || "You",
             isVideoOff: isVideoOff,
             isMuted: isMuted,
             reaction: localReaction,
             isHandRaised: isHandRaised
         },
-        ...remoteStreams.map((p) => ({
-            id: p.peerId,
-            stream: p.stream,
-            isLocal: false,
-            name: p.peerId.substring(0, 8),
-            fullName: `Participant ${p.peerId.substring(0, 4)}`,
-            isVideoOff: p.isVideoOff || false,
-            isMuted: p.isMuted || false,
-            reaction: p.reaction || null,
-            isHandRaised: p.isHandRaised || false,
-        })),
+        ...remoteStreams.map((p) => {
+            const invitee = participants?.find((m: MeetingParticipant) => m.user_details?._id === p.peerId || m._id === p.peerId);
+            const name = invitee?.user_details?.full_name || invitee?.external_name || p.peerId.substring(0, 8);
+            return {
+                id: p.peerId,
+                stream: p.stream,
+                isLocal: false,
+                name: name.split(" ")[0],
+                fullName: name,
+                isVideoOff: p.isVideoOff || false,
+                isMuted: p.isMuted || false,
+                reaction: p.reaction || null,
+                isHandRaised: p.isHandRaised || false,
+            };
+        }),
     ];
 
     // Rearrange participants based on pinning
@@ -322,7 +344,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     };
 
     return (
-        <div className="h-screen flex flex-col bg-[#f8f9fa] overflow-hidden">
+        <div className="h-screen flex flex-col bg-gray-200 overflow-hidden">
             {/* Layout Modal (Floating centered modal) */}
             {showLayoutModal && (
                 <div
@@ -486,24 +508,32 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                                     </div>
                                 </button>
                                 <div className="border-t border-gray-100">
-                                    {allParticipants.map((participant, index) => (
-                                        <div key={participant.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                                            <div className={`w-9 h-9 rounded-full ${avatarColors[index % avatarColors.length]} flex items-center justify-center text-white font-medium text-sm flex-shrink-0`}>
-                                                {participant.name.charAt(0).toUpperCase()}
+                                    {allParticipants.map((participant, index) => {
+                                        const isHost = meetingInfo?.host_user_object_id === participant.id || (participant.isLocal && meetingInfo?.host_details?._id === "local");
+                                        return (
+                                            <div key={participant.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                                                <div className={`w-9 h-9 rounded-full ${avatarColors[index % avatarColors.length]} flex items-center justify-center text-white font-medium text-sm flex-shrink-0`}>
+                                                    {participant.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm text-gray-900 truncate font-medium">
+                                                            {participant.fullName}{participant.isLocal && " (You)"}
+                                                        </span>
+                                                        {isHost && (
+                                                            <span className="text-[10px] bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Host</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-shrink-0">
+                                                    {(participant.isLocal ? isMuted : participant.isMuted) && <MicOff className="w-4 h-4 text-gray-400" />}
+                                                    <button className="p-1 hover:bg-gray-100 rounded-full">
+                                                        <MoreVertical className="w-4 h-4 text-gray-400" />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <span className="text-sm text-gray-900 truncate block">
-                                                    {participant.fullName}{participant.isLocal && " (You)"}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2 flex-shrink-0">
-                                                {(participant.isLocal ? isMuted : false) && <MicOff className="w-4 h-4 text-gray-400" />}
-                                                <button className="p-1 hover:bg-gray-100 rounded-full">
-                                                    <MoreVertical className="w-4 h-4 text-gray-400" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -563,15 +593,43 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                         </div>
                     </div>
                 )}
+
+                {/* Summary Panel */}
+                {showSummary && (
+                    <div className="w-96 flex-shrink-0 bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
+                        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-white rounded-lg shadow-sm">
+                                    <Sparkles className="w-5 h-5 text-blue-600" />
+                                </div>
+                                <h3 className="font-semibold text-gray-900">AI Summary</h3>
+                            </div>
+                            <button onClick={toggleSummary} className="p-1.5 hover:bg-white/50 rounded-full transition-colors">
+                                <X className="w-5 h-5 text-gray-600" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-5 scrollbar-hide">
+                            <AIContent chatMessages={chatMessages} />
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Bottom Control Bar */}
             <div className="h-16 flex-shrink-0 bg-white border-t border-gray-200 flex items-center justify-between px-4">
-                {/* Left - Time and Meeting ID */}
+                {/* Left - Time and Meeting Info */}
                 <div className="flex items-center gap-3 text-sm text-gray-700">
-                    <span className="font-medium">{formatTime(currentTime)}</span>
-                    <span className="text-gray-400">|</span>
-                    <span>{meetingCode}</span>
+                    <span className="font-bold text-gray-900">{formatTime(currentTime)}</span>
+                    <span className="text-gray-300">|</span>
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-gray-800 leading-tight">
+                            {meetingInfo?.title || "Meeting"}
+                        </span>
+                        <span className="text-[10px] text-gray-400 font-mono tracking-wider">
+                            {meetingCode}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Center - Main Controls */}
@@ -678,13 +736,18 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                     <button
                         onClick={handleToggleChat}
                         className={`p-2.5 rounded-full transition-colors relative ${showChat ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-600"}`}
+                        title="Chat"
                     >
                         <MessageSquare className="w-5 h-5" />
                         {hasUnreadMsg && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />}
                     </button>
 
-                    <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors text-gray-600">
-                        <Grid3X3 className="w-5 h-5" />
+                    <button
+                        onClick={toggleSummary}
+                        className={`p-2.5 rounded-full transition-colors ${showSummary ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-600"}`}
+                        title="AI Summary"
+                    >
+                        <Sparkles className="w-5 h-5" />
                     </button>
                 </div>
             </div>
@@ -794,6 +857,138 @@ const VideoTile: React.FC<{
             <div className="absolute bottom-2 left-2 z-10">
                 <span className="text-sm font-medium text-white drop-shadow-md bg-black/20 px-2 py-0.5 rounded-md backdrop-blur-[2px]">{name}</span>
             </div>
+        </div>
+    );
+};
+
+// AI Content Component (Simulated)
+const AIContent: React.FC<{ chatMessages: ChatMessage[] }> = ({ chatMessages }) => {
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [summary, setSummary] = useState<{
+        title: string;
+        keyPoints: string[];
+        actionItems: string[];
+        sentiment: string;
+    } | null>(null);
+
+    const generateSummary = () => {
+        setIsGenerating(true);
+        // Simulate AI generation delay
+        setTimeout(() => {
+            setSummary({
+                title: "Project Update & Sync",
+                keyPoints: [
+                    "Discussed the progress of the media sync feature implementation.",
+                    "Identified issues with PeerJS initialization order and fixed them using hoisting.",
+                    "Integrated real-time emoji reactions and hand-raising notifications.",
+                    "Reviewed the premium UI design for the dashboard and meeting room."
+                ],
+                actionItems: [
+                    "Complete the AI summary side panel integration.",
+                    "Test multi-user media state synchronization in the production environment.",
+                    "Optimize video grid layout for larger participant groups."
+                ],
+                sentiment: "Highly productive and collaborative session with clear outcomes."
+            });
+            setIsGenerating(false);
+        }, 2500);
+    };
+
+    if (isGenerating) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full space-y-4 py-20">
+                <div className="relative">
+                    <div className="w-20 h-20 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+                    <Sparkles className="absolute inset-0 m-auto w-8 h-8 text-blue-600 animate-pulse" />
+                </div>
+                <div className="text-center">
+                    <p className="text-gray-900 font-medium">Analyzing meeting data...</p>
+                    <p className="text-gray-500 text-sm">Our AI is summarizing the discussion</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!summary) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-center py-10">
+                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-4">
+                    <Bot className="w-8 h-8 text-blue-600" />
+                </div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">Need a quick catch-up?</h4>
+                <p className="text-gray-600 text-sm mb-6 max-w-[240px]">
+                    Generate an AI-powered summary of everything discussed in this meeting so far.
+                </p>
+                <button
+                    onClick={generateSummary}
+                    className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 group"
+                >
+                    <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    Generate Summary
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Title */}
+            <div>
+                <h4 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1">Meeting Overview</h4>
+                <h3 className="text-xl font-bold text-gray-900">{summary.title}</h3>
+            </div>
+
+            {/* Sentiment */}
+            <div className="p-3 bg-green-50 rounded-xl border border-green-100 flex gap-3">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                    <Smile className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                    <p className="text-xs font-bold text-green-700 uppercase">Mojo Score</p>
+                    <p className="text-sm text-green-800 font-medium">{summary.sentiment}</p>
+                </div>
+            </div>
+
+            {/* Key Points */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <ScrollText className="w-4 h-4 text-purple-600" />
+                    <h4 className="font-bold text-gray-900">Key Discussion Points</h4>
+                </div>
+                <ul className="space-y-3">
+                    {summary.keyPoints.map((point, i) => (
+                        <li key={i} className="flex gap-3 text-sm text-gray-600 leading-relaxed">
+                            <span className="w-5 h-5 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                                {i + 1}
+                            </span>
+                            {point}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+
+            {/* Action Items */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <ScrollText className="w-4 h-4 text-orange-600" />
+                    <h4 className="font-bold text-gray-900">Action Items</h4>
+                </div>
+                <div className="space-y-2">
+                    {summary.actionItems.map((item, i) => (
+                        <div key={i} className="flex items-start gap-3 p-3 bg-orange-50/50 rounded-xl border border-orange-100">
+                            <div className="mt-1 w-2 h-2 rounded-full bg-orange-400" />
+                            <p className="text-sm text-gray-700 font-medium">{item}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <button
+                onClick={generateSummary}
+                className="w-full py-2.5 text-sm text-blue-600 font-semibold hover:bg-blue-50 rounded-lg border border-blue-100 transition-colors"
+            >
+                Refresh Summary
+            </button>
         </div>
     );
 };

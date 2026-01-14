@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Script from "next/script";
 import MeetingLobby from "@/components/shared/meeting/MeetingLobby";
 import MeetingRoom from "@/components/shared/meeting/MeetingRoom";
+import { getMeetingByCode, MeetingDetails, Participant } from "@/utils/api/meeting/meeting.api";
 
 declare global {
     interface Window {
@@ -50,6 +51,11 @@ export default function MeetingPage() {
     const [isHandRaised, setIsHandRaised] = useState(false);
     const [localReaction, setLocalReaction] = useState<string | null>(null);
 
+    // Meeting Info State
+    const [meetingInfo, setMeetingInfo] = useState<MeetingDetails | null>(null);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [isFetchingInfo, setIsFetchingInfo] = useState(true);
+
     // Chat State
     const [showChat, setShowChat] = useState(false);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -71,6 +77,25 @@ export default function MeetingPage() {
     useEffect(() => {
         audioRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3");
     }, []);
+
+    // Fetch meeting details
+    useEffect(() => {
+        const fetchMeetingData = async () => {
+            if (!meetingCode) return;
+            try {
+                setIsFetchingInfo(true);
+                const response = await getMeetingByCode(meetingCode);
+                setMeetingInfo(response.data.meeting);
+                setParticipants(response.data.participants);
+            } catch (err) {
+                console.error("Failed to fetch meeting info:", err);
+            } finally {
+                setIsFetchingInfo(false);
+            }
+        };
+
+        fetchMeetingData();
+    }, [meetingCode]);
 
     // Initialize media on mount
     useEffect(() => {
@@ -440,6 +465,9 @@ export default function MeetingPage() {
                     <MeetingLobby
                         meetingCode={meetingCode}
                         localStream={localStream}
+                        meetingInfo={meetingInfo}
+                        participants={participants}
+                        isFetchingInfo={isFetchingInfo}
                         isMuted={isMuted}
                         isVideoOff={isVideoOff}
                         isLoading={isLoading}
@@ -454,6 +482,8 @@ export default function MeetingPage() {
                         meetingCode={meetingCode}
                         peerId={peerId}
                         localStream={localStream}
+                        meetingInfo={meetingInfo}
+                        participants={participants}
                         remoteStreams={remoteStreams}
                         isMuted={isMuted}
                         isVideoOff={isVideoOff}
