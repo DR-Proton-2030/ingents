@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import { ParticipantState } from "./types";
-import { MicOff, Pin, PinOff, Sparkles } from "lucide-react";
+import { MicOff, MoreVertical, Pin, PinOff, Sparkles } from "lucide-react";
 import { UserHandUp } from "@solar-icons/react/ssr";
 import { FaRegHandPaper } from "react-icons/fa";
 import SimulationBackground from "./SimulationBackground";
