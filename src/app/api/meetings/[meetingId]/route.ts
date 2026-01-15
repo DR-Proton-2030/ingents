@@ -35,3 +35,37 @@ export async function GET(
     );
   }
 }
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ meetingId: string }> }
+) {
+  try {
+    const { meetingId } = await params;
+    const body = await req.json();
+    
+    // Extract cookies from the incoming request
+    const cookies = req.headers.get("cookie") || "";
+
+    const response = await axios.patch(
+      `${BACKEND_URL}/api/v1/meetings/${meetingId}`,
+      body,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Cookie": cookies,
+        },
+        withCredentials: true,
+      }
+    );
+    
+    console.log("response from update meeting", response.data);
+    return NextResponse.json(response.data);
+  } catch (err: any) {
+    console.error("Backend API error:", err.response?.data || err.message);
+    return NextResponse.json(
+      { error: err.response?.data?.message || "Failed to update meeting" },
+      { status: err.response?.status || 500 }
+    );
+  }
+}

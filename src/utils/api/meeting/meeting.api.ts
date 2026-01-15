@@ -218,3 +218,29 @@ export const createMeeting = async (
   }
 };
 
+export interface UpdateMeetingPayload {
+  title?: string;
+  description?: string;
+  scheduled_start_time?: string;
+  scheduled_end_time?: string;
+  duration_minutes?: number;
+  notes?: string;
+}
+
+export const updateMeeting = async (
+  meetingId: string,
+  payload: UpdateMeetingPayload
+): Promise<any> => {
+  try {
+    const response = await API.patch(`/${initialRoute}/${meetingId}`, payload);
+
+    console.log("✅ Meeting update successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Meeting update failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Meeting update failed");
+  }
+};
