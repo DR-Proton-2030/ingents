@@ -29,10 +29,8 @@ const filters = [
 const backgrounds = [
     { id: "none", name: "None", preview: null },
     { id: "blur", name: "Blur Background", preview: "bg-gray-200" },
-    { id: "office", name: "Modern Office", preview: "bg-blue-100" },
-    { id: "living-room", name: "Cozy Living Room", preview: "bg-orange-100" },
-    { id: "cafe", name: "Quiet Cafe", preview: "bg-amber-100" },
-    { id: "space", name: "Deep Space", preview: "bg-slate-900" },
+    { id: "forest", name: "Lush Forest", preview: "bg-[url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=256')]" },
+    { id: "home", name: "Modern Home", preview: "bg-[url('https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=256')]" },
 ];
 
 const MeetingVisualEffects: React.FC<MeetingVisualEffectsProps> = ({

@@ -1,13 +1,10 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
-import {
-    MicOff,
-    MoreVertical,
-    Pin,
-    PinOff,
-} from "lucide-react";
+import { ParticipantState } from "./types";
+import { MicOff, Pin, PinOff, Sparkles } from "lucide-react";
 import { UserHandUp } from "@solar-icons/react/ssr";
 import { FaRegHandPaper } from "react-icons/fa";
+import SimulationBackground from "./SimulationBackground";
 
 interface VideoTileProps {
     id: string;
@@ -35,13 +32,12 @@ const filterMap: Record<string, string> = {
     "contrast": "contrast(1.5)",
 };
 
-const backgroundColors: Record<string, string> = {
-    "none": "",
-    "blur": "blur",
-    "office": "#e0f2fe", // blue-100
-    "living-room": "#ffedd5", // orange-100
-    "cafe": "#fef3c7", // amber-100
-    "space": "#0f172a", // slate-900
+const backgroundConfigs: Record<string, { type: 'blur' | 'color' | 'simulation', value: string }> = {
+    "none": { type: 'color', value: '' },
+    "blur": { type: 'blur', value: '' },
+    "forest": { type: 'simulation', value: 'forest' },
+    "home": { type: 'simulation', value: 'home' },
+    "space": { type: 'simulation', value: 'space' },
 };
 
 const VideoTile: React.FC<VideoTileProps> = ({
@@ -90,25 +86,35 @@ const VideoTile: React.FC<VideoTileProps> = ({
             ctx.save();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw the mask
-            ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+            // Clear everything first
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw background
-            ctx.globalCompositeOperation = "source-out";
-            const bgEffect = backgroundColors[videoBackground];
+            const config = backgroundConfigs[videoBackground];
 
-            if (bgEffect === "blur") {
-                ctx.filter = "blur(15px)";
+            if (config.type === 'simulation') {
+                // For simulation, we want a transparent background for the person
+                // Draw mask as destination
+                ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+                // Draw person only in the mask
+                ctx.globalCompositeOperation = "source-in";
                 ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
-                ctx.filter = "none";
-            } else if (bgEffect && bgEffect !== "") {
-                ctx.fillStyle = bgEffect;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
+            } else {
+                // Legacy behavior for blur/color
+                ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+                ctx.globalCompositeOperation = "source-out";
 
-            // Draw person
-            ctx.globalCompositeOperation = "destination-atop";
-            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+                if (config.type === "blur") {
+                    ctx.filter = "blur(15px)";
+                    ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+                    ctx.filter = "none";
+                } else if (config.value && config.value !== "") {
+                    ctx.fillStyle = config.value;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+
+                ctx.globalCompositeOperation = "destination-atop";
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+            }
 
             ctx.restore();
         });
@@ -161,6 +167,12 @@ const VideoTile: React.FC<VideoTileProps> = ({
                 }}
                 className={`absolute inset-0 w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} ${isVideoOff ? "opacity-0" : (videoBackground !== "none" ? "opacity-0 pointer-events-none" : "opacity-100")}`}
             />
+
+            {backgroundConfigs[videoBackground]?.type === 'simulation' && !isVideoOff && (
+                <div className={`${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} absolute inset-0`}>
+                    <SimulationBackground environment={backgroundConfigs[videoBackground].value as any} />
+                </div>
+            )}
 
             <canvas
                 ref={canvasRef}
