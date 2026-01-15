@@ -177,9 +177,12 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white">
+                <div className="sticky m-3 top-0 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold">Meeting Details</h2>
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                            {/* <Calendar className="w-5 h-5" /> */}
+                            Meeting Details
+                        </h2>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-white/20 rounded-full transition-colors"
