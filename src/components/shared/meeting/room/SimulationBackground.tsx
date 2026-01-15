@@ -24,48 +24,57 @@ const CameraParallax: React.FC<{ offset?: { x: number, y: number } }> = ({ offse
     return null;
 };
 
-const ForestScene = () => (
-    <>
-        <color attach="background" args={['#051105']} />
-        <fog attach="fog" args={['#051505', 0, 25]} />
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[-5, 10, -5]} intensity={0.8} color="#aaddaa" />
+const ForestScene = () => {
+    const trees = React.useMemo(() => {
+        return [...Array(30)].map((_, i) => {
+            const x = (Math.random() - 0.5) * 40;
+            const z = (Math.random() - 0.5) * 40 - 5;
+            const height = 4 + Math.random() * 6;
+            const shouldRender = Math.abs(x) >= 3 || Math.abs(z) >= 3;
+            return { x, z, height, shouldRender, id: i };
+        });
+    }, []);
 
-        <Environment preset="park" />
+    return (
+        <>
+            <color attach="background" args={['#051105']} />
+            <fog attach="fog" args={['#051505', 0, 25]} />
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[-5, 10, -5]} intensity={0.8} color="#aaddaa" />
 
-        <Sparkles count={400} scale={15} size={4} speed={0.4} opacity={0.8} color="#aaffaa" />
+            <Environment preset="park" />
 
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
-            <planeGeometry args={[100, 100]} />
-            <meshStandardMaterial color="#0a220a" roughness={1} />
-        </mesh>
+            <Sparkles count={400} scale={15} size={4} speed={0.4} opacity={0.8} color="#aaffaa" />
 
-        <group>
-            {[...Array(30)].map((_, i) => {
-                const x = (Math.random() - 0.5) * 40;
-                const z = (Math.random() - 0.5) * 40 - 5;
-                if (Math.abs(x) < 3 && Math.abs(z) < 3) return null;
-                const height = 4 + Math.random() * 6;
-                return (
-                    <group key={i} position={[x, -2, z]}>
-                        <mesh position={[0, height / 2, 0]}>
-                            <cylinderGeometry args={[0.1, 0.3, height]} />
-                            <meshStandardMaterial color="#3d2c1d" />
-                        </mesh>
-                        <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
-                            <mesh position={[0, height, 0]}>
-                                <coneGeometry args={[1.5, 3, 6]} />
-                                <meshStandardMaterial color="#0a3d0a" />
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
+                <planeGeometry args={[100, 100]} />
+                <meshStandardMaterial color="#0a220a" roughness={1} />
+            </mesh>
+
+            <group>
+                {trees.map((tree) => {
+                    if (!tree.shouldRender) return null;
+                    return (
+                        <group key={tree.id} position={[tree.x, -2, tree.z]}>
+                            <mesh position={[0, tree.height / 2, 0]}>
+                                <cylinderGeometry args={[0.1, 0.3, tree.height]} />
+                                <meshStandardMaterial color="#3d2c1d" />
                             </mesh>
-                        </Float>
-                    </group>
-                )
-            })}
-        </group>
+                            <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+                                <mesh position={[0, tree.height, 0]}>
+                                    <coneGeometry args={[1.5, 3, 6]} />
+                                    <meshStandardMaterial color="#0a3d0a" />
+                                </mesh>
+                            </Float>
+                        </group>
+                    )
+                })}
+            </group>
 
-        <Cloud opacity={0.3} speed={0.1} width={10} depth={1.5} segments={20} position={[0, 8, -10]} />
-    </>
-);
+            <Cloud opacity={0.3} speed={0.1} segments={20} position={[0, 8, -10]} />
+        </>
+    );
+};
 
 const HomeScene = () => (
     <>
