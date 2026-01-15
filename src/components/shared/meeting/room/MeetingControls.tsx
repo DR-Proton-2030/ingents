@@ -42,6 +42,7 @@ interface MeetingControlsProps {
     hasUnreadMsg: boolean;
     allParticipants: ParticipantState[];
     meetingCode: string;
+    meetingTitle?: string;
 }
 
 const avatarColors = [
@@ -78,6 +79,7 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
     hasUnreadMsg,
     allParticipants,
     meetingCode,
+    meetingTitle,
 }) => {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -96,8 +98,7 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
             {/* Left - Meeting Info */}
             <div className="flex items-center gap-4">
                 <div className="flex flex-col">
-                    <span className="text-gray-900 font-medium">{formatTime(currentTime)} | {meetingCode}</span>
-
+                    <span className="text-gray-900 font-medium">{formatTime(currentTime)} | {meetingTitle || meetingCode}</span>
                 </div>
             </div>
 

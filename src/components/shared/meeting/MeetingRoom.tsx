@@ -242,6 +242,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 hasUnreadMsg={hasUnreadMsg}
                 allParticipants={allParticipants}
                 meetingCode={meetingCode}
+                meetingTitle={meetingInfo?.title}
             />
         </div>
     );
