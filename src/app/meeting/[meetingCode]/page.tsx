@@ -178,8 +178,12 @@ export default function MeetingPage() {
 
     // --- Peer Management Functions (Hoisted) ---
     function broadcastData(data: any) {
+        const uniquePeers = new Set<string>();
         dataConnsRef.current.forEach((conn) => {
-            if (conn.open) conn.send(data);
+            if (conn.open && !uniquePeers.has(conn.peer)) {
+                conn.send(data);
+                uniquePeers.add(conn.peer);
+            }
         });
     }
 
@@ -204,10 +208,18 @@ export default function MeetingPage() {
         });
     }
 
-    const startTranscription = () => {
+    const startTranscription = (shouldBroadcast = true) => {
         if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
-            toast.error("Speech Recognition is not supported in this browser.");
+            if (shouldBroadcast) toast.error("Speech Recognition is not supported in this browser.");
             return;
+        }
+
+        // Clean up previous instance if any
+        if (recognitionRef.current) {
+            try {
+                recognitionRef.current.onend = null;
+                recognitionRef.current.stop();
+            } catch (e) { }
         }
 
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -217,50 +229,71 @@ export default function MeetingPage() {
         recognition.lang = "en-US";
 
         recognition.onresult = (event: any) => {
+            // Check mute state from the ref
+            if (isMutedRef.current) return;
+
             const result = event.results[event.results.length - 1];
             if (result.isFinal) {
-                const text = result[0].transcript;
+                const text = result[0].transcript.trim();
+                if (!text) return;
+
                 const transcriptEntry: TranscriptEntry = {
-                    id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                    id: `${peerIdRef.current}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                     senderId: peerIdRef.current,
                     senderName: currentUserRef.current.name,
                     text: text,
                     timestamp: Date.now()
                 };
 
-                setTranscripts(prev => [...prev, transcriptEntry]);
+                setTranscripts(prev => {
+                    if (prev.find(t => t.id === transcriptEntry.id)) return prev;
+                    return [...prev, transcriptEntry];
+                });
                 broadcastData({ type: "transcription", payload: transcriptEntry });
             }
         };
 
         recognition.onerror = (event: any) => {
             console.error("Speech Recognition Error:", event.error);
-            if (event.error === "no-speech") return;
+            if (event.error === "no-speech" || event.error === "aborted") return;
             setIsTranscriptionActive(false);
             isTranscriptionActiveRef.current = false;
         };
 
         recognition.onend = () => {
-            if (isTranscriptionActiveRef.current) {
-                recognition.start();
+            if (isTranscriptionActiveRef.current && !isMutedRef.current) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error("Failed to restart recognition", e);
+                }
             }
         };
 
         recognitionRef.current = recognition;
-        recognition.start();
-        setIsTranscriptionActive(true);
-        isTranscriptionActiveRef.current = true;
-        broadcastData({ type: "transcription-status", payload: { active: true } });
-        toast.info("Transcription activated for everyone.");
+        try {
+            recognition.start();
+            setIsTranscriptionActive(true);
+            isTranscriptionActiveRef.current = true;
+            if (shouldBroadcast) {
+                broadcastData({ type: "transcription-status", payload: { active: true } });
+                toast.info("Meeting Transcription started for everyone.");
+            }
+        } catch (e) {
+            console.error("Failed to start recognition", e);
+        }
     };
 
-    const stopTranscription = () => {
+    const stopTranscription = (shouldBroadcast = true) => {
         if (recognitionRef.current) {
             recognitionRef.current.stop();
+            recognitionRef.current = null;
         }
         setIsTranscriptionActive(false);
         isTranscriptionActiveRef.current = false;
-        broadcastData({ type: "transcription-status", payload: { active: false } });
+        if (shouldBroadcast) {
+            broadcastData({ type: "transcription-status", payload: { active: false } });
+        }
     };
 
     const toggleTranscription = () => {
@@ -280,6 +313,7 @@ export default function MeetingPage() {
     }
 
     function setupDataConnection(conn: any) {
+        if (dataConnsRef.current.find(c => c.peer === conn.peer)) return;
         dataConnsRef.current.push(conn);
         conn.on("open", () => {
             // Send user info immediately
@@ -310,6 +344,11 @@ export default function MeetingPage() {
         });
 
         conn.on("data", (data: any) => {
+            // Ignore messages from self to prevent duplication loops
+            if (data.payload?.senderId === peerIdRef.current || data.payload?.peerId === peerIdRef.current) {
+                return;
+            }
+
             if (data.type === "user-info") {
                 // Update remote stream with user name
                 setRemoteStreams(prev => {
@@ -333,7 +372,10 @@ export default function MeetingPage() {
                 });
             }
             if (data.type === "chat") {
-                setChatMessages((prev) => [...prev, data.payload]);
+                setChatMessages((prev) => {
+                    if (prev.find(m => m.id === data.payload.id)) return prev;
+                    return [...prev, data.payload];
+                });
                 if (!showChat) setHasUnreadMsg(true);
             }
             if (data.type === "room-info" && data.peers) {
@@ -364,11 +406,17 @@ export default function MeetingPage() {
                 ));
             }
             if (data.type === "transcription") {
-                setTranscripts(prev => [...prev, data.payload]);
+                setTranscripts(prev => {
+                    if (prev.find(t => t.id === data.payload.id)) return prev;
+                    return [...prev, data.payload];
+                });
             }
             if (data.type === "transcription-status") {
-                setIsTranscriptionActive(data.payload.active);
-                isTranscriptionActiveRef.current = data.payload.active;
+                if (data.payload.active) {
+                    startTranscription(false);
+                } else {
+                    stopTranscription(false);
+                }
                 toast.info(data.payload.active ? "Meeting Transcription started" : "Meeting Transcription stopped");
             }
             if (data.type === "reaction") {
@@ -442,6 +490,19 @@ export default function MeetingPage() {
             });
             setIsMuted(newState);
             isMutedRef.current = newState;
+
+            // If transcription is active, stop it if we mute, start if we unmute
+            if (isTranscriptionActiveRef.current) {
+                if (newState) {
+                    if (recognitionRef.current) {
+                        recognitionRef.current.stop();
+                        recognitionRef.current = null;
+                    }
+                } else {
+                    startTranscription(false);
+                }
+            }
+
             broadcastData({
                 type: "media-state",
                 payload: {
@@ -452,7 +513,7 @@ export default function MeetingPage() {
                 }
             });
         }
-    }, [isMuted]);
+    }, [isMuted, startTranscription]);
 
     const toggleVideo = useCallback(async () => {
         if (localStreamRef.current) {
