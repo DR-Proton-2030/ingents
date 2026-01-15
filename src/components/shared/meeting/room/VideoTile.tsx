@@ -38,6 +38,8 @@ const backgroundConfigs: Record<string, { type: 'blur' | 'color' | 'simulation',
     "forest": { type: 'simulation', value: 'forest' },
     "home": { type: 'simulation', value: 'home' },
     "space": { type: 'simulation', value: 'space' },
+    "cyber": { type: 'simulation', value: 'cyber' },
+    "ocean": { type: 'simulation', value: 'ocean' },
 };
 
 const VideoTile: React.FC<VideoTileProps> = ({

@@ -1,11 +1,11 @@
 "use client";
 import React, { Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment, Stars, Sparkles, Cloud, Float } from '@react-three/drei';
+import { Environment, Stars, Sparkles, Cloud, Float, Sky } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface SimulationBackgroundProps {
-    environment: 'forest' | 'home' | 'space';
+    environment: 'forest' | 'home' | 'space' | 'cyber' | 'ocean';
     cameraOffset?: { x: number, y: number };
 }
 
@@ -132,6 +132,49 @@ const SpaceScene = () => (
     </>
 );
 
+const CyberScene = () => (
+    <>
+        <color attach="background" args={['#020205']} />
+        <ambientLight intensity={0.2} />
+        <pointLight position={[0, 10, 0]} intensity={2} color="#ff00ff" />
+        <pointLight position={[10, 0, 10]} intensity={2} color="#00ffff" />
+
+        <Sparkles count={300} scale={20} size={2} speed={0.5} opacity={0.3} color="#ff00ff" />
+        <gridHelper args={[100, 50, 0xff00ff, 0x220022]} position={[0, -2, 0]} />
+
+        <group>
+            {[...Array(20)].map((_, i) => {
+                const x = (Math.random() - 0.5) * 40;
+                const z = (Math.random() - 0.5) * 40 - 10;
+                const h = 2 + Math.random() * 8;
+                return (
+                    <mesh key={i} position={[x, h / 2 - 2, z]}>
+                        <boxGeometry args={[1, h, 1]} />
+                        <meshStandardMaterial color="#111111" emissive={i % 2 === 0 ? "#ff00ff" : "#00ffff"} emissiveIntensity={0.5} />
+                    </mesh>
+                )
+            })}
+        </group>
+    </>
+);
+
+const OceanScene = () => (
+    <>
+        <Sky sunPosition={[100, 10, -100]} turbidity={0.1} rayleigh={2} />
+        <ambientLight intensity={0.4} />
+        <directionalLight position={[10, 10, 5]} intensity={1} color="#ffaa55" />
+
+        <Float speed={1} rotationIntensity={0.1} floatIntensity={0.2}>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
+                <planeGeometry args={[200, 200]} />
+                <meshStandardMaterial color="#0077be" roughness={0.1} metalness={0.2} transparent opacity={0.8} />
+            </mesh>
+        </Float>
+
+        <Sparkles count={200} scale={20} size={5} speed={0.1} opacity={0.4} color="#ffffff" />
+    </>
+);
+
 const SimulationBackground: React.FC<SimulationBackgroundProps> = ({ environment, cameraOffset }) => {
     return (
         <div className="absolute inset-0 w-full h-full pointer-events-none">
@@ -141,6 +184,8 @@ const SimulationBackground: React.FC<SimulationBackgroundProps> = ({ environment
                     {environment === 'forest' && <ForestScene />}
                     {environment === 'home' && <HomeScene />}
                     {environment === 'space' && <SpaceScene />}
+                    {environment === 'cyber' && <CyberScene />}
+                    {environment === 'ocean' && <OceanScene />}
                 </Suspense>
             </Canvas>
         </div>

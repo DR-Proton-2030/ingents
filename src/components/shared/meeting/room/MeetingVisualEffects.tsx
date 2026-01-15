@@ -31,6 +31,9 @@ const backgrounds = [
     { id: "blur", name: "Blur Background", preview: "bg-gray-200" },
     { id: "forest", name: "Lush Forest", preview: "bg-[url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=256')]" },
     { id: "home", name: "Modern Home", preview: "bg-[url('https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=256')]" },
+    { id: "space", name: "Deep Space", preview: "bg-[url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&q=80&w=256')]" },
+    { id: "cyber", name: "Cyber City", preview: "bg-[url('https://images.unsplash.com/photo-1605810230434-7631ac76ec81?auto=format&fit=crop&q=80&w=256')]" },
+    { id: "ocean", name: "Ocean Sunset", preview: "bg-[url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&q=80&w=256')]" },
 ];
 
 const MeetingVisualEffects: React.FC<MeetingVisualEffectsProps> = ({
