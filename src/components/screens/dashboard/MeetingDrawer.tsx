@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import {
     getMeetingById,
     updateMeeting,
+    respondToMeeting,
     MeetingDetails,
     Participant,
     UpdateMeetingPayload,
@@ -21,6 +22,7 @@ import {
     NotebookSquare,
     NotebookMinimalistic,
     Pen,
+    CheckCircle,
 } from "@solar-icons/react";
 import { LinkCircle } from "@solar-icons/react/ssr";
 import AuthContext from "@/contexts/authContext/authContext";
@@ -135,6 +137,16 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
         meeting.host_details?._id === currentUserId
     );
 
+    // State for responding to invitation
+    const [isRespondingId, setIsRespondingId] = useState<string | null>(null);
+
+    // Helper to check if a participant is the current user
+    const isCurrentUserParticipant = (participant: Participant): boolean => {
+        if (!currentUserId) return false;
+        return participant.user_object_id === currentUserId ||
+            participant.user_details?._id === currentUserId;
+    };
+
     useEffect(() => {
         if (isOpen && meetingId) {
             const fetchMeeting = async () => {
@@ -204,6 +216,30 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
         setIsEditMode(false);
     };
 
+    const handleRespondToMeeting = async (participantId: string, response: "accepted" | "declined") => {
+        if (!meetingId) return;
+
+        try {
+            setIsRespondingId(participantId);
+            await respondToMeeting(meetingId, { response_status: response });
+
+            // Update local participant state
+            setParticipants(prev =>
+                prev.map(p =>
+                    p._id === participantId
+                        ? { ...p, response_status: response }
+                        : p
+                )
+            );
+
+            toast.success(response === "accepted" ? "Meeting accepted!" : "Meeting declined");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to respond to meeting");
+        } finally {
+            setIsRespondingId(null);
+        }
+    };
+
     // Close on escape key
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
@@ -240,7 +276,7 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
 
             {/* Drawer Panel */}
             <div
-                className={`absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
+                className={`absolute top-0 right-0 h-full pb-10 w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out ${isOpen ? "translate-x-0" : "translate-x-full"
                     }`}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -486,38 +522,64 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                                     Participants ({participants.length})
                                 </h4>
                                 <div className="space-y-2">
-                                    {participants.map((participant, index) => (
-                                        <div
-                                            key={participant._id}
-                                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                                        >
+                                    {participants.map((participant, index) => {
+                                        const isCurrentUser = isCurrentUserParticipant(participant);
+                                        const isPending = participant.response_status === "pending";
+                                        const isResponding = isRespondingId === participant._id;
+
+                                        return (
                                             <div
-                                                className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white ${avatarColors[(index + 1) % avatarColors.length]
-                                                    }`}
+                                                key={participant._id}
+                                                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                                             >
-                                                {getInitial(
-                                                    participant.user_details?.full_name || participant.external_name,
-                                                    participant.user_details?.email || participant.external_email
+                                                <div
+                                                    className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white ${avatarColors[(index + 1) % avatarColors.length]}`}
+                                                >
+                                                    {getInitial(
+                                                        participant.user_details?.full_name || participant.external_name,
+                                                        participant.user_details?.email || participant.external_email
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-medium text-gray-800 truncate">
+                                                        {isCurrentUser ? "You" : getDisplayName(participant)}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 truncate">
+                                                        {participant.user_details?.email ||
+                                                            participant.external_email}
+                                                    </p>
+                                                </div>
+
+                                                {/* Show Accept/Decline buttons for current user with pending status */}
+                                                {isCurrentUser && isPending ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handleRespondToMeeting(participant._id, "accepted")}
+                                                            disabled={isResponding}
+                                                            className="px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded-full hover:bg-green-600 transition-all disabled:opacity-50 flex items-center gap-1"
+                                                        >
+                                                            {isResponding ? (
+                                                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                            ) : (
+                                                                <>
+                                                                    <CheckCircle className="w-3.5 h-3.5" />
+                                                                    Accept
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <span
+                                                        className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${getStatusColor(
+                                                            participant.response_status
+                                                        )}`}
+                                                    >
+                                                        {participant.response_status}
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-800 truncate">
-                                                    {getDisplayName(participant)}
-                                                </p>
-                                                <p className="text-xs text-gray-500 truncate">
-                                                    {participant.user_details?.email ||
-                                                        participant.external_email}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${getStatusColor(
-                                                    participant.response_status
-                                                )}`}
-                                            >
-                                                {participant.response_status}
-                                            </span>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                     {participants.length === 0 && (
                                         <p className="text-sm text-gray-500 text-center py-4">
                                             No participants added yet

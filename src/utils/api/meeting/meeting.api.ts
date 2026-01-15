@@ -244,3 +244,25 @@ export const updateMeeting = async (
     throw new Error(error.response?.data?.message || "Meeting update failed");
   }
 };
+
+export interface RespondToMeetingPayload {
+  response_status: "accepted" | "declined";
+}
+
+export const respondToMeeting = async (
+  meetingId: string,
+  payload: RespondToMeetingPayload
+): Promise<any> => {
+  try {
+    const response = await API.patch(`/${initialRoute}/${meetingId}/respond`, payload);
+
+    console.log("✅ Meeting response successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Meeting response failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Meeting response failed");
+  }
+};
