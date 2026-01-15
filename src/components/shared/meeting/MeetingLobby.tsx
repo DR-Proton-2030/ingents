@@ -22,6 +22,7 @@ interface MeetingLobbyProps {
     localStream: MediaStream | null;
     meetingInfo: MeetingDetails | null;
     participants: Participant[];
+    currentUser: { id: string; name: string; email: string };
     isFetchingInfo: boolean;
     isMuted: boolean;
     isVideoOff: boolean;
@@ -47,6 +48,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
     localStream,
     meetingInfo,
     participants,
+    currentUser,
     isFetchingInfo,
     isMuted,
     isVideoOff,
@@ -132,7 +134,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/10">
                                         <div className="w-32 h-32 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 border border-gray-100 flex items-center justify-center shadow-sm transition-transform duration-500 group-hover:scale-105">
                                             <span className="text-5xl text-gray-100 font-bold">
-                                                {(meetingInfo?.title || "M").charAt(0).toUpperCase()}
+                                                {currentUser.name.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
                                         <p className="mt-8 text-gray-400 text-xs font-semibold ">Camera is Disconnected</p>

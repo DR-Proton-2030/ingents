@@ -33,6 +33,7 @@ import { MeetingDetails, Participant as MeetingParticipant } from "@/utils/api/m
 interface PeerStream {
     peerId: string;
     stream: MediaStream;
+    userName?: string;
     isVideoOff?: boolean;
     isMuted?: boolean;
     reaction?: string | null;
@@ -54,6 +55,7 @@ interface MeetingRoomProps {
     localStream: MediaStream | null;
     meetingInfo: MeetingDetails | null;
     participants: MeetingParticipant[];
+    currentUser: { id: string; name: string; email: string };
     remoteStreams: PeerStream[];
     isMuted: boolean;
     isVideoOff: boolean;
@@ -79,6 +81,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     localStream,
     meetingInfo,
     participants,
+    currentUser,
     remoteStreams,
     isMuted,
     isVideoOff,
@@ -167,16 +170,20 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             id: "local",
             stream: localStream,
             isLocal: true,
-            name: meetingInfo?.host_details?.full_name?.split(" ")[0] || "You",
-            fullName: meetingInfo?.host_details?.full_name || "You",
+            name: currentUser.name.split(" ")[0] || "You",
+            fullName: currentUser.name || "You",
             isVideoOff: isVideoOff,
             isMuted: isMuted,
             reaction: localReaction,
             isHandRaised: isHandRaised
         },
         ...remoteStreams.map((p) => {
-            const invitee = participants?.find((m: MeetingParticipant) => m.user_details?._id === p.peerId || m._id === p.peerId);
-            const name = invitee?.user_details?.full_name || invitee?.external_name || p.peerId.substring(0, 8);
+            // First check for userName sent via data connection, then fall back to participant lookup
+            let name = p.userName;
+            if (!name) {
+                const invitee = participants?.find((m: MeetingParticipant) => m.user_details?._id === p.peerId || m._id === p.peerId);
+                name = invitee?.user_details?.full_name || invitee?.external_name || p.peerId.substring(0, 8);
+            }
             return {
                 id: p.peerId,
                 stream: p.stream,
@@ -563,7 +570,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                             {chatMessages.map((msg) => (
                                 <div key={msg.id} className="flex gap-3">
                                     <div className={`w-8 h-8 rounded-full ${avatarColors[allParticipants.findIndex((p) => p.id === msg.senderId) % avatarColors.length || 0]} flex items-center justify-center text-xs font-medium text-white flex-shrink-0`}>
-                                        {msg.senderId === peerId ? "Y" : msg.senderId.charAt(0).toUpperCase()}
+                                        {msg.senderId === peerId ? currentUser.name.charAt(0).toUpperCase() : msg.senderId.charAt(0).toUpperCase()}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-baseline gap-2">

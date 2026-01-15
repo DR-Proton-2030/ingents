@@ -1,10 +1,11 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Script from "next/script";
 import MeetingLobby from "@/components/shared/meeting/MeetingLobby";
 import { getMeetingByCode, MeetingDetails, Participant } from "@/utils/api/meeting/meeting.api";
 import { MeetingRoom } from "@/components/shared/meeting";
+import AuthContext from "@/contexts/authContext/authContext";
 
 declare global {
     interface Window {
@@ -15,6 +16,7 @@ declare global {
 export interface PeerStream {
     peerId: string;
     stream: MediaStream;
+    userName?: string;
     isVideoOff?: boolean;
     isMuted?: boolean;
     reaction?: string | null;
@@ -31,6 +33,7 @@ export interface ChatMessage {
 export default function MeetingPage() {
     const params = useParams();
     const router = useRouter();
+    const { user } = useContext(AuthContext);
     const meetingCode = params.meetingCode as string;
 
     // Connection State
@@ -39,6 +42,58 @@ export default function MeetingPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [statusMsg, setStatusMsg] = useState("");
     const [isPeerJsLoaded, setIsPeerJsLoaded] = useState(false);
+
+    // Meeting Info State (declare early for use in currentUser)
+    const [meetingInfo, setMeetingInfo] = useState<MeetingDetails | null>(null);
+    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [isFetchingInfo, setIsFetchingInfo] = useState(true);
+
+    // Current user info - use AuthContext user, or fallback to meeting host if user is the host
+    const currentUser = useMemo(() => {
+        const userId = user?.id || (user as any)?._id || "";
+        const userName = user?.full_name || "";
+        const userEmail = user?.email || "";
+
+        // If we have user data from AuthContext, use it
+        if (userName) {
+            return { id: userId, name: userName, email: userEmail };
+        }
+
+        // Special case: If this is the person who joined as fixed peer ID (host), 
+        // they are likely the host even if AuthContext isn't loaded yet
+        if (isInCall && peerId === meetingCode && meetingInfo?.host_details) {
+            return {
+                id: meetingInfo.host_details._id,
+                name: meetingInfo.host_details.full_name,
+                email: meetingInfo.host_details.email
+            };
+        }
+
+        // Check if current user matches a participant
+        if (meetingInfo && participants.length > 0 && userId) {
+            const matchedParticipant = participants.find(p =>
+                p.user_details?._id === userId || p.user_object_id === userId
+            );
+            if (matchedParticipant) {
+                return {
+                    id: userId,
+                    name: matchedParticipant.user_details?.full_name || matchedParticipant.external_name || "Guest",
+                    email: matchedParticipant.user_details?.email || matchedParticipant.external_email || ""
+                };
+            }
+        }
+
+        // Check if current user is the host (by ID)
+        if (meetingInfo?.host_details && userId && (meetingInfo.host_user_object_id === userId || meetingInfo.host_details._id === userId)) {
+            return {
+                id: userId,
+                name: meetingInfo.host_details.full_name || "Host",
+                email: meetingInfo.host_details.email || ""
+            };
+        }
+
+        return { id: userId, name: userName || "Guest", email: userEmail };
+    }, [user, meetingInfo, participants, isInCall, peerId, meetingCode]);
 
     // Media State
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -50,11 +105,6 @@ export default function MeetingPage() {
     // Feature State
     const [isHandRaised, setIsHandRaised] = useState(false);
     const [localReaction, setLocalReaction] = useState<string | null>(null);
-
-    // Meeting Info State
-    const [meetingInfo, setMeetingInfo] = useState<MeetingDetails | null>(null);
-    const [participants, setParticipants] = useState<Participant[]>([]);
-    const [isFetchingInfo, setIsFetchingInfo] = useState(true);
 
     // Chat State
     const [showChat, setShowChat] = useState(false);
@@ -71,7 +121,13 @@ export default function MeetingPage() {
     const isVideoOffRef = useRef(false);
     const isHandRaisedRef = useRef(false);
     const peerIdRef = useRef("");
+    const currentUserRef = useRef(currentUser);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // Keep currentUserRef in sync
+    useEffect(() => {
+        currentUserRef.current = currentUser;
+    }, [currentUser]);
 
     // Initialize audio for notifications
     useEffect(() => {
@@ -141,10 +197,17 @@ export default function MeetingPage() {
         connectedPeersRef.current.delete(id);
     }
 
-    function handleRemoteStream(peerId: string, stream: MediaStream) {
+    function handleRemoteStream(peerId: string, stream: MediaStream, userName?: string) {
         setRemoteStreams((prev) => {
-            if (prev.find((p) => p.peerId === peerId)) return prev;
-            return [...prev, { peerId, stream, isVideoOff: false, isMuted: false, isHandRaised: false, reaction: null }];
+            const existing = prev.find((p) => p.peerId === peerId);
+            if (existing) {
+                // Update existing with stream and optionally userName
+                return prev.map(p => p.peerId === peerId
+                    ? { ...p, stream, userName: userName || p.userName }
+                    : p
+                );
+            }
+            return [...prev, { peerId, stream, userName, isVideoOff: false, isMuted: false, isHandRaised: false, reaction: null }];
         });
     }
 
@@ -159,10 +222,21 @@ export default function MeetingPage() {
     function setupDataConnection(conn: any) {
         dataConnsRef.current.push(conn);
         conn.on("open", () => {
+            // Send user info immediately
+            conn.send({
+                type: "user-info",
+                payload: {
+                    peerId: peerIdRef.current,
+                    userName: currentUserRef.current.name,
+                    email: currentUserRef.current.email
+                }
+            });
+            // Also send media state
             conn.send({
                 type: "media-state",
                 payload: {
                     peerId: peerIdRef.current,
+                    userName: currentUserRef.current.name,
                     isMuted: isMutedRef.current,
                     isVideoOff: isVideoOffRef.current,
                     isHandRaised: isHandRaisedRef.current
@@ -171,6 +245,28 @@ export default function MeetingPage() {
         });
 
         conn.on("data", (data: any) => {
+            if (data.type === "user-info") {
+                // Update remote stream with user name
+                setRemoteStreams(prev => {
+                    const existing = prev.find(p => p.peerId === data.payload.peerId);
+                    if (existing) {
+                        return prev.map(p => p.peerId === data.payload.peerId
+                            ? { ...p, userName: data.payload.userName }
+                            : p
+                        );
+                    }
+                    // If stream not yet added, create placeholder
+                    return [...prev, {
+                        peerId: data.payload.peerId,
+                        stream: new MediaStream(),
+                        userName: data.payload.userName,
+                        isVideoOff: false,
+                        isMuted: false,
+                        isHandRaised: false,
+                        reaction: null
+                    }];
+                });
+            }
             if (data.type === "chat") {
                 setChatMessages((prev) => [...prev, data.payload]);
                 if (!showChat) setHasUnreadMsg(true);
@@ -184,6 +280,7 @@ export default function MeetingPage() {
                     p.peerId === data.payload.peerId
                         ? {
                             ...p,
+                            userName: data.payload.userName || p.userName,
                             isMuted: data.payload.isMuted,
                             isVideoOff: data.payload.isVideoOff,
                             isHandRaised: data.payload.isHandRaised
@@ -497,6 +594,7 @@ export default function MeetingPage() {
                         localStream={localStream}
                         meetingInfo={meetingInfo}
                         participants={participants}
+                        currentUser={currentUser}
                         isFetchingInfo={isFetchingInfo}
                         isMuted={isMuted}
                         isVideoOff={isVideoOff}
@@ -514,6 +612,7 @@ export default function MeetingPage() {
                         localStream={localStream}
                         meetingInfo={meetingInfo}
                         participants={participants}
+                        currentUser={currentUser}
                         remoteStreams={remoteStreams}
                         isMuted={isMuted}
                         isVideoOff={isVideoOff}

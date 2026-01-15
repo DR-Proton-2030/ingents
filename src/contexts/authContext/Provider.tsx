@@ -73,6 +73,7 @@ const AuthContextProvider = ({ children }: ContextProviderProps) => {
         currentPath.includes("dashboard") ||
         currentPath.includes("analytics") ||
         currentPath.includes("chat") ||
+        currentPath.includes("meeting") ||
         currentPath.includes("seo-management");
       setIsOnProtectedRoute(isProtected);
     }
