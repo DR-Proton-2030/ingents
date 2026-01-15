@@ -49,6 +49,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                     onTogglePin={() => togglePin(allParticipants[0].id)}
                     reaction={allParticipants[0].reaction}
                     isHandRaised={allParticipants[0].isHandRaised}
+                    videoFilter={allParticipants[0].videoFilter}
+                    videoBackground={allParticipants[0].videoBackground}
                 />
             </div>
         );
@@ -82,6 +84,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                 onTogglePin={() => togglePin(p.id)}
                                 reaction={p.reaction}
                                 isHandRaised={p.isHandRaised}
+                                videoFilter={p.videoFilter}
+                                videoBackground={p.videoBackground}
                             />
                         </div>
                     ))}
@@ -105,6 +109,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                         onTogglePin={() => togglePin(mainPeer.id)}
                         reaction={mainPeer.reaction}
                         isHandRaised={mainPeer.isHandRaised}
+                        videoFilter={mainPeer.videoFilter}
+                        videoBackground={mainPeer.videoBackground}
                     />
                 </div>
             );
@@ -128,6 +134,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                             onTogglePin={() => togglePin(featuredPeer.id)}
                             reaction={featuredPeer.reaction}
                             isHandRaised={featuredPeer.isHandRaised}
+                            videoFilter={featuredPeer.videoFilter}
+                            videoBackground={featuredPeer.videoBackground}
                         />
                     </div>
                     <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
@@ -146,6 +154,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                     onTogglePin={() => togglePin(p.id)}
                                     reaction={p.reaction}
                                     isHandRaised={p.isHandRaised}
+                                    videoFilter={p.videoFilter}
+                                    videoBackground={p.videoBackground}
                                 />
                             </div>
                         ))}
@@ -172,6 +182,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                     onTogglePin={() => togglePin(p.id)}
                                     reaction={p.reaction}
                                     isHandRaised={p.isHandRaised}
+                                    videoFilter={p.videoFilter}
+                                    videoBackground={p.videoBackground}
                                 />
                             </div>
                         ))}
@@ -197,6 +209,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                             onTogglePin={() => togglePin(activePeer.id)}
                             reaction={activePeer.reaction}
                             isHandRaised={activePeer.isHandRaised}
+                            videoFilter={activePeer.videoFilter}
+                            videoBackground={activePeer.videoBackground}
                         />
                     </div>
                     <div className="flex-1 flex flex-col gap-3 min-w-[200px] overflow-y-auto pr-1">
@@ -215,6 +229,8 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                     onTogglePin={() => togglePin(p.id)}
                                     reaction={p.reaction}
                                     isHandRaised={p.isHandRaised}
+                                    videoFilter={p.videoFilter}
+                                    videoBackground={p.videoBackground}
                                 />
                             </div>
                         ))}

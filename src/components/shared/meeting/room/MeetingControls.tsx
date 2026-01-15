@@ -17,6 +17,7 @@ import {
     Bot,
     Sparkles,
     HandIcon,
+    Settings,
 } from "lucide-react";
 import { UserHandUp } from "@solar-icons/react/ssr";
 import { ParticipantState } from "./types";
@@ -47,6 +48,8 @@ interface MeetingControlsProps {
     meetingTitle?: string;
     isTranscriptionActive: boolean;
     onToggleTranscription: () => void;
+    onToggleVisualEffects: () => void;
+    showVisualEffects: boolean;
 }
 
 const avatarColors = [
@@ -86,8 +89,11 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
     meetingTitle,
     isTranscriptionActive,
     onToggleTranscription,
+    onToggleVisualEffects,
+    showVisualEffects,
 }) => {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
+    const [showMoreMenu, setShowMoreMenu] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
 
     React.useEffect(() => {
@@ -175,20 +181,58 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
                     <FaRegHandPaper className="w-6 h-6" fill={isHandRaised ? "white" : "currentColor"} />
                 </button>
 
-                <button className="p-3 bg-gray-200 hover:bg-gray-200 rounded-full transition-colors text-gray-700">
-                    <MoreVertical className="w-6 h-6" />
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => setShowMoreMenu(!showMoreMenu)}
+                        className={`p-3 rounded-full transition-all ${showMoreMenu ? "bg-blue-100 text-blue-600" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+                        title="More options"
+                    >
+                        <MoreVertical className="w-6 h-6" />
+                    </button>
 
-                <button onClick={onLeave} className="px-5 py-3 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors ml-2">
+                    {showMoreMenu && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-64 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 overflow-hidden z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200">
+                            <button
+                                onClick={() => {
+                                    onToggleVisualEffects();
+                                    setShowMoreMenu(false);
+                                }}
+                                className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-gray-700 transition-colors group">
+                                <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-100 transition-colors">
+                                    <Sparkles className="w-5 h-5 text-gray-600" />
+                                </div>
+                                <span className="text-sm font-medium">Apply Filters</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    toggleLayout()
+                                    setShowMoreMenu(false)
+                                }}
+                                className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-gray-700 transition-colors group">
+                                <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-100 transition-colors">
+                                    <LayoutGrid className="w-5 h-5 text-gray-600" />
+                                </div>
+                                <span className="text-sm font-medium">Adjust View</span>
+                            </button>
+                            <div className="h-px bg-gray-100 my-1 mx-4" />
+                            <button className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-gray-700 transition-colors group">
+                                <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-100 transition-colors">
+                                    <Settings className="w-5 h-5 text-gray-600" />
+                                </div>
+                                <span className="text-sm font-medium">Settings</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                <button onClick={onLeave} className="px-5 py-3 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors ml-2 shadow-lg shadow-red-100">
                     <Phone className="w-6 h-6 rotate-[135deg]" />
                 </button>
             </div>
 
             {/* Right - Additional Controls */}
             <div className="flex items-center gap-1">
-                <button className="p-2.5 hover:bg-gray-200 rounded-full transition-colors text-gray-600">
-                    <Info className="w-6 h-6" />
-                </button>
+
 
                 <button
                     onClick={togglePeople}

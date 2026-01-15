@@ -22,7 +22,27 @@ interface VideoTileProps {
     onTogglePin: () => void;
     reaction?: string | null;
     isHandRaised?: boolean;
+    videoFilter?: string;
+    videoBackground?: string;
 }
+
+const filterMap: Record<string, string> = {
+    "none": "",
+    "grayscale": "grayscale(1)",
+    "sepia": "sepia(1)",
+    "blur": "blur(4px)",
+    "brightness": "brightness(1.2)",
+    "contrast": "contrast(1.5)",
+};
+
+const backgroundMap: Record<string, string> = {
+    "none": "",
+    "blur": "backdrop-blur-xl bg-white/10",
+    "office": "bg-blue-100/50",
+    "living-room": "bg-orange-100/50",
+    "cafe": "bg-amber-100/50",
+    "space": "bg-slate-900/50",
+};
 
 const VideoTile: React.FC<VideoTileProps> = ({
     id,
@@ -36,7 +56,9 @@ const VideoTile: React.FC<VideoTileProps> = ({
     isPinned,
     onTogglePin,
     reaction,
-    isHandRaised
+    isHandRaised,
+    videoFilter = "none",
+    videoBackground = "none"
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isHovered, setIsHovered] = useState(false);
@@ -58,8 +80,13 @@ const VideoTile: React.FC<VideoTileProps> = ({
                 autoPlay
                 muted={isLocal}
                 playsInline
+                style={{ filter: filterMap[videoFilter] || "" }}
                 className={`absolute inset-0 w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} ${isVideoOff ? "opacity-0" : "opacity-100"}`}
             />
+
+            {videoBackground !== "none" && !isVideoOff && (
+                <div className={`absolute inset-0 z-[5] pointer-events-none transition-all duration-500 ${backgroundMap[videoBackground] || ""}`} />
+            )}
 
             {isVideoOff && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">

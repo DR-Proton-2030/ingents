@@ -101,6 +101,8 @@ export default function MeetingPage() {
     const [isTranscriptionActive, setIsTranscriptionActive] = useState(false);
     const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
     const [isTranscriptionReady, setIsTranscriptionReady] = useState(false);
+    const [videoFilter, setVideoFilter] = useState("none");
+    const [videoBackground, setVideoBackground] = useState("none");
 
     // Refs
     const peerRef = useRef<any>(null);
@@ -333,7 +335,9 @@ export default function MeetingPage() {
                     userName: currentUserRef.current.name,
                     isMuted: isMutedRef.current,
                     isVideoOff: isVideoOffRef.current,
-                    isHandRaised: isHandRaisedRef.current
+                    isHandRaised: isHandRaisedRef.current,
+                    videoFilter: videoFilter,
+                    videoBackground: videoBackground
                 }
             });
 
@@ -390,7 +394,9 @@ export default function MeetingPage() {
                             userName: data.payload.userName || p.userName,
                             isMuted: data.payload.isMuted,
                             isVideoOff: data.payload.isVideoOff,
-                            isHandRaised: data.payload.isHandRaised
+                            isHandRaised: data.payload.isHandRaised,
+                            videoFilter: data.payload.videoFilter || "none",
+                            videoBackground: data.payload.videoBackground || "none"
                         }
                         : p
                 ));
@@ -433,6 +439,17 @@ export default function MeetingPage() {
                             : p
                     ));
                 }, 2000);
+            }
+            if (data.type === "visual-effect") {
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === data.payload.peerId
+                        ? {
+                            ...p,
+                            videoFilter: data.payload.videoFilter,
+                            videoBackground: data.payload.videoBackground
+                        }
+                        : p
+                ));
             }
         });
         conn.on("close", () => removePeer(conn.peer));
@@ -582,7 +599,23 @@ export default function MeetingPage() {
             payload: { peerId: peerIdRef.current, reaction: emoji }
         });
         setTimeout(() => setLocalReaction(null), 2000);
-    }, []);
+    }, [broadcastData]);
+
+    const applyVisualEffect = useCallback((type: "filter" | "background", effectId: string) => {
+        if (type === "filter") {
+            setVideoFilter(effectId);
+        } else {
+            setVideoBackground(effectId);
+        }
+        broadcastData({
+            type: "visual-effect",
+            payload: {
+                peerId: peerIdRef.current,
+                videoFilter: type === "filter" ? effectId : videoFilter,
+                videoBackground: type === "background" ? effectId : videoBackground
+            }
+        });
+    }, [videoFilter, videoBackground, broadcastData]);
 
     const initGuestMode = useCallback(() => {
         if (!window.Peer) return;
@@ -771,6 +804,9 @@ export default function MeetingPage() {
                         isTranscriptionActive={isTranscriptionActive}
                         onToggleTranscription={toggleTranscription}
                         transcripts={transcripts}
+                        videoFilter={videoFilter}
+                        videoBackground={videoBackground}
+                        onApplyVisualEffect={applyVisualEffect}
                     />
                 )}
             </div>

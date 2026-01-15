@@ -8,6 +8,8 @@ export interface PeerStream {
     isMuted?: boolean;
     reaction?: string | null;
     isHandRaised?: boolean;
+    videoFilter?: string;
+    videoBackground?: string;
 }
 
 export interface ChatMessage {
@@ -30,6 +32,8 @@ export interface ParticipantState {
     isMuted: boolean;
     reaction: string | null;
     isHandRaised: boolean;
+    videoFilter?: string;
+    videoBackground?: string;
 }
 
 export interface TranscriptEntry {
