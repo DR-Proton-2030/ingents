@@ -132,31 +132,71 @@ const SpaceScene = () => (
     </>
 );
 
-const CyberScene = () => (
-    <>
-        <color attach="background" args={['#020205']} />
-        <ambientLight intensity={0.2} />
-        <pointLight position={[0, 10, 0]} intensity={2} color="#ff00ff" />
-        <pointLight position={[10, 0, 10]} intensity={2} color="#00ffff" />
+const CyberScene = () => {
+    const buildings = React.useMemo(() => {
+        return [...Array(50)].map((_, i) => ({
+            id: i,
+            x: (Math.random() - 0.5) * 80,
+            z: (Math.random() - 0.5) * 60 - 20,
+            w: 1.5 + Math.random() * 3,
+            h: 8 + Math.random() * 25,
+            d: 1.5 + Math.random() * 3,
+            color: i % 3 === 0 ? "#ff00ff" : (i % 3 === 1 ? "#00ffff" : "#ffff00"),
+            windowColor: i % 2 === 0 ? "#ff00ff" : "#00ffff",
+        }));
+    }, []);
 
-        <Sparkles count={300} scale={20} size={2} speed={0.5} opacity={0.3} color="#ff00ff" />
-        <gridHelper args={[100, 50, 0xff00ff, 0x220022]} position={[0, -2, 0]} />
+    return (
+        <>
+            <color attach="background" args={['#0a0118']} />
+            <fog attach="fog" args={['#0a0118', 5, 60]} />
+            <ambientLight intensity={0.4} />
 
-        <group>
-            {[...Array(20)].map((_, i) => {
-                const x = (Math.random() - 0.5) * 40;
-                const z = (Math.random() - 0.5) * 40 - 10;
-                const h = 2 + Math.random() * 8;
-                return (
-                    <mesh key={i} position={[x, h / 2 - 2, z]}>
-                        <boxGeometry args={[1, h, 1]} />
-                        <meshStandardMaterial color="#111111" emissive={i % 2 === 0 ? "#ff00ff" : "#00ffff"} emissiveIntensity={0.5} />
-                    </mesh>
-                )
-            })}
-        </group>
-    </>
-);
+            {/* Cinematic Lighting */}
+            <pointLight position={[-15, 20, -10]} intensity={500} color="#ff00ff" decay={2} />
+            <pointLight position={[15, 20, -10]} intensity={500} color="#00ffff" decay={2} />
+            <pointLight position={[0, 10, -30]} intensity={300} color="#ff00ff" decay={2} />
+
+            <Sparkles count={500} scale={40} size={4} speed={0.8} opacity={0.6} color="#00ffff" />
+
+            {/* Bright Neon Grid Floor */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]}>
+                <planeGeometry args={[200, 200]} />
+                <meshStandardMaterial color="#050110" roughness={0.1} metalness={0.9} />
+            </mesh>
+            <gridHelper args={[200, 60, 0x00ffff, 0xff00ff]} position={[0, -1.98, 0]} />
+
+            <group>
+                {buildings.map((b) => (
+                    <group key={b.id} position={[b.x, b.h / 2 - 2, b.z]}>
+                        <mesh>
+                            <boxGeometry args={[b.w, b.h, b.d]} />
+                            <meshStandardMaterial color="#0f0f1a" roughness={0.1} metalness={0.9} />
+                        </mesh>
+
+                        {/* Windows / Light stripes */}
+                        {[...Array(5)].map((_, j) => (
+                            <mesh key={j} position={[0, (j - 2) * (b.h / 6), 0]}>
+                                <boxGeometry args={[b.w + 0.1, 0.3, b.d + 0.1]} />
+                                <meshStandardMaterial
+                                    color={b.windowColor}
+                                    emissive={b.windowColor}
+                                    emissiveIntensity={4}
+                                />
+                            </mesh>
+                        ))}
+                    </group>
+                ))}
+            </group>
+
+            {/* Distant holographic structures */}
+            <mesh position={[0, 20, -50]} rotation={[Math.PI / 2, 0, 0]}>
+                <torusGeometry args={[40, 0.2, 16, 100]} />
+                <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={5} transparent opacity={0.5} />
+            </mesh>
+        </>
+    );
+};
 
 const OceanScene = () => (
     <>
