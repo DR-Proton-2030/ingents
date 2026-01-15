@@ -35,13 +35,13 @@ const filterMap: Record<string, string> = {
     "contrast": "contrast(1.5)",
 };
 
-const backgroundMap: Record<string, string> = {
+const backgroundColors: Record<string, string> = {
     "none": "",
-    "blur": "backdrop-blur-xl bg-white/10",
-    "office": "bg-blue-100/50",
-    "living-room": "bg-orange-100/50",
-    "cafe": "bg-amber-100/50",
-    "space": "bg-slate-900/50",
+    "blur": "blur",
+    "office": "#e0f2fe", // blue-100
+    "living-room": "#ffedd5", // orange-100
+    "cafe": "#fef3c7", // amber-100
+    "space": "#0f172a", // slate-900
 };
 
 const VideoTile: React.FC<VideoTileProps> = ({
@@ -61,13 +61,89 @@ const VideoTile: React.FC<VideoTileProps> = ({
     videoBackground = "none"
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const segmentationRef = useRef<any>(null);
     const [isHovered, setIsHovered] = useState(false);
+
+    // Initialize MediaPipe Segmentation
+    useEffect(() => {
+        if (typeof window === "undefined" || !(window as any).SelfieSegmentation) return;
+
+        const selfieSegmentation = new (window as any).SelfieSegmentation({
+            locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`,
+        });
+
+        selfieSegmentation.setOptions({
+            modelSelection: 1, // 0 for general, 1 for landscape
+        });
+
+        selfieSegmentation.onResults((results: any) => {
+            if (!canvasRef.current || !videoRef.current || isVideoOff) return;
+
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+
+            canvas.width = videoRef.current.videoWidth;
+            canvas.height = videoRef.current.videoHeight;
+
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the mask
+            ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
+
+            // Draw background
+            ctx.globalCompositeOperation = "source-out";
+            const bgEffect = backgroundColors[videoBackground];
+
+            if (bgEffect === "blur") {
+                ctx.filter = "blur(15px)";
+                ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+                ctx.filter = "none";
+            } else if (bgEffect && bgEffect !== "") {
+                ctx.fillStyle = bgEffect;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Draw person
+            ctx.globalCompositeOperation = "destination-atop";
+            ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+            ctx.restore();
+        });
+
+        segmentationRef.current = selfieSegmentation;
+
+        return () => {
+            if (segmentationRef.current) {
+                segmentationRef.current.close();
+            }
+        };
+    }, [videoBackground, isVideoOff]);
 
     useEffect(() => {
         if (videoRef.current && stream) {
             videoRef.current.srcObject = stream;
         }
     }, [stream, isVideoOff]);
+
+    // Handle frame processing
+    useEffect(() => {
+        let animationFrameId: number;
+
+        const processFrame = async () => {
+            if (videoRef.current && segmentationRef.current && videoBackground !== "none" && !isVideoOff) {
+                if (videoRef.current.readyState >= 2) { // HAVE_CURRENT_DATA
+                    await segmentationRef.current.send({ image: videoRef.current });
+                }
+            }
+            animationFrameId = requestAnimationFrame(processFrame);
+        };
+
+        processFrame();
+        return () => cancelAnimationFrame(animationFrameId);
+    }, [videoBackground, isVideoOff]);
 
     return (
         <div
@@ -80,13 +156,19 @@ const VideoTile: React.FC<VideoTileProps> = ({
                 autoPlay
                 muted={isLocal}
                 playsInline
-                style={{ filter: filterMap[videoFilter] || "" }}
-                className={`absolute inset-0 w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} ${isVideoOff ? "opacity-0" : "opacity-100"}`}
+                style={{
+                    filter: filterMap[videoFilter] || "",
+                }}
+                className={`absolute inset-0 w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} ${isVideoOff ? "opacity-0" : (videoBackground !== "none" ? "opacity-0 pointer-events-none" : "opacity-100")}`}
             />
 
-            {videoBackground !== "none" && !isVideoOff && (
-                <div className={`absolute inset-0 z-[5] pointer-events-none transition-all duration-500 ${backgroundMap[videoBackground] || ""}`} />
-            )}
+            <canvas
+                ref={canvasRef}
+                style={{
+                    filter: filterMap[videoFilter] || "",
+                }}
+                className={`absolute inset-0 w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} ${videoBackground !== "none" && !isVideoOff ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            />
 
             {isVideoOff && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">

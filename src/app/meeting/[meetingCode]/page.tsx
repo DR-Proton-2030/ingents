@@ -755,6 +755,7 @@ export default function MeetingPage() {
     return (
         <>
             <Script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" onLoad={() => setIsPeerJsLoaded(true)} />
+            <Script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" strategy="afterInteractive" />
             <div className="min-h-screen bg-[#0a0f16] text-white">
                 {!isInCall ? (
                     <MeetingLobby
