@@ -58,8 +58,10 @@ const VideoTile: React.FC<VideoTileProps> = ({
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const trackingCanvasRef = useRef<HTMLCanvasElement>(null);
     const segmentationRef = useRef<any>(null);
     const [isHovered, setIsHovered] = useState(false);
+    const [headOffset, setHeadOffset] = useState({ x: 0, y: 0 });
 
     // Initialize MediaPipe Segmentation
     useEffect(() => {
@@ -98,6 +100,43 @@ const VideoTile: React.FC<VideoTileProps> = ({
                 // Draw person only in the mask
                 ctx.globalCompositeOperation = "source-in";
                 ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+                // --- TRACKING LOGIC ---
+                // Calculate center of gravity for head tracking parallax
+                if (trackingCanvasRef.current) {
+                    const tCanvas = trackingCanvasRef.current;
+                    const tCtx = tCanvas.getContext("2d");
+                    if (tCtx) {
+                        tCanvas.width = 30; // low res for performance
+                        tCanvas.height = 30;
+                        tCtx.drawImage(results.segmentationMask, 0, 0, 30, 30);
+                        const imageData = tCtx.getImageData(0, 0, 30, 30);
+                        const data = imageData.data;
+
+                        let totalX = 0;
+                        let totalY = 0;
+                        let count = 0;
+
+                        // Weighted average of pixel positions
+                        for (let y = 0; y < 30; y++) {
+                            for (let x = 0; x < 30; x++) {
+                                const idx = (y * 30 + x) * 4;
+                                const alpha = data[idx + 3];
+                                if (alpha > 50) {
+                                    totalX += x;
+                                    totalY += y;
+                                    count++;
+                                }
+                            }
+                        }
+
+                        if (count > 0) {
+                            const centerX = (totalX / count / 30) * 2 - 1; // map to -1 to 1
+                            const centerY = (totalY / count / 30) * 2 - 1;
+                            setHeadOffset({ x: -centerX, y: -centerY }); // Inverse for natural feeling
+                        }
+                    }
+                }
             } else {
                 // Legacy behavior for blur/color
                 ctx.drawImage(results.segmentationMask, 0, 0, canvas.width, canvas.height);
@@ -170,9 +209,19 @@ const VideoTile: React.FC<VideoTileProps> = ({
 
             {backgroundConfigs[videoBackground]?.type === 'simulation' && !isVideoOff && (
                 <div className={`${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} absolute inset-0`}>
-                    <SimulationBackground environment={backgroundConfigs[videoBackground].value as any} />
+                    <SimulationBackground
+                        environment={backgroundConfigs[videoBackground].value as any}
+                        cameraOffset={isLocal ? headOffset : undefined}
+                    />
                 </div>
             )}
+
+            <canvas
+                ref={trackingCanvasRef}
+                className="hidden"
+                width={30}
+                height={30}
+            />
 
             <canvas
                 ref={canvasRef}

@@ -1,19 +1,24 @@
 "use client";
 import React, { Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Environment, Stars, Sparkles, Sky, Cloud, Float } from '@react-three/drei';
+import { Environment, Stars, Sparkles, Cloud, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface SimulationBackgroundProps {
     environment: 'forest' | 'home' | 'space';
+    cameraOffset?: { x: number, y: number };
 }
 
-const CameraParallax = () => {
+const CameraParallax: React.FC<{ offset?: { x: number, y: number } }> = ({ offset }) => {
     const { camera, mouse } = useThree();
     useFrame(() => {
-        // Subtle parallax effect based on mouse position
-        camera.position.x += (mouse.x * 1.5 - camera.position.x) * 0.05;
-        camera.position.y += (mouse.y * 1.0 - camera.position.y) * 0.05;
+        // Use camera tracking offset if available, otherwise fallback to mouse
+        const targetX = offset ? offset.x * 3 : mouse.x * 1.5;
+        const targetY = offset ? offset.y * 2 : mouse.y * 1.0;
+
+        // Smoothly interpolate camera position
+        camera.position.x += (targetX - camera.position.x) * 0.1;
+        camera.position.y += (targetY - camera.position.y) * 0.1;
         camera.lookAt(0, 0, 0);
     });
     return null;
@@ -118,12 +123,12 @@ const SpaceScene = () => (
     </>
 );
 
-const SimulationBackground: React.FC<SimulationBackgroundProps> = ({ environment }) => {
+const SimulationBackground: React.FC<SimulationBackgroundProps> = ({ environment, cameraOffset }) => {
     return (
         <div className="absolute inset-0 w-full h-full pointer-events-none">
             <Canvas camera={{ position: [0, 0, 5], fov: 75 }} gl={{ preserveDrawingBuffer: true }}>
                 <Suspense fallback={null}>
-                    <CameraParallax />
+                    <CameraParallax offset={cameraOffset} />
                     {environment === 'forest' && <ForestScene />}
                     {environment === 'home' && <HomeScene />}
                     {environment === 'space' && <SpaceScene />}
