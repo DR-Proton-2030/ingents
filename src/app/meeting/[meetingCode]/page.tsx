@@ -26,6 +26,7 @@ export interface PeerStream {
 export interface ChatMessage {
     id: string;
     senderId: string;
+    senderName?: string;
     text: string;
     timestamp: number;
 }
@@ -525,6 +526,7 @@ export default function MeetingPage() {
         const msg: ChatMessage = {
             id: Date.now().toString(),
             senderId: peerIdRef.current,
+            senderName: currentUserRef.current.name,
             text,
             timestamp: Date.now(),
         };

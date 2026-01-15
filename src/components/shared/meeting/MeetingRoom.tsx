@@ -43,6 +43,7 @@ interface PeerStream {
 interface ChatMessage {
     id: string;
     senderId: string;
+    senderName?: string;
     text: string;
     timestamp: number;
 }
@@ -570,11 +571,11 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                             {chatMessages.map((msg) => (
                                 <div key={msg.id} className="flex gap-3">
                                     <div className={`w-8 h-8 rounded-full ${avatarColors[allParticipants.findIndex((p) => p.id === msg.senderId) % avatarColors.length || 0]} flex items-center justify-center text-xs font-medium text-white flex-shrink-0`}>
-                                        {msg.senderId === peerId ? currentUser.name.charAt(0).toUpperCase() : msg.senderId.charAt(0).toUpperCase()}
+                                        {msg.senderId === peerId ? currentUser.name.charAt(0).toUpperCase() : (msg.senderName?.charAt(0).toUpperCase() || msg.senderId.charAt(0).toUpperCase())}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-baseline gap-2">
-                                            <span className="text-sm font-medium text-gray-900">{msg.senderId === peerId ? "You" : msg.senderId.substring(0, 8)}</span>
+                                            <span className="text-sm font-medium text-gray-900">{msg.senderId === peerId ? "You" : (msg.senderName || msg.senderId.substring(0, 8))}</span>
                                             <span className="text-xs text-gray-500">{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                                         </div>
                                         <p className="text-sm text-gray-700 break-words">{msg.text}</p>
