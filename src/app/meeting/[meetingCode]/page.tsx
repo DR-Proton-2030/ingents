@@ -13,23 +13,8 @@ declare global {
     }
 }
 
-export interface PeerStream {
-    peerId: string;
-    stream: MediaStream;
-    userName?: string;
-    isVideoOff?: boolean;
-    isMuted?: boolean;
-    reaction?: string | null;
-    isHandRaised?: boolean;
-}
-
-export interface ChatMessage {
-    id: string;
-    senderId: string;
-    senderName?: string;
-    text: string;
-    timestamp: number;
-}
+import { PeerStream, ChatMessage, TranscriptEntry } from "@/components/shared/meeting/room/types";
+import { toast } from "react-toastify";
 
 export default function MeetingPage() {
     const params = useParams();
@@ -112,6 +97,11 @@ export default function MeetingPage() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [hasUnreadMsg, setHasUnreadMsg] = useState(false);
 
+    // Transcription & AI State
+    const [isTranscriptionActive, setIsTranscriptionActive] = useState(false);
+    const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
+    const [isTranscriptionReady, setIsTranscriptionReady] = useState(false);
+
     // Refs
     const peerRef = useRef<any>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
@@ -124,6 +114,8 @@ export default function MeetingPage() {
     const peerIdRef = useRef("");
     const currentUserRef = useRef(currentUser);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const recognitionRef = useRef<any>(null);
+    const isTranscriptionActiveRef = useRef(false);
 
     // Keep currentUserRef in sync
     useEffect(() => {
@@ -212,6 +204,73 @@ export default function MeetingPage() {
         });
     }
 
+    const startTranscription = () => {
+        if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+            toast.error("Speech Recognition is not supported in this browser.");
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+
+        recognition.onresult = (event: any) => {
+            const result = event.results[event.results.length - 1];
+            if (result.isFinal) {
+                const text = result[0].transcript;
+                const transcriptEntry: TranscriptEntry = {
+                    id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                    senderId: peerIdRef.current,
+                    senderName: currentUserRef.current.name,
+                    text: text,
+                    timestamp: Date.now()
+                };
+
+                setTranscripts(prev => [...prev, transcriptEntry]);
+                broadcastData({ type: "transcription", payload: transcriptEntry });
+            }
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error("Speech Recognition Error:", event.error);
+            if (event.error === "no-speech") return;
+            setIsTranscriptionActive(false);
+            isTranscriptionActiveRef.current = false;
+        };
+
+        recognition.onend = () => {
+            if (isTranscriptionActiveRef.current) {
+                recognition.start();
+            }
+        };
+
+        recognitionRef.current = recognition;
+        recognition.start();
+        setIsTranscriptionActive(true);
+        isTranscriptionActiveRef.current = true;
+        broadcastData({ type: "transcription-status", payload: { active: true } });
+        toast.info("Transcription activated for everyone.");
+    };
+
+    const stopTranscription = () => {
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+        setIsTranscriptionActive(false);
+        isTranscriptionActiveRef.current = false;
+        broadcastData({ type: "transcription-status", payload: { active: false } });
+    };
+
+    const toggleTranscription = () => {
+        if (isTranscriptionActive) {
+            stopTranscription();
+        } else {
+            startTranscription();
+        }
+    };
+
     function subscribeToCallEvents(call: any) {
         call.on("stream", (remoteStream: MediaStream) => {
             handleRemoteStream(call.peer, remoteStream);
@@ -243,6 +302,11 @@ export default function MeetingPage() {
                     isHandRaised: isHandRaisedRef.current
                 }
             });
+
+            // If transcription is active, notify the new peer
+            if (isTranscriptionActiveRef.current) {
+                conn.send({ type: "transcription-status", payload: { active: true } });
+            }
         });
 
         conn.on("data", (data: any) => {
@@ -298,6 +362,14 @@ export default function MeetingPage() {
                         ? { ...p, isHandRaised: data.payload.isHandRaised }
                         : p
                 ));
+            }
+            if (data.type === "transcription") {
+                setTranscripts(prev => [...prev, data.payload]);
+            }
+            if (data.type === "transcription-status") {
+                setIsTranscriptionActive(data.payload.active);
+                isTranscriptionActiveRef.current = data.payload.active;
+                toast.info(data.payload.active ? "Meeting Transcription started" : "Meeting Transcription stopped");
             }
             if (data.type === "reaction") {
                 setRemoteStreams(prev => prev.map(p =>
@@ -635,6 +707,9 @@ export default function MeetingPage() {
                         }}
                         onSendMessage={sendChatMessage}
                         onLeave={leaveMeeting}
+                        isTranscriptionActive={isTranscriptionActive}
+                        onToggleTranscription={toggleTranscription}
+                        transcripts={transcripts}
                     />
                 )}
             </div>

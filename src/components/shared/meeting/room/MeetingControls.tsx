@@ -15,11 +15,13 @@ import {
     Users,
     MessageSquare,
     Bot,
+    Sparkles,
     HandIcon,
 } from "lucide-react";
 import { UserHandUp } from "@solar-icons/react/ssr";
 import { ParticipantState } from "./types";
 import { FaRegHandPaper } from "react-icons/fa";
+import { FiVoicemail } from "react-icons/fi";
 
 interface MeetingControlsProps {
     isMuted: boolean;
@@ -43,6 +45,8 @@ interface MeetingControlsProps {
     allParticipants: ParticipantState[];
     meetingCode: string;
     meetingTitle?: string;
+    isTranscriptionActive: boolean;
+    onToggleTranscription: () => void;
 }
 
 const avatarColors = [
@@ -80,6 +84,8 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
     allParticipants,
     meetingCode,
     meetingTitle,
+    isTranscriptionActive,
+    onToggleTranscription,
 }) => {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -207,10 +213,22 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
                 </button>
 
                 <button
+                    onClick={onToggleTranscription}
+                    className={`p-2.5 rounded-full transition-all relative ${isTranscriptionActive ? "bg-red-50 text-red-600 ring-2 ring-red-100" : "hover:bg-gray-200 text-gray-600"}`}
+                    title={isTranscriptionActive ? "Transcription Active (Click to Stop)" : "Start AI Transcription"}
+                >
+                    <FiVoicemail className={`w-6 h-6 ${isTranscriptionActive ? "animate-pulse" : ""}`} />
+                    {isTranscriptionActive && (
+                        <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-600 border-2 border-white rounded-full" />
+                    )}
+                </button>
+
+                <button
                     onClick={toggleSummary}
                     className={`p-2.5 rounded-full transition-colors ${showSummary ? "bg-blue-100 text-blue-600" : "hover:bg-gray-200 text-gray-600"}`}
+                    title="Meeting Summary & AI Insights"
                 >
-                    <Bot className="w-6 h-6" />
+                    <Sparkles className="w-6 h-6" />
                 </button>
             </div>
         </div>

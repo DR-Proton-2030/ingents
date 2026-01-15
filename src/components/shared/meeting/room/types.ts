@@ -31,3 +31,20 @@ export interface ParticipantState {
     reaction: string | null;
     isHandRaised: boolean;
 }
+
+export interface TranscriptEntry {
+    id: string;
+    senderId: string;
+    senderName: string;
+    text: string;
+    timestamp: number;
+}
+
+export interface MeetingAISummary {
+    title: string;
+    keyPoints: string[];
+    actionItems: string[];
+    sentiment: string;
+    lastUpdated: number;
+}
+

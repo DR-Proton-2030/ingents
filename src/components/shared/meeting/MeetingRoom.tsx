@@ -13,7 +13,7 @@ import MeetingVideoGrid from "./room/MeetingVideoGrid";
 import MeetingLayoutModal from "./room/MeetingLayoutModal";
 
 // Types
-import { PeerStream, ChatMessage, LayoutType, ParticipantState } from "./room/types";
+import { PeerStream, ChatMessage, LayoutType, ParticipantState, TranscriptEntry } from "./room/types";
 
 export interface MeetingRoomProps {
     meetingCode: string;
@@ -39,6 +39,9 @@ export interface MeetingRoomProps {
     onSendReaction: (emoji: string) => void;
     onToggleHandRaise: () => void;
     onLeave: () => void;
+    isTranscriptionActive: boolean;
+    onToggleTranscription: () => void;
+    transcripts: TranscriptEntry[];
 }
 
 export const MeetingRoom: React.FC<MeetingRoomProps> = ({
@@ -65,6 +68,9 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     onSendReaction,
     onToggleHandRaise,
     onLeave,
+    isTranscriptionActive,
+    onToggleTranscription,
+    transcripts,
 }) => {
     // State
     const [layout, setLayout] = useState<LayoutType>("auto");
@@ -212,7 +218,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                             )}
                             {showSummary && (
                                 <div className="h-full p-4 overflow-y-auto">
-                                    <MeetingSummary chatMessages={chatMessages} />
+                                    <MeetingSummary transcripts={transcripts} />
                                 </div>
                             )}
                         </div>
@@ -243,6 +249,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 allParticipants={allParticipants}
                 meetingCode={meetingCode}
                 meetingTitle={meetingInfo?.title}
+                isTranscriptionActive={isTranscriptionActive}
+                onToggleTranscription={onToggleTranscription}
             />
         </div>
     );
