@@ -24,10 +24,10 @@ export const Dashboard = () => {
           </div>
 
           {/* Center content */}
-          <section className="lg:col-span-6 space-y-5">
+          <section className="col-span-6 space-y-5">
             {/* <AllUsers /> */}
             <UpcomingEvent />
-            <ProjectProgress />
+
           </section>
 
           {/* Right column */}
