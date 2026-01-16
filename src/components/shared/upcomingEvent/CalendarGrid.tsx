@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { Meeting } from "@/utils/api/meeting/meeting.api";
-import { WeekInfo, TIME_SLOTS } from "./types";
+import { WeekInfo } from "./types";
 import EventCard from "./EventCard";
 
 interface CalendarGridProps {
@@ -15,9 +15,52 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     meetings,
     onMeetingClick,
 }) => {
+    // Generate dynamic time slots based on meeting range
+    const { dynamicTimeSlots, minHour } = React.useMemo(() => {
+        if (meetings.length === 0) {
+            // Default range if no meetings: 9 AM to 6 PM
+            const defaultStart = 9;
+            const defaultEnd = 18;
+            const slots = [];
+            for (let h = defaultStart; h <= defaultEnd; h++) {
+                const hour = h % 24;
+                const ampm = hour >= 12 ? "pm" : "am";
+                const displayHour = hour % 12 || 12;
+                slots.push(`${displayHour} ${ampm}`);
+            }
+            return { dynamicTimeSlots: slots, minHour: defaultStart };
+        }
+
+        let firstHour = 24;
+        let lastHour = 0;
+
+        meetings.forEach((m) => {
+            const start = new Date(m.scheduled_start_time).getHours();
+            const duration = Math.ceil(m.duration_minutes / 60);
+            const end = start + duration;
+
+            if (start < firstHour) firstHour = start;
+            if (end > lastHour) lastHour = end;
+        });
+
+        // Add 1 hour padding if possible
+        const startHour = Math.max(0, firstHour - 1);
+        const endHour = Math.min(24, lastHour + 1);
+
+        const slots = [];
+        for (let h = startHour; h < endHour; h++) {
+            const hour = h % 24;
+            const ampm = hour >= 12 ? "pm" : "am";
+            const displayHour = hour % 12 || 12;
+            slots.push(`${displayHour} ${ampm}`);
+        }
+
+        return { dynamicTimeSlots: slots, minHour: startHour };
+    }, [meetings]);
+
     // Get meeting and its span for a specific slot
     const getEventInfoForSlot = (dayIndex: number, timeSlotIndex: number) => {
-        const slotHour = 8 + timeSlotIndex; // Starting from 8am
+        const slotHour = minHour + timeSlotIndex;
         const targetDate = weekInfo.days[dayIndex]?.fullDate;
 
         if (!targetDate) return null;
@@ -40,8 +83,8 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     };
 
     // Determine if a time slot has any meetings across all days (including spanned hours)
-    const columnsWithMeetings = TIME_SLOTS.map((_, timeIdx) => {
-        const slotHour = 8 + timeIdx;
+    const columnsWithMeetings = dynamicTimeSlots.map((_, timeIdx) => {
+        const slotHour = minHour + timeIdx;
         return weekInfo.days.some((day) => {
             const targetDateString = day.fullDate.toDateString();
             return meetings.some((meeting) => {
@@ -65,11 +108,10 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
     return (
         <div className="max-h-[300px] overflow-auto hidescroll scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent">
             <table className="w-full border-collapse table-fixed min-w-max">
-                {/* Time Slots Header */}
                 <thead>
                     <tr>
                         <th className="w-20 p-1 sticky left-0 z-10 bg-[#FAF9F6] border-b border-orange-200/80"></th>
-                        {TIME_SLOTS.map((time, idx) => (
+                        {dynamicTimeSlots.map((time, idx) => (
                             <th
                                 key={idx}
                                 className={`p-1 text-center border-b border-orange-200/80 transition-all duration-300 ${columnsWithMeetings[idx] ? "w-[150px]" : "w-[40px]"
@@ -83,7 +125,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                     </tr>
                 </thead>
 
-                {/* Date Rows */}
                 <tbody>
                     {weekInfo.days.map((day, dayIdx) => {
                         let slotsToSkip = 0;
@@ -100,7 +141,7 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
                                         {day.date}
                                     </div>
                                 </td>
-                                {TIME_SLOTS.map((_, timeIdx) => {
+                                {dynamicTimeSlots.map((_, timeIdx) => {
                                     if (slotsToSkip > 0) {
                                         slotsToSkip--;
                                         return null;
