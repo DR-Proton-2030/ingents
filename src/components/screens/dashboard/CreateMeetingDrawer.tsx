@@ -48,7 +48,7 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
     const [duration, setDuration] = useState(60);
     const [notes, setNotes] = useState("");
     const [meetingType, setMeetingType] = useState("team");
-    const [activePicker, setActivePicker] = useState<"time" | "duration" | null>(null);
+    const [activePicker, setActivePicker] = useState<"time" | "duration" | "participants" | null>(null);
 
     // Custom Picker States
     const [viewDate, setViewDate] = useState(new Date());
@@ -370,129 +370,51 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
 
                     {/* Participants */}
                     <div className="space-y-4">
-                        <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                            <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
-                                <UsersGroupRounded className="w-5 h-5 text-amber-500" />
+                        <h3 className="text-sm font-semibold text-gray-700 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
+                                    <UsersGroupRounded className="w-5 h-5 text-amber-500" />
+                                </div>
+                                Invitees
                             </div>
 
-                            Invitees
+                            <button
+                                type="button"
+                                onClick={() => setActivePicker("participants")}
+                                className="text-[10px] font-bold text-orange-600 hover:text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 transition-all active:scale-95"
+                            >
+                                Manage
+                            </button>
                         </h3>
-                        <div className="space-y-5">
-                            {/* Internal Search */}
-                            <div className="relative">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1.5 ml-1">Internal Teammates</label>
-                                <div className="relative">
-                                    <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        disabled={meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1}
-                                        placeholder={meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1
-                                            ? "Participant limit reached"
-                                            : "Search by name or corporate email..."}
-                                        className={`w-full h-11 pl-11 pr-4 rounded-xl transition-all outline-none text-sm font-medium bg-gray-100 ${meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1
-                                            ? "opacity-50 cursor-not-allowed text-gray-400"
-                                            : "text-gray-800"
-                                            }`}
-                                    />
-                                </div>
 
-                                {searchQuery.trim() && filteredUsers.length > 0 && (
-                                    <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-white rounded-xl border border-gray-100 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                                        <div className="p-2 max-h-64 overflow-y-auto">
-                                            {filteredUsers.map((u: IUser) => (
-                                                <button
-                                                    key={u.id || (u as any)._id}
-                                                    type="button"
-                                                    onClick={() => addInternalParticipant(u)}
-                                                    className="w-full p-2.5 flex items-center gap-3 hover:bg-gray-50 rounded-lg transition-all group"
-                                                >
-                                                    <div className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-bold border border-white shadow-sm ring-1 ring-gray-100 uppercase overflow-hidden">
-                                                        {u.profile_picture ? (
-                                                            <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            u.full_name?.charAt(0) || "?"
-                                                        )}
-                                                    </div>
-                                                    <div className="text-left flex-1 min-w-0">
-                                                        <p className="text-sm font-bold text-gray-800 group-hover:text-orange-600 truncate">{u.full_name}</p>
-                                                        <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
-                                                    </div>
-                                                    <AddCircle className="w-5 h-5 text-gray-300 group-hover:text-orange-500 transition-colors" />
-                                                </button>
-                                            ))}
+                        <div className="space-y-2">
+                            {(internalParticipants.length > 0 || externalParticipants.length > 0) ? (
+                                <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px]">
+                                    {internalParticipants.map(u => (
+                                        <div key={u._id} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden shadow-sm" title={u.full_name}>
+                                            {u.profile_picture ? (
+                                                <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500 uppercase">
+                                                    {u.full_name.charAt(0)}
+                                                </div>
+                                            )}
                                         </div>
+                                    ))}
+                                    {externalParticipants.map((u, i) => (
+                                        <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-orange-500 flex items-center justify-center text-[10px] font-bold text-white shadow-sm" title={u.name || u.email}>
+                                            {u.name?.charAt(0) || "G"}
+                                        </div>
+                                    ))}
+                                    <div className="flex items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+                                        {internalParticipants.length + externalParticipants.length} Participants Added
                                     </div>
-                                )}
-                            </div>
-
-                            {/* External */}
-                            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 space-y-3">
-                                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest ml-1">External Guest</label>
-                                <div className="grid grid-cols-[1fr_1.5fr_auto] gap-2">
-                                    <input
-                                        type="text"
-                                        value={newExternalName}
-                                        onChange={(e) => setNewExternalName(e.target.value)}
-                                        placeholder="Full Name"
-                                        className="h-10 px-3 rounded-lg border border-gray-200 focus:border-orange-500 outline-none text-xs font-medium bg-white"
-                                    />
-                                    <input
-                                        type="email"
-                                        value={newExternalEmail}
-                                        onChange={(e) => setNewExternalEmail(e.target.value)}
-                                        placeholder="Email address"
-                                        className="h-10 px-3 rounded-lg border border-gray-200 focus:border-orange-500 outline-none text-xs font-medium bg-white"
-                                    />
-                                    <button
-                                        type="button"
-                                        disabled={meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1}
-                                        onClick={addExternalParticipant}
-                                        className="h-10 w-10 bg-orange-500 text-white rounded-lg hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50 disabled:grayscale disabled:pointer-events-none"
-                                    >
-                                        <AddCircle className="w-5 h-5" />
-                                    </button>
                                 </div>
-                            </div>
-
-                            {/* Selected Chips */}
-                            {(internalParticipants.length > 0 || externalParticipants.length > 0) && (
-                                <div className="space-y-3 pt-1">
-                                    <div className="flex flex-col gap-2">
-                                        {internalParticipants.map(u => (
-                                            <div key={u._id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition-all">
-                                                <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-black shadow-sm uppercase overflow-hidden">
-                                                    {u.profile_picture ? (
-                                                        <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        u.full_name.charAt(0)
-                                                    )}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-gray-800 truncate">{u.full_name}</p>
-                                                    <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
-                                                </div>
-                                                <button onClick={() => removeInternalParticipant(u._id)} className="p-1 text-gray-300 hover:text-red-500 transition-colors">
-                                                    <MinusCircle className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        {externalParticipants.map((u, i) => (
-                                            <div key={i} className="flex items-center gap-3 p-2.5 bg-orange-50 rounded-xl border border-orange-100 animate-in zoom-in-95 duration-200">
-                                                <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-black shadow-sm uppercase">
-                                                    {u.name.charAt(0) || "G"}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-orange-800 truncate">{u.name || "Guest"}</p>
-                                                    <p className="text-[10px] text-orange-600/70 truncate">{u.email}</p>
-                                                </div>
-                                                <button onClick={() => removeExternalParticipant(i)} className="p-1 text-orange-300 hover:text-red-500 transition-colors">
-                                                    <MinusCircle className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
+                            ) : (
+                                <div className="p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={() => setActivePicker("participants")}>
+                                    <UsersGroupRounded className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
+                                    <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No participants added yet</p>
+                                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to manage invitees</p>
                                 </div>
                             )}
                         </div>
@@ -542,7 +464,6 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
                     </div>
                 </div>
 
-                {/* Side Picker Content */}
                 <div
                     className={`absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 w-96 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md ${activePicker ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10 pointer-events-none"
                         }`}
@@ -550,7 +471,7 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
                     <div className="p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h4 className="text-xl font-bold text-gray-800 ">
-                                {activePicker === "time" ? "Select Start Time" : "Set Duration"}
+                                {activePicker === "time" ? "Select Start Time" : activePicker === "duration" ? "Set Duration" : "Manage Invitees"}
                             </h4>
                             <button onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
                                 <CloseCircle className="w-5 h-5 text-gray-400" />
@@ -674,6 +595,147 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
                                         {m} Min {m >= 60 && `(${m / 60}h)`}
                                     </button>
                                 ))}
+                            </div>
+                        )}
+
+                        {activePicker === "participants" && (
+                            <div className="space-y-6">
+                                {/* Internal Search */}
+                                <div className="space-y-4">
+                                    <div className="relative">
+                                        <div className="relative">
+                                            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                disabled={meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1}
+                                                placeholder={meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1
+                                                    ? "Participant limit reached"
+                                                    : "Search teammate..."}
+                                                className={`w-full h-12 pl-11 pr-4 rounded-2xl transition-all outline-none text-sm font-bold bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-500/10 border border-transparent focus:border-orange-500 ${meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1
+                                                    ? "opacity-50 cursor-not-allowed text-gray-400"
+                                                    : "text-gray-800"
+                                                    }`}
+                                            />
+                                        </div>
+
+                                        {searchQuery.trim() && filteredUsers.length > 0 && (
+                                            <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                                                <div className="p-2 max-h-64 overflow-y-auto shadow-inner">
+                                                    {filteredUsers.map((u: IUser) => (
+                                                        <button
+                                                            key={u.id || (u as any)._id}
+                                                            type="button"
+                                                            onClick={() => addInternalParticipant(u)}
+                                                            className="w-full p-2.5 flex items-center gap-3 hover:bg-orange-50 rounded-xl transition-all group"
+                                                        >
+                                                            <div className="w-10 h-10 rounded-full bg-white text-gray-600 flex items-center justify-center text-xs font-bold border border-gray-100 shadow-sm uppercase overflow-hidden">
+                                                                {u.profile_picture ? (
+                                                                    <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    u.full_name?.charAt(0) || "?"
+                                                                )}
+                                                            </div>
+                                                            <div className="text-left flex-1 min-w-0">
+                                                                <p className="text-sm font-bold text-gray-800 group-hover:text-orange-600 truncate">{u.full_name}</p>
+                                                                <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
+                                                            </div>
+                                                            <AddCircle className="w-5 h-5 text-gray-300 group-hover:text-orange-500 transition-colors" />
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* External Guest */}
+                                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">External Guest</span>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <input
+                                            type="text"
+                                            value={newExternalName}
+                                            onChange={(e) => setNewExternalName(e.target.value)}
+                                            placeholder="Guest Name"
+                                            className="w-full h-10 px-4 rounded-xl border border-gray-200 outline-none text-xs font-bold text-gray-800 focus:border-orange-500 bg-white"
+                                        />
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="email"
+                                                value={newExternalEmail}
+                                                onChange={(e) => setNewExternalEmail(e.target.value)}
+                                                placeholder="Guest Email"
+                                                className="flex-1 h-10 px-4 rounded-xl border border-gray-200 outline-none text-xs font-bold text-gray-800 focus:border-orange-500 bg-white"
+                                            />
+                                            <button
+                                                type="button"
+                                                disabled={meetingType === "one_on_one" && (internalParticipants.length + externalParticipants.length) >= 1}
+                                                onClick={addExternalParticipant}
+                                                className="h-10 w-10 bg-orange-500 text-white rounded-xl hover:bg-orange-600 active:scale-95 transition-all flex items-center justify-center disabled:opacity-50 disabled:grayscale"
+                                            >
+                                                <AddCircle className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Selected List */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between px-1 border-b border-gray-100 pb-2">
+                                        <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Selected Invitees ({internalParticipants.length + externalParticipants.length})</h5>
+                                    </div>
+                                    <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
+                                        {internalParticipants.map(u => (
+                                            <div key={u._id} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 hover:border-orange-100 transition-all group">
+                                                <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-black shadow-sm uppercase overflow-hidden">
+                                                    {u.profile_picture ? (
+                                                        <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        u.full_name.charAt(0)
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-gray-800 truncate">{u.full_name}</p>
+                                                    <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
+                                                </div>
+                                                <button onClick={() => removeInternalParticipant(u._id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                                    <MinusCircle className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {externalParticipants.map((u, i) => (
+                                            <div key={i} className="flex items-center gap-3 p-3 bg-orange-50/50 rounded-2xl border border-orange-100 group">
+                                                <div className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-black shadow-sm uppercase">
+                                                    {u.name?.charAt(0) || "G"}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm font-bold text-orange-800 truncate">{u.name || "Guest"}</p>
+                                                    <p className="text-[10px] text-orange-600/70 truncate">{u.email}</p>
+                                                </div>
+                                                <button onClick={() => removeExternalParticipant(i)} className="p-2 text-orange-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                                    <MinusCircle className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                        {internalParticipants.length === 0 && externalParticipants.length === 0 && (
+                                            <div className="text-center py-8">
+                                                <p className="text-xs font-bold text-gray-400">Search above to add people</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setActivePicker(null)}
+                                    className="w-full h-12 bg-gray-900 text-white rounded-2xl text-xs font-bold hover:bg-black transition-all active:scale-95 shadow-xl shadow-gray-200 mt-4"
+                                >
+                                    Done Managing
+                                </button>
                             </div>
                         )}
                     </div>
