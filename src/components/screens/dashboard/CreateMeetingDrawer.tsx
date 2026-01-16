@@ -50,6 +50,13 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
     const [meetingType, setMeetingType] = useState("team");
     const [activePicker, setActivePicker] = useState<"time" | "duration" | null>(null);
 
+    // Custom Picker States
+    const [viewDate, setViewDate] = useState(new Date());
+    const [selDate, setSelDate] = useState(new Date());
+    const [selHour, setSelHour] = useState("09");
+    const [selMinute, setSelMinute] = useState("00");
+    const [selAmPm, setSelAmPm] = useState("AM");
+
     // Participants State
     const [internalParticipants, setInternalParticipants] = useState<{ _id: string; full_name: string; email: string; profile_picture?: string }[]>([]);
     const [externalParticipants, setExternalParticipants] = useState<{ email: string; name: string }[]>([]);
@@ -100,6 +107,30 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
             (user?.email || "").toLowerCase().includes(term)
         );
     });
+
+    // Sync custom picker states to startTime
+    useEffect(() => {
+        const year = selDate.getFullYear();
+        const month = String(selDate.getMonth() + 1).padStart(2, "0");
+        const day = String(selDate.getDate()).padStart(2, "0");
+
+        let h = parseInt(selHour);
+        if (selAmPm === "PM" && h < 12) h += 12;
+        if (selAmPm === "AM" && h === 12) h = 0;
+
+        const formattedDate = `${year}-${month}-${day}T${String(h).padStart(2, "0")}:${selMinute}`;
+        setStartTime(formattedDate);
+    }, [selDate, selHour, selMinute, selAmPm]);
+
+    const getDaysInMonth = (date: Date) => {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const days = new Date(year, month + 1, 0).getDate();
+        return { firstDay, days };
+    };
+
+    const calendarData = getDaysInMonth(viewDate);
 
     // Close on escape key
     useEffect(() => {
@@ -513,12 +544,12 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
 
                 {/* Side Picker Content */}
                 <div
-                    className={`absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 w-72 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md ${activePicker ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10 pointer-events-none"
+                    className={`absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 w-96 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md ${activePicker ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10 pointer-events-none"
                         }`}
                 >
                     <div className="p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h4 className="text-sm font-bold text-gray-800 uppercase tracking-widest">
+                            <h4 className="text-xl font-bold text-gray-800 ">
                                 {activePicker === "time" ? "Select Start Time" : "Set Duration"}
                             </h4>
                             <button onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
@@ -527,33 +558,100 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
                         </div>
 
                         {activePicker === "time" && (
-                            <div className="space-y-4">
-                                <input
-                                    type="datetime-local"
-                                    value={startTime}
-                                    onChange={(e) => setStartTime(e.target.value)}
-                                    className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none text-sm font-bold text-gray-800 transition-all"
-                                    required
-                                />
-                                <div className="grid grid-cols-2 gap-2">
-                                    {["09:00", "11:00", "14:00", "16:00"].map((t) => (
+                            <div className="space-y-6">
+                                {/* Month Header */}
+                                <div className="flex items-center justify-between px-1">
+                                    <h5 className="text-xs font-black text-gray-800">
+                                        {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                    </h5>
+                                    <div className="flex gap-1">
                                         <button
-                                            key={t}
                                             type="button"
-                                            onClick={() => {
-                                                const d = new Date();
-                                                const [h, m] = t.split(":");
-                                                d.setHours(parseInt(h), parseInt(m), 0, 0);
-                                                // Adjust to match local datetime input format
-                                                const pad = (n: number) => String(n).padStart(2, "0");
-                                                const formatted = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${t}`;
-                                                setStartTime(formatted);
-                                            }}
-                                            className="px-3 py-2 rounded-xl bg-gray-50 text-xs font-bold text-gray-600 hover:bg-orange-500 hover:text-white transition-all shadow-sm"
+                                            onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))}
+                                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                                         >
-                                            Today, {t}
+                                            <AltArrowRight className="w-4 h-4 text-gray-400 rotate-180" />
                                         </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))}
+                                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                                        >
+                                            <AltArrowRight className="w-4 h-4 text-gray-400" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Calendar Grid */}
+                                <div className="grid grid-cols-7 gap-1">
+                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
+                                        <div key={d} className="text-[10px] font-bold text-gray-300 text-center py-1">{d}</div>
                                     ))}
+                                    {[...Array(calendarData.firstDay)].map((_, i) => <div key={`empty-${i}`} />)}
+                                    {[...Array(calendarData.days)].map((_, i) => {
+                                        const day = i + 1;
+                                        const isSelected = selDate.getDate() === day && selDate.getMonth() === viewDate.getMonth() && selDate.getFullYear() === viewDate.getFullYear();
+                                        return (
+                                            <button
+                                                key={day}
+                                                type="button"
+                                                onClick={() => setSelDate(new Date(viewDate.getFullYear(), viewDate.getMonth(), day))}
+                                                className={`h-8 w-8 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center ${isSelected ? "bg-orange-500 text-white shadow-lg shadow-orange-200 scale-110" : "text-gray-600 hover:bg-orange-50 hover:text-orange-500"
+                                                    }`}
+                                            >
+                                                {day}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Time Picker Section */}
+                                <div className="pt-4 border-t border-gray-100">
+                                    <div className="flex items-center justify-between gap-2 p-1 bg-gray-50 rounded-2xl">
+                                        <div className="flex-1 flex flex-col gap-1 items-center">
+                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Hour</span>
+                                            <div className="flex gap-1 flex-wrap justify-center">
+                                                {["09", "10", "11", "12", "01", "02", "03", "04", "05", "06", "07", "08"].map(h => (
+                                                    <button
+                                                        key={h}
+                                                        type="button"
+                                                        onClick={() => setSelHour(h)}
+                                                        className={`w-7 h-7 rounded-lg text-[10px] font-bold transition-all ${selHour === h ? "bg-gray-900 text-white" : "text-gray-500 hover:bg-gray-200"
+                                                            }`}
+                                                    >
+                                                        {h}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="w-px h-12 bg-gray-200" />
+                                        <div className="flex flex-col gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelAmPm("AM")}
+                                                className={`px-2 py-1.5 rounded-lg text-[9px] font-black transition-all ${selAmPm === "AM" ? "bg-orange-500 text-white" : "bg-white text-gray-400"}`}
+                                            >AM</button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelAmPm("PM")}
+                                                className={`px-2 py-1.5 rounded-lg text-[9px] font-black transition-all ${selAmPm === "PM" ? "bg-orange-500 text-white" : "bg-white text-gray-400"}`}
+                                            >PM</button>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 flex gap-2">
+                                        {["00", "15", "30", "45"].map(m => (
+                                            <button
+                                                key={m}
+                                                type="button"
+                                                onClick={() => setSelMinute(m)}
+                                                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${selMinute === m ? "bg-orange-50 border-orange-200 text-orange-600" : "bg-white border-gray-100 text-gray-400 hover:border-orange-200"
+                                                    }`}
+                                            >
+                                                :{m}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -569,8 +667,8 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
                                             setActivePicker(null);
                                         }}
                                         className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all border ${duration === m
-                                                ? "bg-gray-900 border-gray-900 text-white shadow-lg"
-                                                : "bg-white border-gray-100 text-gray-600 hover:border-orange-500"
+                                            ? "bg-gray-900 border-gray-900 text-white shadow-lg"
+                                            : "bg-white border-gray-100 text-gray-600 hover:border-orange-500"
                                             }`}
                                     >
                                         {m} Min {m >= 60 && `(${m / 60}h)`}
