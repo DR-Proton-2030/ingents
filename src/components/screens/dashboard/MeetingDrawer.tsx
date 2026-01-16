@@ -27,6 +27,7 @@ import {
 import { LinkCircle } from "@solar-icons/react/ssr";
 import AuthContext from "@/contexts/authContext/authContext";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 // Avatar colors for participants
 const avatarColors = [
@@ -117,6 +118,7 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
     isOpen,
     onClose,
 }) => {
+    const router = useRouter();
     const { user } = useContext(AuthContext);
     const [meeting, setMeeting] = useState<MeetingDetails | null>(null);
     const [participants, setParticipants] = useState<Participant[]>([]);
@@ -146,6 +148,13 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
         return participant.user_object_id === currentUserId ||
             participant.user_details?._id === currentUserId;
     };
+
+    const handleJoinMeeting = () => {
+        if (meeting) {
+            router.push(`/meeting/${meeting.meeting_code}`);
+            onClose();
+        }
+    }
 
     useEffect(() => {
         if (isOpen && meetingId) {
@@ -442,14 +451,13 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                                     Meeting Link
                                 </h4>
                                 <div className="flex items-center gap-2">
-                                    <a
-                                        href={`http://localhost:3000/meeting/${meeting.meeting_code}`}
-                                        rel="noopener noreferrer"
+                                    <button
+                                    onClick={handleJoinMeeting}
                                         className="flex-1 bg-gradient-to-r from-black/70 to-black/80 text-white text-sm font-medium py-2.5 px-4
                                          rounded-lg hover:from-black/80 hover:to-black/90 transition-all shadow-md hover:shadow-lg text-center"
                                     >
                                         Join Meeting
-                                    </a>
+                                    </button>
                                     <button
                                         onClick={() =>
                                             navigator.clipboard.writeText(meeting.meeting_link)
