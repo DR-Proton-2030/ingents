@@ -17,8 +17,25 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
 }) => {
     // Generate dynamic time slots based on meeting range
     const { dynamicTimeSlots, minHour } = React.useMemo(() => {
-        if (meetings.length === 0) {
-            // Default range if no meetings: 9 AM to 6 PM
+        let firstHour = 24;
+        let lastHour = 0;
+        let hasValidMeeting = false;
+
+        meetings.forEach((m) => {
+            const startDate = new Date(m.scheduled_start_time);
+            if (isNaN(startDate.getTime())) return;
+
+            const start = startDate.getHours();
+            const duration = Math.ceil((m.duration_minutes || 60) / 60);
+            const end = start + duration;
+
+            if (start < firstHour) firstHour = start;
+            if (end > lastHour) lastHour = end;
+            hasValidMeeting = true;
+        });
+
+        if (!hasValidMeeting) {
+            // Default range if no meetings or invalid data: 9 AM to 6 PM
             const defaultStart = 9;
             const defaultEnd = 18;
             const slots = [];
@@ -30,18 +47,6 @@ export const CalendarGrid: React.FC<CalendarGridProps> = ({
             }
             return { dynamicTimeSlots: slots, minHour: defaultStart };
         }
-
-        let firstHour = 24;
-        let lastHour = 0;
-
-        meetings.forEach((m) => {
-            const start = new Date(m.scheduled_start_time).getHours();
-            const duration = Math.ceil(m.duration_minutes / 60);
-            const end = start + duration;
-
-            if (start < firstHour) firstHour = start;
-            if (end > lastHour) lastHour = end;
-        });
 
         // Add 1 hour padding if possible
         const startHour = Math.max(0, firstHour - 1);

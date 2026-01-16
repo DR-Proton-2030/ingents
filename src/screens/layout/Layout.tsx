@@ -28,17 +28,17 @@ export default function Layout({ children, showSidebar = true }: LayoutProps) {
       )}
 
       {/* Main content wrapper */}
-     <div
-  className="relative w-full hidescroll h-full bg-white/50 backdrop-blur-2xl
+      <div
+        className="relative w-full hidescroll h-full bg-white/50 backdrop-blur-2xl
   rounded-3xl shadow-xl shadow-black/5 border border-white/30 overflow-y-auto"
->
-  <Navbar />
+      >
+        <Navbar />
 
-  {/* 👇 THIS is where modals should live */}
-  <main className="relative p-6 h-full">
-    {children}
-  </main>
-</div>
+        {/* 👇 THIS is where modals should live */}
+        <main className="relative p-5 h-full">
+          {children}
+        </main>
+      </div>
 
     </div>
   );
