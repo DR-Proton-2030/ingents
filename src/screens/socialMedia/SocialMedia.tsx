@@ -6,10 +6,11 @@ import StatCard from "./components/StatCard";
 import TotalMessagesCard from "./components/TotalMessagesCard";
 import FollowersOverviewCard from "./components/FollowersOverviewCard";
 import AccountSelection from "./components/AccountSelection";
+import PostComposer from "./components/PostComposer";
 import AiSidebar from "@/components/shared/aiSidebar/AiSidebar";
 import { getCompanyDetails, storeDefaultCompanyDetails } from "@/lib/storage";
 import Layout from "../layout/Layout";
-import FacebookPostForm from "@/Testing/FacebookPostForm";
+
 
 // Data for the page (kept local for now)
 
@@ -74,24 +75,14 @@ export default function SocialMediaDashboard() {
     <Layout>
       <div className="mx-auto px-5 max-w-7xl font-sans gap-5 flex flex-col lg:flex-row  grid grid-cols-1  lg:grid-cols-12">
         <div className="flex-grow  lg:col-span-8 h-[87vh] overflow-y-auto pb-10 hidescroll">
-          <Header
+          {/* <Header
             selectedCompany={selectedCompany}
             setSelectedCompany={setSelectedCompany}
-          />
-          <FacebookPostForm />
+          /> */}
           <AccountSelection />
-          <main className="mt-8 space-y-6 pr-2">
-            <FollowersChart />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {stats.map((stat) => (
-                <StatCard key={stat.title} {...stat} />
-              ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TotalMessagesCard />
-              <FollowersOverviewCard />
-            </div>
-          </main>
+          <div className="mt-6">
+            <PostComposer />
+          </div>
         </div>
         <div className="w-full   flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
           <AiSidebar aiUrl="social" context={companyDetails} />

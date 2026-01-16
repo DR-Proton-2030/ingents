@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  devIndicators: false,
   images: {
     remotePatterns: [
       {
@@ -16,6 +17,22 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "d3fyty2h10se9r.cloudfront.net",
+      },
+      {
+        protocol: "https",
+        hostname: "ingents.s3.ap-south-1.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "threedio-prod-var-cdn.icons8.com",
+      },
+      {
+        protocol: "https",
+        hostname: "encrypted-tbn0.gstatic.com",
       },
       {
         protocol: "https",

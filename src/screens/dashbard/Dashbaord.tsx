@@ -17,7 +17,7 @@ export const Dashboard = () => {
         <DashboardHeader />
 
         {/* Grid */}
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="flex flex-col lg:flex-row gap-5">
           {/* Left Navigation */}
           <div className="lg:col-span-3">
             <LeftNavigation />
@@ -31,7 +31,7 @@ export const Dashboard = () => {
           </section>
 
           {/* Right column */}
-          <aside className="lg:col-span-3 space-y-5">
+          <aside className="w-1/4  space-y-5">
             <TimeSchedule />
             <TeamControl />
           </aside>

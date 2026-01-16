@@ -139,9 +139,9 @@ useEffect(() => {
         </div>
       </div>
       {/* Aurora Gradient Background */}
-      <div className="pointer-events-none absolute -top-32 -left-40 h-[42rem] w-[42rem] rounded-full bg-[radial-gradient(ellipse_at_top_left,_rgba(255,186,122,0.45)_0%,_rgba(255,214,170,0.28)_35%,_transparent_70%)] blur-3xl opacity-90 -z-10" />
-      <div className="pointer-events-none absolute top-24 -right-36 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.65)_0%,_rgba(255,255,255,0.35)_40%,_transparent_70%)] blur-3xl opacity-90 -z-10" />
-      <div className="pointer-events-none absolute bottom-[-14rem] left-1/3 h-[48rem] w-[48rem] rotate-12 rounded-full bg-[conic-gradient(from_120deg_at_50%_50%,_rgba(255,255,255,0.55)_0deg,_rgba(255,179,71,0.28)_120deg,_transparent_300deg)] blur-3xl opacity-90 -z-10" />
+      <div className="pointer-events-none absolute -top-32 -left-40 h-[42rem] w-[42rem] rounded-full bg-[radial-gradient(ellipse_at_top_left,_rgba(255,186,122,0.45)_0%,_rgba(255,214,170,0.28)_35%,_transparent_70%)] blur-3xl opacity-90 -z-10 animate-aurora-1 animate-debug" />
+      <div className="pointer-events-none absolute top-24 -right-36 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.65)_0%,_rgba(255,255,255,0.35)_40%,_transparent_70%)] blur-3xl opacity-90 -z-10 animate-aurora-2" />
+      <div className="pointer-events-none absolute bottom-[-14rem] left-1/3 h-[48rem] w-[48rem] rotate-12 rounded-full bg-[conic-gradient(from_120deg_at_50%_50%,_rgba(255,255,255,0.55)_0deg,_rgba(255,179,71,0.28)_120deg,_transparent_300deg)] blur-3xl opacity-90 -z-10 animate-aurora-3" />
       <motion.div
         key="header"
         initial={{ opacity: 0, y: -40 }}
@@ -149,7 +149,7 @@ useEffect(() => {
         exit={{ opacity: 0, y: 40 }}
         transition={{ duration: 0.5, ease: "easeInOut" }}
       >
-        <AuthHeader onPress={() => {}} btn={false} />
+        <AuthHeader onPress={() => {}} btn={false} login={true} />
       </motion.div>
       <motion.div
         key="body"
@@ -187,7 +187,7 @@ useEffect(() => {
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   className={cn(
-                    "block w-full pl-10 pr-3 py-4 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
+                    "block w-full pl-10 pr-3 py-4 border rounded-full bg-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
                     errors.email
                       ? "border-red-300 bg-red-50"
                       : "border-gray-300 hover:border-gray-400"
@@ -221,7 +221,7 @@ useEffect(() => {
                     handleInputChange("password", e.target.value)
                   }
                   className={cn(
-                    "block w-full pl-10 pr-3 py-4 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
+                    "block w-full pl-10 pr-3 py-4 border rounded-full bg-white/80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
                     errors.password
                       ? "border-red-300 bg-red-50"
                       : "border-gray-300 hover:border-gray-400"
@@ -274,7 +274,7 @@ useEffect(() => {
       "w-full flex items-center justify-center px-8 py-3 rounded-full font-medium transition-all",
       isLoading
         ? "bg-gray-400 cursor-not-allowed"
-        : "bg-purple-600 hover:bg-blue-700",
+        : "bg-black/80  hover:bg-black/70",
       "text-white"
     )}
   >

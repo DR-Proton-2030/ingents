@@ -7,8 +7,25 @@ export function middleware(req: NextRequest) {
   console.log("🍪 All Cookies:", req.cookies.getAll());
 
   // Skip authentication for public routes
-  const publicRoutes = ["/login", "/signup", "/auth/login", "/auth/signup", "/setup-password"];
+  const publicRoutes = [
+    "/login",
+    "/signup",
+    "/auth/login",
+    "/auth/signup",
+    "/setup-password",
+  ];
   if (publicRoutes.includes(req.nextUrl.pathname)) {
+    return NextResponse.next();
+  }
+
+  // Allow OAuth callback routes (social media with platform & token params)
+  const isOAuthCallback =
+    req.nextUrl.pathname.includes("/social-media") &&
+    req.nextUrl.searchParams.has("platform") &&
+    req.nextUrl.searchParams.has("token");
+
+  if (isOAuthCallback) {
+    console.log("OAuth callback detected, allowing access...");
     return NextResponse.next();
   }
 
@@ -19,7 +36,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  if(req.nextUrl.pathname === "/" && token) {
+  if (req.nextUrl.pathname === "/" && token) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
@@ -28,6 +45,6 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|auth).*)"
+    "/((?!api|_next/static|_next/image|favicon.ico|login|signup|auth).*)",
   ],
 };

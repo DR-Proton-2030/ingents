@@ -10,7 +10,7 @@ interface LayoutProps {
 export default function Layout({ children, showSidebar = true }: LayoutProps) {
   return (
     // Set a base background and establish a relative container for the gradient blobs
-    <div className="relative h-screen hidescroll flex overflow-hidden bg-gray-100 isolate">
+    <div className="relative h-screen hidescroll flex overflow-hidden bg-gray-100 isolate py-5">
       {/* 1. The Aurora Gradient Background */}
       {/* These are the blurred "blobs" that create the soft, multi-color effect. */}
       {/* They are positioned absolutely behind all other content. */}

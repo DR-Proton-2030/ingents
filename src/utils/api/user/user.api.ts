@@ -4,6 +4,12 @@ import { IUser } from "@/types/interface/user.interface";
 
 const initialRoute = "user";
 
+export interface UserOption {
+  _id: string;
+  full_name: string;
+  email: string;
+}
+
 export const searchUsers = async (query: Params): Promise<any> => {
   try {
     const response = await API.get(`/${initialRoute}/search-user`, { params: query });

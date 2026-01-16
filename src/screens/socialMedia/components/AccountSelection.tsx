@@ -2,8 +2,8 @@
 
 "use client";
 import AccountSelectionModal from "@/components/shared/AccountSelectionModal/AccountSelectionModal";
+import IntegrationCard from "@/components/shared/IntegrationCard/IntegrationCard";
 import AuthContext from "@/contexts/authContext/authContext";
-import { PowerOff } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useContext, useEffect, useState } from "react";
 
@@ -23,10 +23,10 @@ const socials = [
     description: "Reach billions of users with targeted content",
   },
   {
-    id: "twitter",
+    id: "X",
     src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/X_logo.jpg/250px-X_logo.jpg",
     href: "https://x.com",
-    alt: "Twitter / X",
+    alt: "X",
     description: "Share real-time updates and trending content",
   },
   {
@@ -35,6 +35,7 @@ const socials = [
     href: "https://linkedin.com",
     alt: "LinkedIn",
     description: "Professional networking and B2B content sharing",
+    comingSoon: true,
   },
   {
     id: "reddit",
@@ -42,6 +43,7 @@ const socials = [
     href: "https://reddit.com",
     alt: "Reddit",
     description: "Engage with communities and drive discussions",
+    comingSoon: true,
   },
   {
     id: "youtube",
@@ -51,6 +53,7 @@ const socials = [
     description: "Broadcast videos, grow subscribers and engage viewers",
   },
 ];
+
 type PlatformKey =
   | "instagram"
   | "facebook"
@@ -61,7 +64,6 @@ type PlatformKey =
 export default function AccountSelection() {
   const searchParams = useSearchParams();
   const [connected, setConnected] = useState<string[]>([]);
-  const [connecting, setConnecting] = useState<string[]>([]);
   const { user } = useContext(AuthContext);
   const router = useRouter();
   const pathname = usePathname();
@@ -81,7 +83,7 @@ export default function AccountSelection() {
 
     switch (socialId) {
       case "facebook":
-        authURL = `${baseURL}/api/v1/fa/facebook?user_id=${user?.id}`;
+        authURL = `${baseURL}/api/v1/facebook/login?user_id=${user?.id}`;
 
         break;
       case "instagram":
@@ -168,6 +170,11 @@ export default function AccountSelection() {
   };
 
   useEffect(() => {
+    // Clean Facebook hash fragment
+    if (typeof window !== "undefined" && window.location.hash === "#_=_") {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+
     const platformParam = searchParams.get("platform");
     const tokenParam = searchParams.get("token");
 
@@ -196,7 +203,7 @@ export default function AccountSelection() {
       if (typeof window !== "undefined" && window.location.hash) {
         window.history.replaceState(null, "", pathname);
       }
-      // Clear local oauth state to prevent re-open
+      // Clear local state that was populated from query params
       setPlatform(null);
       setToken(null);
     } catch (_) {
@@ -259,132 +266,36 @@ export default function AccountSelection() {
   const platformKey = toPlatformKey(platform);
 
   return (
-    <div className="w-full flex justify-start">
-      <div className="flex flex-wrap gap-4 mt-6">
-        {socials.map((social) => {
-          const isConnected = connected.includes(social.id);
-          const isConnecting = connecting.includes(social.id);
-
-          return (
-            <div
-              key={social.id}
-              className="w-64 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* Top: Icon + Title */}
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <img
-                    src={social.src}
-                    alt={social.alt}
-                    className="h-10 w-10 rounded-full"
-                  />
-                </div>
-                <span className="font-semibold text-gray-900">
-                  {social.alt}
-                </span>
-              </div>
-
-              {/* Middle: Description */}
-              {/* {!isConnected && (
-                <p className="mt-2 text-sm text-gray-600">
-                  {social.description}
-                </p>
-              )} */}
-
-              {/* Connection Status */}
-              <div className="mt-3">
-                {isConnected ? (
-                  <button
-                    className="Btn-Container"
-                    onClick={() => handleConnect(social.id)}
-                  >
-                    <span className="text">Connected</span>
-                    <span className="icon-Container">
-                      <PowerOff size={19} />
-                    </span>
-                  </button>
-                ) : (
-                  <button
-                    className="Btn-Container"
-                    onClick={() => handleConnect(social.id)}
-                  >
-                    <span className="text">Conect</span>
-                    <span className="icon-Container">
-                      <svg
-                        width="16"
-                        height="19"
-                        viewBox="0 0 16 19"
-                        fill="nones"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <circle
-                          cx="1.61321"
-                          cy="1.61321"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="5.73583"
-                          cy="1.61321"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="5.73583"
-                          cy="5.5566"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="9.85851"
-                          cy="5.5566"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="9.85851"
-                          cy="9.5"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="13.9811"
-                          cy="9.5"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="5.73583"
-                          cy="13.4434"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="9.85851"
-                          cy="13.4434"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="1.61321"
-                          cy="17.3868"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                        <circle
-                          cx="5.73583"
-                          cy="17.3868"
-                          r="1.5"
-                          fill="black"
-                        ></circle>
-                      </svg>
-                    </span>
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
+    <div className="w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+        {socials.map((social, index) => (
+          <IntegrationCard
+            key={social.id}
+            integration={{
+              title: social.alt,
+              description: social.description,
+              logo: social.src,
+              isConnected: connected.includes(social.id),
+              comingSoon: (social as any).comingSoon ? "Coming Soon" : undefined,
+            }}
+            index={index}
+            onConnect={() => {
+              handleConnect(social.id);
+            }}
+            onView={(integration) => {
+              console.log("View connection details for:", integration.title);
+              // Add view logic here if needed
+            }}
+            onDisconnect={(integration) => {
+              console.log("Disconnect:", integration.title);
+              // Add disconnect logic here
+              setConnected(prev => prev.filter(id => id !== social.id));
+            }}
+            onReconnect={(integration) => {
+              handleConnect(social.id);
+            }}
+          />
+        ))}
       </div>
 
       {/* Modal */}
