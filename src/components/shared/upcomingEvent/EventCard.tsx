@@ -27,9 +27,9 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isDark, onClick }) 
     return (
         <div
             onClick={onClick}
-            className={`rounded-lg p-2 h-full flex flex-col justify-between cursor-pointer transition-all hover:scale-[1.02] ${isDark
-                    ? "bg-gray-800 text-white shadow-lg shadow-black/30"
-                    : "bg-white border border-gray-100 shadow-lg"
+            className={`rounded-xl p-2 h-full flex flex-row justify-between item-end cursor-pointer transition-all hover:scale-[1.02] ${isDark
+                ? "bg-gray-800 text-white shadow-lg shadow-black/30"
+                : "bg-white border border-gray-100 shadow-lg"
                 }`}
             title={event.title}
         >
@@ -44,11 +44,11 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isDark, onClick }) 
                     className={`text-[7px] mt-0.5 leading-tight truncate ${isDark ? "text-gray-300" : "text-gray-500"
                         }`}
                 >
-                    {event.description}
+                    View more
                 </p>
             </div>
 
-            <div className="flex -space-x-1 mt-1">
+            <div className="flex -space-x-1 mt-1 items-end">
                 {/* Host avatar */}
                 {hostAsParticipant && (
                     <ParticipantAvatar
@@ -59,7 +59,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isDark, onClick }) 
                     />
                 )}
                 {/* Participant avatars (limit to 3) */}
-                {event.participants.slice(0, 3).map((participant, i) => (
+                {event.participants.slice(0, 2).map((participant, i) => (
                     <ParticipantAvatar
                         key={participant._id}
                         participant={participant}
@@ -71,8 +71,8 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isDark, onClick }) 
                 {event.participants.length > 3 && (
                     <div
                         className={`h-6 w-6 rounded-full flex items-center justify-center text-[8px] font-semibold border-2 ${isDark
-                                ? "bg-gray-700 text-gray-300 border-gray-800"
-                                : "bg-gray-100 text-gray-600 border-white"
+                            ? "bg-gray-700 text-gray-300 border-gray-800"
+                            : "bg-gray-100 text-gray-600 border-white"
                             }`}
                     >
                         +{event.participants.length - 3}
