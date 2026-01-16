@@ -19,13 +19,13 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="h-16  sticky top-0 bg-white flex items-center gap-4 px-4 md:px-6 border-b border-gray-100">
+      <nav className="h-16 overflow-hidden z-[999] sticky top-0 bg-white/50 backdrop-blur-sm flex items-center gap-4 px-4 md:px-6 border-b border-gray-100">
         {/* Left: Avatar + greeting */}
 
         {/* Assistant label with mic */}
         <div className="hidden md:flex items-center gap-2 pr-2 mr-2 border-r border-gray-200">
           <div className="text-xl  font-semibold  text-gray-900 flex items-center gap-3">
-            <img src={user?.company_details?.logo || "https://scripturesresearch.com/images/logo/scriptureslogo.svg"} alt="" className="h-12" />
+            <img src={user?.company_details?.logo || ""} alt="" className="h-12" />
             {/* {user?.company_details?.company_name || "Ingents"} */}
           </div>
           {/* <button

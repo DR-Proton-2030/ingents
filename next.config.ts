@@ -36,7 +36,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "ingents.s3.ap-south-1.amazonaws.com",
+        hostname: "cdn.prod.website-files.com",
+      },
+      {
+        protocol: "https",
+        hostname: "static.prinseps.com",
       },
     ],
   },
