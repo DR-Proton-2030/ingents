@@ -145,7 +145,7 @@ export const TeamControl = () => {
             </div>
           </div>
         </div>,
-        document.body
+        typeof window !== "undefined" ? document.body : ({} as HTMLElement)
       )}
     </>
   );

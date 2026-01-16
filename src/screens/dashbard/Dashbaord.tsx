@@ -1,4 +1,3 @@
-
 import React from "react";
 import Layout from "../layout/Layout";
 import { DashboardHeader } from "../../components/screens/dashboard/DashboardHeader";
@@ -25,13 +24,10 @@ export const Dashboard = () => {
           </div>
 
           {/* Center content */}
-          <section className="w-1/2 space-y-5">
-
-
+          <section className="lg:col-span-6 space-y-5">
+            {/* <AllUsers /> */}
             <UpcomingEvent />
-
-
-
+            <ProjectProgress />
           </section>
 
           {/* Right column */}
