@@ -8,6 +8,7 @@ import VideoTile from "./room/VideoTile";
 import MeetingChat from "./room/MeetingChat";
 import MeetingPeople from "./room/MeetingPeople";
 import MeetingSummary from "./room/MeetingSummary";
+import MeetingVisualEffects from "./room/MeetingVisualEffects";
 import MeetingControls from "./room/MeetingControls";
 import MeetingVideoGrid from "./room/MeetingVideoGrid";
 import MeetingLayoutModal from "./room/MeetingLayoutModal";
@@ -42,6 +43,9 @@ export interface MeetingRoomProps {
     isTranscriptionActive: boolean;
     onToggleTranscription: () => void;
     transcripts: TranscriptEntry[];
+    videoFilter: string;
+    videoBackground: string;
+    onApplyVisualEffect: (type: "filter" | "background", effectId: string) => void;
 }
 
 export const MeetingRoom: React.FC<MeetingRoomProps> = ({
@@ -71,11 +75,15 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     isTranscriptionActive,
     onToggleTranscription,
     transcripts,
+    videoFilter,
+    videoBackground,
+    onApplyVisualEffect,
 }) => {
     // State
     const [layout, setLayout] = useState<LayoutType>("auto");
     const [showPeople, setShowPeople] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
+    const [showVisualEffects, setShowVisualEffects] = useState(false);
     const [pinnedPeerId, setPinnedPeerId] = useState<string | null>(null);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
 
@@ -87,6 +95,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         if (showChat) onToggleChat();
         setShowPeople(false);
         setShowSummary(false);
+        setShowVisualEffects(false);
     };
 
     // Toggle people panel
@@ -103,6 +112,13 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             closeAllPanels();
         }
         setShowSummary(!showSummary);
+    };
+
+    const toggleVisualEffects = () => {
+        if (!showVisualEffects) {
+            closeAllPanels();
+        }
+        setShowVisualEffects(!showVisualEffects);
     };
 
     // Toggle chat
@@ -124,7 +140,9 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             isVideoOff: isVideoOff,
             isMuted: isMuted,
             reaction: localReaction,
-            isHandRaised: isHandRaised
+            isHandRaised: isHandRaised,
+            videoFilter: videoFilter,
+            videoBackground: videoBackground
         },
         ...remoteStreams.map((p) => {
             const meetingParticipant = participants.find(
@@ -141,6 +159,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 isMuted: !!p.isMuted,
                 reaction: p.reaction || null,
                 isHandRaised: !!p.isHandRaised,
+                videoFilter: p.videoFilter || "none",
+                videoBackground: p.videoBackground || "none"
             };
         }),
     ];
@@ -185,11 +205,11 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 </div>
 
                 {/* Right Panels */}
-                {(showPeople || showChat || showSummary) && (
+                {(showPeople || showChat || showSummary || showVisualEffects) && (
                     <div className="w-96 flex-shrink-0 bg-white rounded-2xl shadow-lg flex flex-col animate-in slide-in-from-right-4 duration-300 overflow-hidden">
                         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                            <h3 className="font-medium text-gray-900">
-                                {showPeople ? "People" : showChat ? "In-call messages" : "AI Summary"}
+                            <h3 className="font-medium text-gray-900 leading-none">
+                                {showPeople ? "People" : showChat ? "In-call messages" : showSummary ? "AI Summary" : "Visual effects"}
                             </h3>
                             <button
                                 onClick={closeAllPanels}
@@ -219,6 +239,17 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                             {showSummary && (
                                 <div className="h-full p-4 overflow-y-auto">
                                     <MeetingSummary transcripts={transcripts} />
+                                </div>
+                            )}
+                            {showVisualEffects && (
+                                <div className="h-full overflow-hidden">
+                                    <MeetingVisualEffects
+                                        onClose={() => setShowVisualEffects(false)}
+                                        onApplyFilter={(id) => onApplyVisualEffect("filter", id)}
+                                        onApplyBackground={(id) => onApplyVisualEffect("background", id)}
+                                        currentFilter={videoFilter}
+                                        currentBackground={videoBackground}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -251,6 +282,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 meetingTitle={meetingInfo?.title}
                 isTranscriptionActive={isTranscriptionActive}
                 onToggleTranscription={onToggleTranscription}
+                onToggleVisualEffects={toggleVisualEffects}
+                showVisualEffects={showVisualEffects}
             />
         </div>
     );
