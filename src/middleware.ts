@@ -14,7 +14,12 @@ export function middleware(req: NextRequest) {
     "/auth/signup",
     "/setup-password",
   ];
-  if (publicRoutes.includes(req.nextUrl.pathname)) {
+
+  // Allow /meeting/* routes (e.g., /meeting/5E75B3ED-2)
+  if (
+    publicRoutes.includes(req.nextUrl.pathname) ||
+    req.nextUrl.pathname.startsWith("/meeting/")
+  ) {
     return NextResponse.next();
   }
 
