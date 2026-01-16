@@ -3,6 +3,9 @@ import Image from "next/image";
 import React, { useContext, useEffect, useState } from "react";
 import AuthContext from "@/contexts/authContext/authContext";
 import { getUpcomingMeetings, Meeting } from "@/utils/api/meeting/meeting.api";
+import { MessageCircleHeartIcon } from "lucide-react";
+import { Video } from "@solar-icons/react/category";
+import { Videocamera } from "@solar-icons/react";
 
 export const TimeSchedule = () => {
   const { user } = useContext(AuthContext);
@@ -105,8 +108,9 @@ export const TimeSchedule = () => {
           <h3 className="flex items-center gap-1 text-xl font-semibold text-white">
             Upcoming
           </h3>
-          <button className="rounded-full border border-white/30 bg-white/10 backdrop-blur-md px-2 py-1 text-xs text-white">
-            {monthName} {year}
+          <button className="rounded-full flex items-center gap-1 border border-white/30 bg-white/30 backdrop-blur-md px-2 py-1 text-xs text-white cursor-pointer">
+            {/* <Videocamera /> */}
+            Join Now
           </button>
         </div>
 
