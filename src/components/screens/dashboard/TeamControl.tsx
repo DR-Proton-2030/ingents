@@ -51,68 +51,68 @@ export const TeamControl = () => {
       <div className="relative mb-3">
         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
-          className="w-full bg-gray-100 rounded-full border border-gray-200  pl-9 pr-3 py-3 mb-3 text-sm 
-          placeholder:text-gray-400 focus:outline-none"
+          className="w-full bg-gray-100 rounded-full border border-gray-200 pl-9 pr-3 py-3 mb-3 text-sm placeholder:text-gray-400 focus:outline-none"
           placeholder="Search Team"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
       <div className="space-y-3">
-        {users?.map((user: IUser, i) => (
-          <div key={i} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {!user?.profile_picture ? (
-                <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center justify-center">
-                  <span className="text-black font-medium">
-                    {user.full_name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              ) : (
-                <Image
-                  src={user.profile_picture}
-                  alt={user.full_name}
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 rounded-full object-cover"
-                />
-              )}
-              <div>
-                <div className="text-sm font-medium text-gray-900">
-                  {user?.full_name}
-                </div>
-
-                <div className="min-w-0">
-                  <div className="text-sm font-bold text-gray-100 truncate group-hover/item:text-cyan-300 transition-colors">
+        {filteredUsers.length > 0 ? (
+          filteredUsers.map((user: IUser, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {!user?.profile_picture ? (
+                  <div className="h-9 w-9 rounded-full bg-orange-400 flex items-center justify-center">
+                    <span className="text-black font-medium">
+                      {user.full_name.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                ) : (
+                  <Image
+                    src={user.profile_picture}
+                    alt={user.full_name}
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                )}
+                <div>
+                  <div className="text-sm font-medium text-gray-900">
                     {user?.full_name}
                   </div>
-                  <div className="text-[10px] uppercase tracking-tighter text-cyan-500/60 font-mono flex items-center gap-1">
-                    <span className="w-1 h-1 bg-cyan-500/40 rounded-full"></span>
-                    {user?.role || "Agent"}
+                  <div className="min-w-0">
+                    <div className="text-sm font-bold text-gray-100 truncate group-hover/item:text-cyan-300 transition-colors">
+                      {user?.full_name}
+                    </div>
+                    <div className="text-[10px] uppercase tracking-tighter text-cyan-500/60 font-mono flex items-center gap-1">
+                      <span className="w-1 h-1 bg-cyan-500/40 rounded-full"></span>
+                      {user?.role || "Agent"}
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button className="flex items-center justify-center h-9 w-9 rounded-lg bg-black/40 border border-white/5 text-gray-400 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:shadow-[0_0_10px_rgba(34,211,238,0.2)] transition-all">
-                  <MessageSquare className="h-4 w-4" />
-                </button>
-                <button className="flex items-center justify-center h-9 w-9 rounded-lg bg-black/40 border border-white/5 text-gray-400 hover:text-magenta-400 hover:border-magenta-500/30 hover:bg-magenta-500/10 hover:shadow-[0_0_10px_rgba(255,0,255,0.2)] transition-all">
-                  <Video className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button className="flex items-center justify-center h-9 w-9 rounded-lg bg-black/40 border border-white/5 text-gray-400 hover:text-cyan-400 hover:border-cyan-500/30 hover:bg-cyan-500/10 hover:shadow-[0_0_10px_rgba(34,211,238,0.2)] transition-all">
+                    <MessageSquare className="h-4 w-4" />
+                  </button>
+                  <button className="flex items-center justify-center h-9 w-9 rounded-lg bg-black/40 border border-white/5 text-gray-400 hover:text-magenta-400 hover:border-magenta-500/30 hover:bg-magenta-500/10 hover:shadow-[0_0_10px_rgba(255,0,255,0.2)] transition-all">
+                    <Video className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
-          )) : (
-            <div className="text-center py-10">
-              <p className="text-sm text-cyan-900 italic">No signals found in current sector...</p>
-            </div>
-          )}
-        </div>
+          ))
+        ) : (
+          <div className="text-center py-10">
+            <p className="text-sm text-cyan-900 italic">No signals found in current sector...</p>
+          </div>
+        )}
       </div>
 
       {/* Team Members Drawer - Slides from right */}
       {createPortal(
         <div
-          className={`fixed inset-0 z-[9999] transition-opacity duration-500 ${modalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-            }`}
+          className={`fixed inset-0 z-[9999] transition-opacity duration-500 ${modalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
           onClick={() => setModalOpen(false)}
         >
           {/* Backdrop with extreme blur and dark tint */}
@@ -120,8 +120,7 @@ export const TeamControl = () => {
 
           {/* Drawer Panel */}
           <div
-            className={`absolute top-0 right-0 h-full w-full max-w-2xl bg-[#0b0118] border-l border-cyan-500/20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${modalOpen ? "translate-x-0" : "translate-x-full"
-              }`}
+            className={`absolute top-0 right-0 h-full w-full max-w-2xl bg-[#0b0118] border-l border-cyan-500/20 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${modalOpen ? "translate-x-0" : "translate-x-full"}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drawer Header Decorative */}
@@ -136,7 +135,7 @@ export const TeamControl = () => {
             </div>
           </div>
         </div>,
-        document.body
+        typeof window !== "undefined" ? document.body : ({} as HTMLElement)
       )}
 
       <style jsx global>{`
@@ -163,6 +162,6 @@ export const TeamControl = () => {
           animation: cyber-gradient 3s linear infinite;
         }
       `}</style>
-    </>
+    </div>
   );
 };
