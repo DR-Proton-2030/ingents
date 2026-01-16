@@ -48,6 +48,7 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
     const [duration, setDuration] = useState(60);
     const [notes, setNotes] = useState("");
     const [meetingType, setMeetingType] = useState("team");
+    const [activePicker, setActivePicker] = useState<"time" | "duration" | null>(null);
 
     // Participants State
     const [internalParticipants, setInternalParticipants] = useState<{ _id: string; full_name: string; email: string; profile_picture?: string }[]>([]);
@@ -287,28 +288,31 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Commence At</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={startTime}
-                                        onChange={(e) => setStartTime(e.target.value)}
-                                        className="w-full h-10 px-3 rounded-lg border border-gray-200 focus:border-orange-500 outline-none text-xs font-bold text-gray-800 bg-white "
-                                        required
-                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setActivePicker(activePicker === "time" ? null : "time")}
+                                        className={`w-full h-11 px-3 rounded-xl border transition-all flex items-center justify-between group ${activePicker === "time" ? "border-orange-500 bg-orange-50/30" : "border-gray-100 bg-white"
+                                            }`}
+                                    >
+                                        <span className="text-xs font-bold text-gray-800">
+                                            {startTime ? new Date(startTime).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : "Select Time"}
+                                        </span>
+                                        <Calendar className={`w-4 h-4 transition-colors ${activePicker === "time" ? "text-orange-500" : "text-gray-400 group-hover:text-orange-500"}`} />
+                                    </button>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Duration</label>
-                                    <div className="relative">
-                                        <select
-                                            value={duration}
-                                            onChange={(e) => setDuration(Number(e.target.value))}
-                                            className="w-full h-10 px-3 pr-8 rounded-lg border border-gray-200 focus:border-orange-500 outline-none text-xs font-bold text-gray-800 bg-white appearance-none cursor-pointer"
-                                        >
-                                            {[15, 30, 45, 60, 90, 120, 180, 240].map(m => (
-                                                <option key={m} value={m}>{m} Minutes {m >= 60 && `(${m / 60}h)`}</option>
-                                            ))}
-                                        </select>
-                                        <AltArrowRight className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none rotate-90" />
-                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActivePicker(activePicker === "duration" ? null : "duration")}
+                                        className={`w-full h-11 px-3 rounded-xl border transition-all flex items-center justify-between group ${activePicker === "duration" ? "border-orange-500 bg-orange-50/30" : "border-gray-100 bg-white"
+                                            }`}
+                                    >
+                                        <span className="text-xs font-bold text-gray-800">
+                                            {duration} Minutes
+                                        </span>
+                                        <AltArrowRight className={`w-4 h-4 transition-all ${activePicker === "duration" ? "text-orange-500 rotate-90" : "text-gray-400 group-hover:text-orange-500 rotate-90"}`} />
+                                    </button>
                                 </div>
                             </div>
 
@@ -504,6 +508,76 @@ export const CreateMeetingDrawer: React.FC<CreateMeetingDrawerProps> = ({
                                 </>
                             )}
                         </button>
+                    </div>
+                </div>
+
+                {/* Side Picker Content */}
+                <div
+                    className={`absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 w-72 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md ${activePicker ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10 pointer-events-none"
+                        }`}
+                >
+                    <div className="p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h4 className="text-sm font-bold text-gray-800 uppercase tracking-widest">
+                                {activePicker === "time" ? "Select Start Time" : "Set Duration"}
+                            </h4>
+                            <button onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
+                                <CloseCircle className="w-5 h-5 text-gray-400" />
+                            </button>
+                        </div>
+
+                        {activePicker === "time" && (
+                            <div className="space-y-4">
+                                <input
+                                    type="datetime-local"
+                                    value={startTime}
+                                    onChange={(e) => setStartTime(e.target.value)}
+                                    className="w-full h-12 px-4 rounded-2xl border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none text-sm font-bold text-gray-800 transition-all"
+                                    required
+                                />
+                                <div className="grid grid-cols-2 gap-2">
+                                    {["09:00", "11:00", "14:00", "16:00"].map((t) => (
+                                        <button
+                                            key={t}
+                                            type="button"
+                                            onClick={() => {
+                                                const d = new Date();
+                                                const [h, m] = t.split(":");
+                                                d.setHours(parseInt(h), parseInt(m), 0, 0);
+                                                // Adjust to match local datetime input format
+                                                const pad = (n: number) => String(n).padStart(2, "0");
+                                                const formatted = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${t}`;
+                                                setStartTime(formatted);
+                                            }}
+                                            className="px-3 py-2 rounded-xl bg-gray-50 text-xs font-bold text-gray-600 hover:bg-orange-500 hover:text-white transition-all shadow-sm"
+                                        >
+                                            Today, {t}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activePicker === "duration" && (
+                            <div className="grid grid-cols-2 gap-3">
+                                {[15, 30, 45, 60, 90, 120, 180, 240].map((m) => (
+                                    <button
+                                        key={m}
+                                        type="button"
+                                        onClick={() => {
+                                            setDuration(m);
+                                            setActivePicker(null);
+                                        }}
+                                        className={`px-4 py-3 rounded-2xl text-xs font-bold transition-all border ${duration === m
+                                                ? "bg-gray-900 border-gray-900 text-white shadow-lg"
+                                                : "bg-white border-gray-100 text-gray-600 hover:border-orange-500"
+                                            }`}
+                                    >
+                                        {m} Min {m >= 60 && `(${m / 60}h)`}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
