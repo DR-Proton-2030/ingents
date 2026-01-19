@@ -19,13 +19,8 @@ import type {
   TaskFormData,
 } from "@/types/interface/task-modal.interface";
 import { SearchIcon } from "lucide-react";
-
-interface UserOption {
-  _id: string;
-  full_name: string;
-  email: string;
-  profile_picture?: string;
-}
+import useGetUsers from "@/hooks/getUsers/useGetUsers";
+import { IUser } from "@/types/interface/user.interface";
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
@@ -43,7 +38,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedUsers, setSelectedUsers] = useState<UserOption[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
   const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
 
   // Custom Picker States
@@ -54,9 +49,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [selAmPm, setSelAmPm] = useState("AM");
 
   // User Search State
+  const { users: allUsers } = useGetUsers();
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<UserOption[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+
+  const filteredUsers = (Array.isArray(allUsers) ? allUsers : []).filter((u) => {
+    const term = searchQuery.toLowerCase().trim();
+    if (!term) return false;
+    return (
+      u.full_name?.toLowerCase().includes(term) ||
+      u.email?.toLowerCase().includes(term)
+    );
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -72,7 +75,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       setSelectedUsers([]);
       setActivePicker(null);
       setSearchQuery("");
-      setSearchResults([]);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -95,29 +97,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     const formattedDate = `${year}-${month}-${day}T${String(h).padStart(2, "0")}:${selMinute}`;
     setFormData(prev => ({ ...prev, due_date: formattedDate }));
   }, [selDate, selHour, selMinute, selAmPm]);
-
-  // User Search Logic
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const res = await fetch(`/api/users/search?query=${encodeURIComponent(searchQuery)}`, { credentials: "include" });
-        const data = await res.json();
-        setSearchResults(data.data || []);
-      } catch (err) {
-        console.error("Search failed", err);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   // Calendar Helpers
   const getDaysInMonth = (date: Date) => {
@@ -152,15 +131,14 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     setFormData((p) => ({ ...p, [name]: value }));
   };
 
-  const addAssignee = (user: UserOption) => {
-    if (selectedUsers.some(u => u._id === user._id)) return;
+  const addAssignee = (user: IUser) => {
+    if (selectedUsers.some(u => (u.id || (u as any)._id) === (user.id || (user as any)._id))) return;
     setSelectedUsers([...selectedUsers, user]);
     setSearchQuery("");
-    setSearchResults([]);
   };
 
   const removeAssignee = (id: string) => {
-    setSelectedUsers(selectedUsers.filter(u => u._id !== id));
+    setSelectedUsers(selectedUsers.filter(u => (u.id || (u as any)._id) !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -169,7 +147,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     setIsSubmitting(true);
     await onSubmit({
       ...formData,
-      assigned_user_list: selectedUsers.map((u) => u._id),
+      assigned_user_list: selectedUsers.map((u) => u.id || (u as any)._id),
     });
     setIsSubmitting(false);
     onClose();
@@ -316,12 +294,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 {selectedUsers.length > 0 ? (
                   <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px]">
                     {selectedUsers.map(u => (
-                      <div key={u._id} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden shadow-sm" title={u.full_name}>
+                      <div key={u.id || (u as any)._id} className="w-8 h-8 rounded-full border-2 border-white bg-gray-200 overflow-hidden shadow-sm" title={u.full_name}>
                         {u.profile_picture ? (
                           <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-500 uppercase">
-                            {u.full_name.charAt(0)}
+                            {u.full_name?.charAt(0) || "?"}
                           </div>
                         )}
                       </div>
@@ -505,12 +483,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                     className="w-full h-12 pl-11 pr-4 rounded-2xl transition-all outline-none text-sm font-bold bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-500/10 border border-transparent focus:border-orange-500 text-gray-800"
                   />
 
-                  {searchQuery.trim() && searchResults.length > 0 && (
-                    <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden">
+                  {searchQuery.trim() && filteredUsers.length > 0 && (
+                    <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
                       <div className="p-2 max-h-64 overflow-y-auto">
-                        {searchResults.map((u) => (
+                        {filteredUsers.map((u) => (
                           <button
-                            key={u._id}
+                            key={u.id || (u as any)._id}
                             type="button"
                             onClick={() => addAssignee(u)}
                             className="w-full p-2.5 flex items-center gap-3 hover:bg-orange-50 rounded-xl transition-all group"
@@ -540,19 +518,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   </div>
                   <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
                     {selectedUsers.map(u => (
-                      <div key={u._id} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 hover:border-orange-100 transition-all group">
+                      <div key={u.id || (u as any)._id} className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-gray-100 hover:border-orange-100 transition-all group">
                         <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-xs font-black shadow-sm uppercase overflow-hidden">
                           {u.profile_picture ? (
                             <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            u.full_name.charAt(0)
+                            u.full_name?.charAt(0) || "?"
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-gray-800 truncate">{u.full_name}</p>
                           <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
                         </div>
-                        <button type="button" onClick={() => removeAssignee(u._id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                        <button type="button" onClick={() => removeAssignee(u.id || (u as any)._id)} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
                           <MinusCircle className="w-5 h-5" />
                         </button>
                       </div>
