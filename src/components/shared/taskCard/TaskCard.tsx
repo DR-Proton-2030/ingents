@@ -43,8 +43,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [showDescription, setShowDescription] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const descRef = useRef<HTMLTableCellElement>(null);
+  const descTriggerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLTableCellElement>(null);
+  const [descPosition, setDescPosition] = useState({ top: 0, left: 0 });
   const hasChildren = task.subtask && task.subtask.length > 0;
   const paddingLeft = depth * 24;
 
@@ -76,20 +77,44 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (descRef.current && !descRef.current.contains(event.target as Node)) {
+      if (descTriggerRef.current && !descTriggerRef.current.contains(event.target as Node)) {
         setShowDescription(false);
       }
-      if (calendarRef.current && !calendarRef.current.contains(event.target as Node)) {
-        // Removed portal-incompatible close logic
-      }
     };
-    if (showDescription || isCalendarOpen) {
+    if (showDescription) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showDescription, isCalendarOpen]);
+  }, [showDescription]);
+
+  useEffect(() => {
+    if (showDescription && descTriggerRef.current) {
+      const rect = descTriggerRef.current.getBoundingClientRect();
+      setDescPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+      });
+
+      const handleResize = () => {
+        const newRect = descTriggerRef.current?.getBoundingClientRect();
+        if (newRect) {
+          setDescPosition({
+            top: newRect.bottom + 8,
+            left: newRect.left,
+          });
+        }
+      };
+
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('scroll', handleResize, true);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('scroll', handleResize, true);
+      };
+    }
+  }, [showDescription]);
 
   // Calendar Helpers
   const getDaysInMonth = (date: Date) => {
@@ -178,55 +203,66 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </td>
 
         {/* Description Cell */}
-        <td className="py-4 px-4 relative " ref={descRef}>
+        <td className="py-4 px-4 relative">
           <div
-            className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-orange-600 transition-all group/desc"
+            ref={descTriggerRef}
+            className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-orange-600 transition-all group/desc w-fit"
             onClick={() => setShowDescription(!showDescription)}
           >
             <Notes className={cn("w-4 h-4 shrink-0 transition-transform duration-300", showDescription ? "scale-110 text-orange-500" : "group-hover/desc:scale-110")} />
             <span className={cn("font-medium transition-colors", showDescription && "text-orange-600")}>View</span>
           </div>
 
-          <AnimatePresence>
-            {showDescription && (
-              <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute z-[100] top-full left-4 mt-2 w-80 p-5 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 flex flex-col gap-3"
-              >
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                    <Notes className="w-3 h-3" />
-                    Description
-                  </h4>
-                  <button
-                    onClick={() => setShowDescription(false)}
-                    className="p-1 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-lg transition-colors"
-                  >
-                    <CloseCircle size={14} />
-                  </button>
-                </div>
-
-                <div className="bg-gray-50/50 rounded-xl p-1 border border-gray-100/50">
-                  <EditableText
-                    value={task.description || ""}
-                    onSave={(value) => {
-                      handleEditTask(task._id, { description: value });
+          {mounted && createPortal(
+            <AnimatePresence>
+              {showDescription && (
+                <div className="fixed inset-0 z-[99999]" onClick={() => setShowDescription(false)}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      top: descPosition.top,
+                      left: Math.min(descPosition.left, typeof window !== 'undefined' ? window.innerWidth - 340 : descPosition.left)
                     }}
-                    placeholder="Add specific details or context..."
-                    multiline
-                    className="text-xs font-medium text-gray-700 italic leading-relaxed"
-                  />
-                </div>
+                    className="fixed w-80 p-5 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 flex flex-col gap-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                        <Notes className="w-3 h-3" />
+                        Description
+                      </h4>
+                      <button
+                        onClick={() => setShowDescription(false)}
+                        className="p-1 hover:bg-red-50 text-gray-300 hover:text-red-500 rounded-lg transition-colors"
+                      >
+                        <CloseCircle size={14} />
+                      </button>
+                    </div>
 
-                <div className="flex justify-end">
-                  <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter italic">Click content to edit</p>
+                    <div className="bg-gray-50/50 rounded-xl p-1 border border-gray-100/50">
+                      <EditableText
+                        value={task.description || ""}
+                        onSave={(value) => {
+                          handleEditTask(task._id, { description: value });
+                        }}
+                        placeholder="Add specific details or context..."
+                        multiline
+                        className="text-xs font-medium text-gray-700 italic leading-relaxed"
+                      />
+                    </div>
+
+                    <div className="flex justify-end">
+                      <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter italic">Click content to edit</p>
+                    </div>
+                  </motion.div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
+            </AnimatePresence>,
+            document.body
+          )}
         </td>
 
         {/* Assignee Cell */}
