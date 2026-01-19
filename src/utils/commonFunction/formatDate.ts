@@ -1,5 +1,5 @@
 export const formatDate = (dateInput: string | Date | undefined): string => {
-  if (!dateInput) return "N/A";
+  if (!dateInput) return "No dates";
 
   const target = new Date(dateInput);
   const today = new Date();
@@ -22,5 +22,5 @@ export const formatDate = (dateInput: string | Date | undefined): string => {
   if (diff === -1) return "1 day ago";
   if (diff < -1) return `${Math.abs(diff)} days ago`;
 
-  return "N/A";
+  return "No  dates";
 };
