@@ -17,10 +17,10 @@ interface TaskSectionProps {
   handleAssignTask: (taskId: string, userId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
   searchUsers: (query: string) => Promise<any[]>;
- handleEditTask: (
-  taskId: string,
-  payload: Partial<Task>
-) => Promise<void>;
+  handleEditTask: (
+    taskId: string,
+    payload: Partial<Task>
+  ) => Promise<void>;
 
 }
 
@@ -81,21 +81,21 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         </div>
 
         {/* Task Count */}
-      <span
-  className={cn(
-    "text-sm px-2 py-0.5 rounded-lg font-bold",
-    section.status === "pending" &&
-      "bg-purple-200 text-purple-800",
-    section.status === "completed" &&
-      "bg-green-200 text-green-700",
-    section.status === "backlog" &&
-      "bg-gray-200 text-gray-600",
-    section.status === "ready-to-check" &&
-      "bg-blue-200 text-blue-800"
-  )}
->
-  {section.count}
-</span>
+        <span
+          className={cn(
+            "text-sm px-2 py-0.5 rounded-lg font-bold",
+            section.status === "pending" &&
+            "bg-purple-200 text-purple-800",
+            section.status === "completed" &&
+            "bg-green-200 text-green-700",
+            section.status === "backlog" &&
+            "bg-gray-200 text-gray-600",
+            section.status === "ready-to-check" &&
+            "bg-blue-200 text-blue-800"
+          )}
+        >
+          {section.count}
+        </span>
 
 
         {/* Section Actions */}
@@ -144,7 +144,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                     isExpanded={expandedTasks.has(task._id)}
                     handleDeleteTask={handleDeleteTask}
                     handleAddSubtask={() => handleAddSubtask(task._id)}
-                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers}     handleEditTask={handleEditTask}           />
+                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers} handleEditTask={handleEditTask} />
                   {/* Render subtasks if any */}
                   {subTasksMap[task._id]?.map((subtask) => (
                     <TaskCard

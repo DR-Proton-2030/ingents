@@ -29,6 +29,7 @@ const TaskManagement: React.FC = () => {
   } = useTasks();
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<TaskStatus | undefined>();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -68,7 +69,8 @@ const TaskManagement: React.FC = () => {
   );
 
   const handleAddTask = useCallback((sectionId: string) => {
-    console.log("Add task to section:", sectionId);
+    setSelectedStatus(sectionId as TaskStatus);
+    setIsCreateModalOpen(true);
   }, []);
 
   const handleFilter = useCallback(() => {
@@ -111,7 +113,7 @@ const TaskManagement: React.FC = () => {
     [handleUnassignTask]
   );
 
-   const handleAssignTaskToUser = useCallback(
+  const handleAssignTaskToUser = useCallback(
     async (taskId: string, userId: string) => {
       console.log("🔵 Parent delete handler called:", taskId);
       try {
@@ -128,7 +130,7 @@ const TaskManagement: React.FC = () => {
   }, []);
 
   const handleTaskModal = useCallback(() => {
-    console.log("task open");
+    setSelectedStatus(undefined);
     setIsCreateModalOpen(true);
   }, []);
 
@@ -144,10 +146,12 @@ const TaskManagement: React.FC = () => {
           ? new Date(taskData.due_date).toISOString()
           : undefined,
         priority: taskData.priority,
+        status: taskData.status,
         assigned_user_list: taskData.assigned_user_list,
       };
 
       await handleCreateTask(payload);
+      setIsCreateModalOpen(false);
     },
     [handleCreateTask]
   );
@@ -178,7 +182,7 @@ const TaskManagement: React.FC = () => {
     [handleCreateTask, parentTaskId]
   );
 
-   const searchUsers = async (query: string): Promise<UserOption[]> => {
+  const searchUsers = async (query: string): Promise<UserOption[]> => {
     const res = await fetch(
       `/api/users/search?query=${encodeURIComponent(query)}`,
       { credentials: "include" }
@@ -261,7 +265,11 @@ const TaskManagement: React.FC = () => {
         {/* Create Task Modal */}
         <CreateTaskModal
           isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
+          initialStatus={selectedStatus}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setSelectedStatus(undefined);
+          }}
           onSubmit={handleCreateTaskSubmit}
         />
         <CreateSubtaskModal
