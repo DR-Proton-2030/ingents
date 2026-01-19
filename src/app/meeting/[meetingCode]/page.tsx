@@ -127,12 +127,20 @@ export default function MeetingPage() {
     // Initialize audio for notifications
     useEffect(() => {
         audioRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3");
+
+        // Check if PeerJS is already loaded (e.g. from a previous navigation)
+        if (typeof window !== "undefined" && (window as any).Peer) {
+            setIsPeerJsLoaded(true);
+        }
     }, []);
 
     // Fetch meeting details
     useEffect(() => {
         const fetchMeetingData = async () => {
-            if (!meetingCode) return;
+            if (!meetingCode) {
+                setIsFetchingInfo(false);
+                return;
+            }
             try {
                 setIsFetchingInfo(true);
                 const response = await getMeetingByCode(meetingCode);
@@ -754,7 +762,11 @@ export default function MeetingPage() {
 
     return (
         <>
-            <Script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" onLoad={() => setIsPeerJsLoaded(true)} />
+            <Script
+                src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"
+                onLoad={() => setIsPeerJsLoaded(true)}
+                onReady={() => setIsPeerJsLoaded(true)}
+            />
             <Script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" strategy="afterInteractive" />
             <div className="min-h-screen bg-[#0a0f16] text-white">
                 {!isInCall ? (

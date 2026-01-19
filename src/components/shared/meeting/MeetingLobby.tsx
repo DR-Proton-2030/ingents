@@ -286,13 +286,27 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                             >
                                 {isLoading ? (
                                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                ) : !isPeerJsLoaded ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span className="text-[13px] font-black">Initializing PeerJS...</span>
+                                    </div>
+                                ) : !localStream ? (
+                                    <span className="text-[13px] font-black">Waiting for Camera...</span>
                                 ) : (
                                     <>
-                                        <span className="text-[13px]  font-black">Join Meeting</span>
+                                        <span className="text-[13px] font-black">Join Meeting</span>
                                         <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                                     </>
                                 )}
                             </button>
+
+                            {statusMsg && (
+                                <p className="text-center text-xs font-medium text-red-500 animate-pulse">
+                                    {statusMsg}
+                                </p>
+                            )}
+
 
                             {/* Security Footer */}
                             <div className="flex items-center justify-between border-t border-gray-100 pt-6">
