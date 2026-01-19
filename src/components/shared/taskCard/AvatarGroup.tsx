@@ -3,7 +3,7 @@
 import React, { useMemo, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Assignee } from "@/types/interface/task.interface";
-import { CloseCircle, AddCircle } from "@solar-icons/react";
+import { CloseCircle, AddCircle, TrashBin2, TrashBinMinimalistic } from "@solar-icons/react";
 import SearchAndAssign from "../searchAndAssign/SearchAndAssign";
 
 interface UserOption {
@@ -96,9 +96,9 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({
                 handleUnAssignTask(taskId, assignee._id);
               }
             }}
-            className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-white text-gray-400 hover:text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+            className="absolute -top-0.5 -right-1.5 w-4 h-4 rounded-full bg-white cursor-pointer text-red-400 hover:text-white hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
           >
-            <CloseCircle size={12} />
+            <TrashBinMinimalistic size={12} />
           </button>
         </div>
       ))}

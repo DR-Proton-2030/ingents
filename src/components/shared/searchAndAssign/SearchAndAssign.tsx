@@ -1,5 +1,7 @@
 
-import { UserPlus } from 'lucide-react';
+import { MinimalisticMagnifer } from '@solar-icons/react';
+import { UserPlusRounded } from '@solar-icons/react/ssr';
+import { Plus, UserPlus } from 'lucide-react';
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -73,7 +75,7 @@ const SearchAndAssign: React.FC<SearchAndAssignProps> = ({
     >
       {/* search input */}
       <div className="flex items-center px-4 pt-4 pb-2">
-        <UserPlus className="w-5 h-5 text-gray-400 mr-2" />
+        <MinimalisticMagnifer className="w-5 h-5 text-gray-400 mr-2" />
         <input
           autoFocus
           value={search}
@@ -119,18 +121,20 @@ const SearchAndAssign: React.FC<SearchAndAssignProps> = ({
   );
 
   return (
-    <div className="relative w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center p-2 cursor-pointer">
-    <button
-  ref={buttonRef}
-  type="button"
-  onClick={(e) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setOpen((v) => !v);
-  }}
->
+    <div className="relative  rounded-full bg-gray-200 flex items-center justify-center p-2 cursor-pointer">
+      <button
+        ref={buttonRef}
+        className='text-xs flex items-center gap-1'
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          setOpen((v) => !v);
+        }}
+      >
 
-        <UserPlus className="w-5 h-5 text-orange-600" />
+        <UserPlusRounded className="w-5 h-5 text-gray-600" />
+        Add
       </button>
 
       {open && createPortal(popupContent, document.body)}
