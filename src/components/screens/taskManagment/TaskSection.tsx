@@ -60,7 +60,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   });
 
   return (
-    <div className="mb-6">
+    <div className="mb-20">
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-3">
         <button
