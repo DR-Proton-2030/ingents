@@ -50,7 +50,7 @@ export const TimeSchedule = () => {
   // Robust background selection with fallbacks
   const getBackgroundImage = () => {
     // If it's a team meeting or specifically mentioned "therapist team", try company logo first
-    if (isTeamMeeting && user?.company_details?.logo) return user.company_details.logo;
+    if (isTeamMeeting && user?.company_details?.logo) return "https://imgs.search.brave.com/LK_7r8AJQ-k9hkni6TdLt1A9pQO0bOjM5Q1Kgv95HbU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/dmVjdG9yc3RvY2su/Y29tL2kvcHJldmll/dy0xeC8zOC8xMi9p/bmZvcm1hdGl2ZS1i/YW5uZXItbWVldGlu/Zy1sZWFkZXJzLWNh/cnRvb24tZmxhdC12/ZWN0b3ItMjY5ODM4/MTIuanBn";
 
     // For 1-on-1 meetings, try to find the other person's profile picture
     if (upcomingMeeting.meeting_type === "one_on_one") {
@@ -92,7 +92,7 @@ export const TimeSchedule = () => {
           src={backgroundImage}
           alt={upcomingMeeting.title}
           fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
+          className="object-cover bg-black/10 transition-transform duration-700 group-hover:scale-105"
         />
       ) : (
         <div className="absolute inset-0 bg-slate-800" />

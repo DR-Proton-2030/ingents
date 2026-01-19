@@ -56,18 +56,15 @@ export const DashboardHeader = () => {
 
         </div>
       </header>
-      {isInviteModalOpen && (
-
-        <CommonModal isOpen={isInviteModalOpen} onClose={handleCloseModal}>
-          <InviteUsersModal onClose={handleCloseModal} />
-        </CommonModal>
-      )}
+      <InviteUsersModal
+        isOpen={isInviteModalOpen}
+        onClose={handleCloseModal}
+      />
 
       <CreateMeetingDrawer
         isOpen={isScheduleDrawerOpen}
         onClose={handleCloseDrawer}
         onSuccess={() => {
-          // You might want to refresh the meeting list here if needed
           console.log("Meeting scheduled successfully");
         }}
       />
