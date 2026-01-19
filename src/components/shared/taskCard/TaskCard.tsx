@@ -139,7 +139,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </button>
             ) : (
               <div className="w-6 h-6 flex items-center justify-center">
-                <ChecklistMinimalistic className="w-4 h-4" />
+                <ChecklistMinimalistic className="w-4 h-4 text-gray-600" />
               </div>
             )}
 
