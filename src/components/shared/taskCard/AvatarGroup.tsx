@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useMemo, useRef, useEffect } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Assignee } from "@/types/interface/task.interface";
 import { CloseCircle, AddCircle, TrashBin2, TrashBinMinimalistic } from "@solar-icons/react";
@@ -58,8 +60,14 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({
   handleAssignTask,
   searchUsers,
 }) => {
+  const [hoveredUser, setHoveredUser] = useState<{ id: string; name: string; rect: DOMRect } | null>(null);
+  const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const safeAssignees = assignees ?? [];
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { visible, remaining } = useMemo(() => {
     return {
@@ -77,15 +85,30 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({
     <div className="flex items-center -space-x-1.5 relative group/avatars" ref={ref}>
       {/* Avatars */}
       {visible.map((assignee) => (
-        <div key={assignee._id} className="relative group transition-all hover:z-10 hover:-translate-y-0.5">
+        <div
+          key={assignee._id}
+          className="relative group transition-all hover:z-20 hover:-translate-y-1"
+          onMouseEnter={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setHoveredUser({ id: assignee._id, name: assignee.full_name, rect });
+          }}
+          onMouseLeave={() => setHoveredUser(null)}
+        >
           <div
             className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-black text-white border border-white shadow-sm transition-all duration-300",
-              getAvatarColor(assignee._id)
+              "w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-black text-white border border-white shadow-sm shadow-gray-400 transition-all duration-300 overflow-hidden",
+              !assignee.avatar && !(assignee as any).profile_picture && getAvatarColor(assignee._id)
             )}
-            title={assignee.full_name}
           >
-            {getInitials(assignee.full_name)}
+            {assignee.avatar || (assignee as any).profile_picture ? (
+              <img
+                src={assignee.avatar || (assignee as any).profile_picture}
+                alt={assignee.full_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              getInitials(assignee.full_name)
+            )}
           </div>
 
           {/* Unassign button */}
@@ -96,12 +119,35 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({
                 handleUnAssignTask(taskId, assignee._id);
               }
             }}
-            className="absolute -top-0.5 -right-1.5 w-4 h-4 rounded-full bg-white cursor-pointer text-red-400 hover:text-white hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+            className="absolute -top-0.5 -right-1.5 w-4 h-4 rounded-full bg-white cursor-pointer text-red-400 hover:text-white hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90 z-[30]"
           >
             <TrashBinMinimalistic size={12} />
           </button>
         </div>
       ))}
+
+      {/* Portalled Tooltip */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {hoveredUser && (
+            <motion.div
+              initial={{ opacity: 0, y: 5, scale: 0.9, x: "-50%" }}
+              animate={{ opacity: 1, y: 0, scale: 1, x: "-50%" }}
+              exit={{ opacity: 0, y: 5, scale: 0.9, x: "-50%" }}
+              className="fixed z-[999999] px-3 py-2 bg-gray-900 text-white text-[10px] font-bold rounded-xl shadow-2xl pointer-events-none whitespace-nowrap"
+              style={{
+                top: hoveredUser.rect.top - 40,
+                left: hoveredUser.rect.left + hoveredUser.rect.width / 2,
+              }}
+            >
+              {hoveredUser.name}
+              {/* Tooltip Arrow */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1.5 border-[6px] border-transparent border-t-gray-900" />
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* Remaining count */}
       {remaining > 0 && (
