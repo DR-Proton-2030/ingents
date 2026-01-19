@@ -25,7 +25,7 @@ interface TaskSectionProps {
 }
 
 const statusColors: Record<string, { bg: string; dot: string; text: string }> = {
-  "pending": { bg: "bg-purple-600", dot: "bg-white", text: "text-white" },
+  "pending": { bg: "bg-purple-500", dot: "bg-white", text: "text-white" },
   "ready-to-check": { bg: "bg-blue-500", dot: "bg-white", text: "text-white" },
   "completed": { bg: "bg-green-500", dot: "bg-white", text: "text-white" },
   "backlog": { bg: "bg-gray-500", dot: "bg-white", text: "text-white" },
@@ -75,7 +75,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         </button>
 
         {/* Section Badge */}
-        <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full", colors.bg)}>
+        <div className={cn("flex items-center gap-2 px-4 py-2 rounded-full", colors.bg)}>
           <span className={cn("w-2 h-2 rounded-full", colors.dot)} />
           <span className={cn("text-sm font-medium", colors.text)}>{section.title}</span>
         </div>
@@ -83,7 +83,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         {/* Task Count */}
         <span
           className={cn(
-            "text-sm px-2 py-0.5 rounded-lg font-bold",
+            "text-sm w-8 h-8 flex items-center justify-center rounded-full font-bold",
             section.status === "pending" &&
             "bg-purple-200 text-purple-800",
             section.status === "completed" &&
@@ -98,17 +98,14 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         </span>
 
 
-        {/* Section Actions */}
-        <button className="p-1 hover:bg-gray-200 rounded">
-          <MoreHorizontal className="w-4 h-4 text-gray-400" />
-        </button>
+
       </div>
 
       {/* Task Table */}
       {!isCollapsed && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 ">
               <tr>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Task
