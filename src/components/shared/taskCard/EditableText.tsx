@@ -48,7 +48,7 @@ export default function EditableText({
         onBlur={save}
         onKeyDown={(e) => e.key === "Escape" && cancel()}
         className={cn(
-          "w-full text-sm p-4 bg-gray-50 border border-orange-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all resize-none shadow-sm",
+          "w-full text-sm p-1.5 bg-gray-50 border border-orange-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all resize-none shadow-sm",
           className
         )}
       />
@@ -64,7 +64,7 @@ export default function EditableText({
           if (e.key === "Escape") cancel();
         }}
         className={cn(
-          "text-sm px-3 py-1.5 bg-gray-50 border border-orange-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all shadow-sm",
+          "w-full text-sm px-3 py-1.5 bg-gray-50 border border-orange-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all shadow-sm",
           className
         )}
       />
@@ -73,7 +73,7 @@ export default function EditableText({
 
   return (
     <div
-      className="flex items-center gap-2 group/edit cursor-pointer"
+      className="flex items-center gap-2 group/edit cursor-pointer w-full"
       onClick={() => !disabled && setIsEditing(true)}
     >
       <span className={cn("text-sm transition-colors group-hover/edit:text-orange-600", className)}>

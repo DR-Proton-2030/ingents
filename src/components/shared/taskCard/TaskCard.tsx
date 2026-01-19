@@ -44,6 +44,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const descTriggerRef = useRef<HTMLDivElement>(null);
+  const descModalRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLTableCellElement>(null);
   const [descPosition, setDescPosition] = useState({ top: 0, left: 0 });
   const hasChildren = task.subtask && task.subtask.length > 0;
@@ -77,7 +78,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (descTriggerRef.current && !descTriggerRef.current.contains(event.target as Node)) {
+      const isClickInsideTrigger = descTriggerRef.current?.contains(event.target as Node);
+      const isClickInsideModal = descModalRef.current?.contains(event.target as Node);
+
+      if (!isClickInsideTrigger && !isClickInsideModal) {
         setShowDescription(false);
       }
     };
@@ -173,13 +177,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
               <Widget className="w-4 h-4" />
             </div>
 
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <div className="flex items-center gap-2 w-full">
                 <EditableText
                   value={task.title}
                   placeholder="Task title"
                   className="font-bold text-gray-800 text-sm tracking-tight"
                   onSave={(value) => handleEditTask(task._id, { title: value })}
+                  multiline
                 />
 
                 {/* Indicators */}
@@ -218,6 +223,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
               {showDescription && (
                 <div className="fixed inset-0 z-[99999]" onClick={() => setShowDescription(false)}>
                   <motion.div
+                    ref={descModalRef}
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
