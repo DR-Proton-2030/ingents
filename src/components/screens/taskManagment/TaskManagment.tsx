@@ -243,7 +243,7 @@ const TaskManagement: React.FC = () => {
         />
 
         {/* Task Sections */}
-        <div className="space-y-4">
+        <div className="space-y">
           {sections.map((section) => (
             <TaskSection
               key={section.id}

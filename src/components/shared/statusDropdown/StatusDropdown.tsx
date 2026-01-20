@@ -195,7 +195,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           isOpen ? "ring-4 ring-gray-100" : "hover:shadow-m"
         )}
         style={{
-          backgroundColor: currentColor + '30', // Subtle background color
+          backgroundColor: currentColor + '50', // Subtle background color
           borderColor: currentColor + '30'      // Subtle border color
         }}
       >
