@@ -24,12 +24,6 @@ interface TaskSectionProps {
 
 }
 
-const statusColors: Record<string, { bg: string; dot: string; text: string }> = {
-  "pending": { bg: "bg-purple-500", dot: "bg-white", text: "text-white" },
-  "ready-to-check": { bg: "bg-blue-500", dot: "bg-white", text: "text-white" },
-  "completed": { bg: "bg-green-500", dot: "bg-white", text: "text-white" },
-  "backlog": { bg: "bg-gray-500", dot: "bg-white", text: "text-white" },
-};
 
 const TaskSection: React.FC<TaskSectionProps> = ({
   section,
@@ -46,7 +40,9 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const colors = statusColors[section.status] || statusColors.backlog;
+  // Use hex color from section if it's there, else fallback
+  const isHex = section.color && section.color.startsWith('#');
+  const sectionColor = isHex ? section.color : "#6B7280";
 
   // Group tasks by parent_object_id
   const parentTasks = section.tasks.filter((task) => !task.parent_task_object_id);
@@ -75,24 +71,26 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         </button>
 
         {/* Section Badge */}
-        <div className={cn("flex items-center gap-2 px-4 py-2 rounded-full", colors.bg)}>
-          <span className={cn("w-2 h-2 rounded-full", colors.dot)} />
-          <span className={cn("text-sm font-medium", colors.text)}>{section.title}</span>
+        <div 
+          className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-sm" 
+          style={{ 
+            backgroundColor: sectionColor + '10', 
+            borderColor: sectionColor + '30',
+            color: sectionColor 
+          }}
+        >
+          <span className="w-2 h-2 rounded-full shadow-inner" style={{ backgroundColor: sectionColor }} />
+          <span className="text-[10px] font-black uppercase tracking-widest">{section.title}</span>
         </div>
 
         {/* Task Count */}
         <span
-          className={cn(
-            "text-sm w-8 h-8 flex items-center justify-center rounded-full font-bold",
-            section.status === "pending" &&
-            "bg-purple-200 text-purple-800",
-            section.status === "completed" &&
-            "bg-green-200 text-green-700",
-            section.status === "backlog" &&
-            "bg-gray-200 text-gray-600",
-            section.status === "ready-to-check" &&
-            "bg-blue-200 text-blue-800"
-          )}
+          className="text-[11px] w-8 h-8 flex items-center justify-center rounded-xl font-black border shadow-sm"
+          style={{ 
+            backgroundColor: sectionColor + '05',
+            borderColor: sectionColor + '20',
+            color: sectionColor
+          }}
         >
           {section.count}
         </span>

@@ -78,9 +78,9 @@ const TaskManagement: React.FC = () => {
   }, []);
 
   const handleStatusChange = useCallback(
-    async (taskId: string, newStatus: TaskStatus) => {
+    async (taskId: string, newPhaseId: string) => {
       try {
-        await handleUpdateTask(taskId, { status: newStatus });
+        await handleUpdateTask(taskId, { phase_object_id: newPhaseId });
         // ✅ handleUpdateTask already refetches tasks
       } catch (error) {
         console.error("Failed to update task status:", error);
@@ -146,7 +146,7 @@ const TaskManagement: React.FC = () => {
           ? new Date(taskData.due_date).toISOString()
           : undefined,
         priority: taskData.priority,
-        status: taskData.status,
+        phase_object_id: taskData.phase_object_id,
         assigned_user_list: taskData.assigned_user_list,
       };
 

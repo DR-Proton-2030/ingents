@@ -34,12 +34,19 @@ export interface Task {
   assignees?: Assignee[];
   subtask?: Task[];
   assigned_user_list?: any[];
+  phase_info?: {
+    _id: string;
+    name: string;
+    color?: string;
+    index: number;
+    is_default: boolean;
+  };
 }
 
 export interface TaskSection {
   id: string;
   title: string;
-  status: TaskStatus;
+  status: string;
   color: string;
   count: number;
   tasks: Task[];

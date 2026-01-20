@@ -29,12 +29,16 @@ export const useTasks = () => {
       setLoading(true);
       setError(null);
 
-      const response = await api.task.getTasks();
+      const [tasksRes, phasesRes] = await Promise.all([
+        api.task.getTasks(),
+        api.taskPhase.getTaskPhases()
+      ]);
 
-      if (response?.data) {
-        const normalized = response.data.map(normalizeTask);
+      if (tasksRes?.data) {
+        const normalized = tasksRes.data.map(normalizeTask);
         setTasks(normalized);
-        setSections(groupTasksByStatus(normalized));
+        const phases = phasesRes?.data || [];
+        setSections(groupTasksByStatus(normalized, phases));
       }
     } catch (err: any) {
       const msg = err.message || "Failed to fetch tasks";
@@ -102,51 +106,68 @@ export const useTasks = () => {
   };
 };
 
-// Helper function to group tasks by status
-function groupTasksByStatus(tasks: Task[]): TaskSection[] {
-  const sections: TaskSection[] = [
-    {
-      id: "pending",
-      title: "In Progress",
-      status: "pending",
-      color: "orange",
+// Helper function to group tasks by phase_info
+function groupTasksByStatus(tasks: Task[], allPhases: any[] = []): TaskSection[] {
+  // 1. Initialize sections from all available phases
+  let sections: TaskSection[] = allPhases
+    .sort((a, b) => a.index - b.index)
+    .map(phase => ({
+      id: phase._id,
+      title: phase.name,
+      status: phase.name,
+      color: phase.color || "#9CA3AF",
       count: 0,
       tasks: [],
-    },
-    {
-      id: "ready-to-check",
-      title: "Ready to check by PM",
-      status: "ready-to-check",
-      color: "blue",
-      count: 0,
-      tasks: [],
-    },
-    {
-      id: "completed",
-      title: "Completed",
-      status: "completed",
-      color: "green",
-      count: 0,
-      tasks: [],
-    },
-    {
-      id: "backlog",
-      title: "Backlog",
-      status: "backlog",
-      color: "gray",
-      count: 0,
-      tasks: [],
-    },
-  ];
-  // Filter only parent tasks (those without parent_task_object_id)
+    }));
+
+  // 2. If no phases fetched, find unique phases used in tasks
+  if (sections.length === 0) {
+    const phaseMap = new Map<string, any>();
+    tasks.forEach(t => {
+      if (t.phase_info && !phaseMap.has(t.phase_info._id)) {
+        phaseMap.set(t.phase_info._id, t.phase_info);
+      }
+    });
+    
+    sections = Array.from(phaseMap.values())
+      .sort((a, b) => (a.index || 0) - (b.index || 0))
+      .map(p => ({
+        id: p._id,
+        title: p.name,
+        status: p.name,
+        color: p.color || "#9CA3AF",
+        count: 0,
+        tasks: [],
+      }));
+  }
+
+  // 3. Fallback to default sections if still nothing
+  if (sections.length === 0) {
+    sections = [
+      { id: "pending", title: "In Progress", status: "pending", color: "#F97316", count: 0, tasks: [] },
+      { id: "ready-to-check", title: "Review", status: "ready-to-check", color: "#3B82F6", count: 0, tasks: [] },
+      { id: "completed", title: "Completed", status: "completed", color: "#22C55E", count: 0, tasks: [] },
+      { id: "backlog", title: "Backlog", status: "backlog", color: "#6B7280", count: 0, tasks: [] },
+    ];
+  }
+
+  // 4. Group parent tasks into sections
   const parentTasks = tasks.filter((task) => !task.parent_task_object_id);
   parentTasks.forEach((task) => {
-    const section = sections.find((s) => s.status === task.status);
+    // Try matching by phase ID, then by name
+    const section = sections.find(s => 
+      s.id === task.phase_info?._id || 
+      s.title === task.phase_info?.name ||
+      s.status === task.status
+    );
+    
     if (section) {
       section.tasks.push(task);
       section.count++;
     }
   });
-  // Filter out empty sections
-  return sections.filter((section) => section.count > 0);
-} 
+
+  // 5. If we fetched all phases, keep them even if empty (optional, but original code filtered empty)
+  // For better UX with dynamic phases, we'll keep them if we fetched them explicitly
+  return sections.filter(s => s.count > 0);
+}
