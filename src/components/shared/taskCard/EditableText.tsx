@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pen } from "@solar-icons/react";
 import { cn } from "@/lib/utils";
 
 interface EditableTextProps {
@@ -34,7 +34,7 @@ export default function EditableText({
   };
 
   const cancel = () => {
-    setText(value);
+    setText(value || "");
     setIsEditing(false);
   };
 
@@ -48,7 +48,7 @@ export default function EditableText({
         onBlur={save}
         onKeyDown={(e) => e.key === "Escape" && cancel()}
         className={cn(
-          "w-full text-sm p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500",
+          "w-full text-sm p-1.5 bg-gray-50 border border-orange-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all resize-none shadow-sm",
           className
         )}
       />
@@ -64,7 +64,7 @@ export default function EditableText({
           if (e.key === "Escape") cancel();
         }}
         className={cn(
-          "text-sm px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500",
+          "w-full text-sm px-3 py-1.5 bg-gray-50 border border-orange-200 rounded-lg focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all shadow-sm",
           className
         )}
       />
@@ -72,23 +72,25 @@ export default function EditableText({
   }
 
   return (
-    <div className="flex items-center gap-2 group">
-      <span className={cn("text-sm", className)}>
-        {value || <span className="text-gray-400">{placeholder}</span>}
+    <div
+      className="flex items-center gap-2 group/edit cursor-pointer w-full"
+      onClick={() => !disabled && setIsEditing(true)}
+    >
+      <span className={cn("text-sm transition-colors group-hover/edit:text-orange-600", className)}>
+        {value || <span className="text-gray-400 italic font-normal">{placeholder}</span>}
       </span>
 
       {!disabled && (
-       <button
-  onClick={(e) => {
-    e.preventDefault();
-    e.stopPropagation(); // ✅ THIS FIXES 404
-    setIsEditing(true);
-  }}
-  className="text-gray-500 hover:text-orange-600 transition"
->
-  <Pencil size={14} />
-</button>
-
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsEditing(true);
+          }}
+          className="opacity-0 group-hover/edit:opacity-100 text-gray-400 hover:text-orange-500 transition-all duration-300"
+        >
+          <Pen size={12} />
+        </button>
       )}
     </div>
   );

@@ -21,6 +21,7 @@ export const ParticipantAvatar: React.FC<ParticipantAvatarProps> = ({
         participant.user_details?.full_name || participant.external_name
     );
     const displayName = getDisplayName(participant);
+    const profilePicture = participant.user_details?.profile_picture;
 
     return (
         <div
@@ -30,9 +31,13 @@ export const ParticipantAvatar: React.FC<ParticipantAvatarProps> = ({
         >
             <div
                 className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-semibold text-white shadow-sm cursor-pointer transition-transform hover:scale-110 ${colorClass} border-2 ${isDark ? "border-gray-800" : "border-white"
-                    }`}
+                    } overflow-hidden`}
             >
-                {initial}
+                {profilePicture ? (
+                    <img src={profilePicture} alt={displayName} className="h-full w-full object-cover" />
+                ) : (
+                    initial
+                )}
             </div>
             {showTooltip && (
                 <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-[10px] rounded-md whitespace-nowrap shadow-lg">

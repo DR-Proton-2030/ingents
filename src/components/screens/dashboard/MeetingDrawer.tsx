@@ -452,7 +452,7 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                                 </h4>
                                 <div className="flex items-center gap-2">
                                     <button
-                                    onClick={handleJoinMeeting}
+                                        onClick={handleJoinMeeting}
                                         className="flex-1 bg-gradient-to-r from-black/70 to-black/80 text-white text-sm font-medium py-2.5 px-4
                                          rounded-lg hover:from-black/80 hover:to-black/90 transition-all shadow-md hover:shadow-lg text-center"
                                     >
@@ -481,9 +481,17 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                                 </h4>
                                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                                     <div
-                                        className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white ${avatarColors[0]}`}
+                                        className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white overflow-hidden ${avatarColors[0]}`}
                                     >
-                                        {getInitial(meeting.host_details.full_name, meeting.host_details.email)}
+                                        {meeting.host_details.profile_picture ? (
+                                            <img
+                                                src={meeting.host_details.profile_picture}
+                                                alt={meeting.host_details.full_name}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            getInitial(meeting.host_details.full_name, meeting.host_details.email)
+                                        )}
                                     </div>
                                     <div>
                                         <p className="text-sm font-medium text-gray-800">
@@ -541,11 +549,19 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                                                 className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                                             >
                                                 <div
-                                                    className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white ${avatarColors[(index + 1) % avatarColors.length]}`}
+                                                    className={`h-10 w-10 rounded-full flex items-center justify-center text-sm font-semibold text-white overflow-hidden ${avatarColors[(index + 1) % avatarColors.length]}`}
                                                 >
-                                                    {getInitial(
-                                                        participant.user_details?.full_name || participant.external_name,
-                                                        participant.user_details?.email || participant.external_email
+                                                    {participant.user_details?.profile_picture ? (
+                                                        <img
+                                                            src={participant.user_details.profile_picture}
+                                                            alt={getDisplayName(participant)}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        getInitial(
+                                                            participant.user_details?.full_name || participant.external_name,
+                                                            participant.user_details?.email || participant.external_email
+                                                        )
                                                     )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">

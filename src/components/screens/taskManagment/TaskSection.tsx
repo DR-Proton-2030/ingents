@@ -17,19 +17,13 @@ interface TaskSectionProps {
   handleAssignTask: (taskId: string, userId: string) => void;
   handleAddSubtask: (parentTaskId: string) => void;
   searchUsers: (query: string) => Promise<any[]>;
- handleEditTask: (
-  taskId: string,
-  payload: Partial<Task>
-) => Promise<void>;
+  handleEditTask: (
+    taskId: string,
+    payload: Partial<Task>
+  ) => Promise<void>;
 
 }
 
-const statusColors: Record<string, { bg: string; dot: string; text: string }> = {
-  "pending": { bg: "bg-purple-600", dot: "bg-white", text: "text-white" },
-  "ready-to-check": { bg: "bg-blue-500", dot: "bg-white", text: "text-white" },
-  "completed": { bg: "bg-green-500", dot: "bg-white", text: "text-white" },
-  "backlog": { bg: "bg-gray-500", dot: "bg-white", text: "text-white" },
-};
 
 const TaskSection: React.FC<TaskSectionProps> = ({
   section,
@@ -46,7 +40,9 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const colors = statusColors[section.status] || statusColors.backlog;
+  // Use hex color from section if it's there, else fallback
+  const isHex = section.color && section.color.startsWith('#');
+  const sectionColor = isHex ? section.color : "#6B7280";
 
   // Group tasks by parent_object_id
   const parentTasks = section.tasks.filter((task) => !task.parent_task_object_id);
@@ -60,7 +56,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   });
 
   return (
-    <div className="mb-6">
+    <div className="mb-20">
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-3">
         <button
@@ -75,40 +71,39 @@ const TaskSection: React.FC<TaskSectionProps> = ({
         </button>
 
         {/* Section Badge */}
-        <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full", colors.bg)}>
-          <span className={cn("w-2 h-2 rounded-full", colors.dot)} />
-          <span className={cn("text-sm font-medium", colors.text)}>{section.title}</span>
+        <div 
+          className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-sm" 
+          style={{ 
+            backgroundColor: sectionColor + '10', 
+            borderColor: sectionColor + '30',
+            color: sectionColor 
+          }}
+        >
+          <span className="w-2 h-2 rounded-full shadow-inner" style={{ backgroundColor: sectionColor }} />
+          <span className="text-[10px] font-black uppercase tracking-widest">{section.title}</span>
         </div>
 
         {/* Task Count */}
-      <span
-  className={cn(
-    "text-sm px-2 py-0.5 rounded-lg font-bold",
-    section.status === "pending" &&
-      "bg-purple-200 text-purple-800",
-    section.status === "completed" &&
-      "bg-green-200 text-green-700",
-    section.status === "backlog" &&
-      "bg-gray-200 text-gray-600",
-    section.status === "ready-to-check" &&
-      "bg-blue-200 text-blue-800"
-  )}
->
-  {section.count}
-</span>
+        <span
+          className="text-[11px] w-8 h-8 flex items-center justify-center rounded-xl font-black border shadow-sm"
+          style={{ 
+            backgroundColor: sectionColor + '05',
+            borderColor: sectionColor + '20',
+            color: sectionColor
+          }}
+        >
+          {section.count}
+        </span>
 
 
-        {/* Section Actions */}
-        <button className="p-1 hover:bg-gray-200 rounded">
-          <MoreHorizontal className="w-4 h-4 text-gray-400" />
-        </button>
+
       </div>
 
       {/* Task Table */}
       {!isCollapsed && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 border-b border-gray-200 ">
               <tr>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Task
@@ -144,7 +139,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                     isExpanded={expandedTasks.has(task._id)}
                     handleDeleteTask={handleDeleteTask}
                     handleAddSubtask={() => handleAddSubtask(task._id)}
-                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers}     handleEditTask={handleEditTask}           />
+                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers} handleEditTask={handleEditTask} />
                   {/* Render subtasks if any */}
                   {subTasksMap[task._id]?.map((subtask) => (
                     <TaskCard

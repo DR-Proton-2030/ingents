@@ -1,142 +1,235 @@
-import { X } from "lucide-react";
-
-import React, { useState } from "react";
+"use client";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import {
+	CloseCircle,
+	User,
+	Letter,
+	ShieldUser,
+	AddCircle
+} from "@solar-icons/react";
 import { toast } from "react-toastify";
 
 export type UserRole = 'company_admin' | 'employee' | 'manager';
-const roles: UserRole[] = ['company_admin', 'employee', 'manager'];
+const roles: { id: UserRole; label: string; icon: any }[] = [
+	{ id: 'company_admin', label: 'Company Admin', icon: ShieldUser },
+	{ id: 'employee', label: 'Employee', icon: User },
+	{ id: 'manager', label: 'Manager', icon: ShieldUser },
+];
 
 interface InviteUsersModalProps {
+	isOpen: boolean;
 	onClose: () => void;
 }
 
-const InviteUsersModal: React.FC<InviteUsersModalProps> = ({ onClose }) => {
+const InviteUsersModal: React.FC<InviteUsersModalProps> = ({ isOpen, onClose }) => {
 	const [fullName, setFullName] = useState("");
 	const [email, setEmail] = useState("");
 	const [role, setRole] = useState<UserRole>("employee");
 	const [loading, setLoading] = useState(false);
 
+	// Handle escape key to close
+	useEffect(() => {
+		const handleEscape = (e: KeyboardEvent) => {
+			if (e.key === "Escape") onClose();
+		};
+		if (isOpen) {
+			document.addEventListener("keydown", handleEscape);
+			document.body.style.overflow = "hidden";
+		}
+		return () => {
+			document.removeEventListener("keydown", handleEscape);
+			document.body.style.overflow = "";
+		};
+	}, [isOpen, onClose]);
+
 	const handleInvite = async () => {
-  if (!fullName || !email) {
-    toast.error("Please fill all fields");
-    return;
-  }
+		if (!fullName || !email) {
+			toast.error("Please fill all fields");
+			return;
+		}
 
-  try {
-    setLoading(true);
+		try {
+			setLoading(true);
 
-    const res = await fetch("/api/users/inviteUser", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        full_name: fullName,
-        email,
-        role,
-      }),
-      credentials: "include", // ✅ VERY IMPORTANT for cookies
-    });
+			const res = await fetch("/api/users/inviteUser", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					full_name: fullName,
+					email,
+					role,
+				}),
+				credentials: "include",
+			});
 
-    const data = await res.json();
+			const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data?.error || "Invite failed");
-    }
+			if (!res.ok) {
+				throw new Error(data?.error || "Invite failed");
+			}
 
-    toast.success("User invited successfully");
-    onClose();
-  } catch (error: any) {
-    console.error("Invite error:", error);
-    toast.error(error.message || "Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+			toast.success("User invited successfully");
+			// Reset form
+			setFullName("");
+			setEmail("");
+			setRole("employee");
+			onClose();
+		} catch (error: any) {
+			console.error("Invite error:", error);
+			toast.error(error.message || "Something went wrong");
+		} finally {
+			setLoading(false);
+		}
+	};
 
+	if (typeof document === "undefined") return null;
 
-	return (
+	return createPortal(
 		<div
+			className={`fixed inset-0 z-[9999] transition-opacity duration-300 ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+				}`}
 			onClick={onClose}
-			className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
 		>
+			{/* Backdrop */}
+			<div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
+			{/* Drawer Panel */}
 			<div
+				className={`absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"
+					}`}
 				onClick={(e) => e.stopPropagation()}
-				className="relative w-full max-w-md rounded-3xl bg-white/95 backdrop-blur-lg p-6 shadow-2xl border border-white/20"
 			>
-				{/* Close button */}
-				<button
-					onClick={onClose}
-					className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 transition"
-				>
-					<X className="w-5 h-5" />
-				</button>
-
-				<h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-					Invite User
-				</h2>
-
-				<div className="space-y-4">
-					{/* Full Name */}
-					<div className="flex flex-col">
-						<label className="text-sm font-medium text-gray-700 mb-1">Full Name</label>
-						<input
-							type="text"
-							placeholder="Enter full name"
-							value={fullName}
-							onChange={(e) => setFullName(e.target.value)}
-							className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-700 placeholder-gray-400 shadow-sm outline-none focus:ring-2 focus:ring-orange-400 transition"
-						/>
-					</div>
-
-					{/* Email */}
-					<div className="flex flex-col">
-						<label className="text-sm font-medium text-gray-700 mb-1">Email Address</label>
-						<input
-							type="email"
-							placeholder="Enter email"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-700 placeholder-gray-400 shadow-sm outline-none focus:ring-2 focus:ring-orange-400 transition"
-						/>
-					</div>
-
-					{/* Role */}
-					<div className="flex flex-col">
-						<label className="text-sm font-medium text-gray-700 mb-1">Role</label>
-						<select
-							value={role}
-							onChange={(e) => setRole(e.target.value as UserRole)}
-							className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-700 shadow-sm outline-none focus:ring-2 focus:ring-orange-400 transition"
+				{/* Header: Exact match to MeetingDrawer */}
+				<div className="sticky m-3 top-0 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
+					<div className="flex items-center justify-between">
+						<h2 className="text-lg font-semibold flex items-center gap-2">
+							Invite New User
+						</h2>
+						<button
+							onClick={onClose}
+							className="p-2 hover:bg-white/20 rounded-full transition-colors"
 						>
-							{roles.map((r) => (
-								<option key={r} value={r}>
-									{r.replace("_", " ").toUpperCase()}
-								</option>
-							))}
-						</select>
+							<CloseCircle className="w-5 h-5" />
+						</button>
 					</div>
 				</div>
 
-				{/* Actions */}
-				<div className="mt-6 flex justify-end gap-3">
-					<button
-						onClick={onClose}
-						className="rounded-xl px-5 py-2 text-gray-600 hover:bg-gray-100 transition"
-					>
-						Cancel
-					</button>
+				{/* Content */}
+				<div className="flex-1 overflow-y-auto px-6 py-8 space-y-8 scrollbar-hide">
+					{/* User Details Section */}
+					<div className="space-y-6">
 
-					<button
-						onClick={handleInvite}
-						disabled={loading}
-						className="rounded-xl bg-orange-500 px-6 py-2 text-white font-semibold hover:bg-orange-600 disabled:opacity-60 transition"
-					>
-						{loading ? "Inviting..." : "Invite"}
-					</button>
+
+						<div className="space-y-5">
+							<div className="relative group">
+								<label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1  group-focus-within:text-orange-500 transition-colors">
+									Full Name
+								</label>
+								<div className="relative">
+									<User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+									<input
+										type="text"
+										placeholder="e.g. John Doe"
+										value={fullName}
+										onChange={(e) => setFullName(e.target.value)}
+										className="w-full h-14 pl-12 pr-4 rounded-2xl bg-gray-100 border-2 border-transparent focus:border-orange-500/20 focus:bg-white outline-none text-sm font-bold text-gray-800 transition-all "
+									/>
+								</div>
+							</div>
+
+							<div className="relative group">
+								<label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1  group-focus-within:text-orange-500 transition-colors">
+									Email Address
+								</label>
+								<div className="relative">
+									<Letter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+									<input
+										type="email"
+										placeholder="e.g. john@company.com"
+										value={email}
+										onChange={(e) => setEmail(e.target.value)}
+										className="w-full h-14 pl-12 pr-4 rounded-2xl bg-gray-100 border-2 border-transparent focus:border-orange-500/20 focus:bg-white outline-none text-sm font-bold text-gray-800 transition-all "
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					{/* Role Selection Section */}
+					<div className="space-y-6">
+						<h3 className="text-xs font-black text-gray-400 uppercase  flex items-center gap-2">
+							<ShieldUser className="w-3 h-3" />
+							Access Control
+						</h3>
+
+						<div className="grid grid-cols-1 gap-3">
+							{roles.map((r) => {
+								const Icon = r.icon;
+								const isActive = role === r.id;
+								return (
+									<button
+										key={r.id}
+										onClick={() => setRole(r.id)}
+										className={`flex items-center gap-4 p-2 rounded-2xl border-2 transition-all text-left ${isActive
+											? "border-orange-500 bg-orange-50  ring-2 ring-gray-500/5 px-6"
+											: "border-gray-100 bg-gray-100/50 hover:border-orange-200 hover:bg-gray-100"
+											}`}
+									>
+										<div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isActive ? "bg-orange-500 text-white" : "bg-white text-gray-400 border border-gray-100"
+											}`}>
+											<Icon className="w-6 h-6" />
+										</div>
+										<div>
+											<p className={`text-sm font-bold ${isActive ? "text-orange-900" : "text-gray-700"}`}>
+												{r.label}
+											</p>
+											<p className={`text-[10px]  font-bold tracking-tight mt-0.5 ${isActive ? "text-orange-600/70" : "text-gray-400"}`}>
+												{r.id.replace("_", " ")} permissions
+											</p>
+										</div>
+										{isActive && (
+											<div className="ml-auto w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+												<div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+											</div>
+										)}
+									</button>
+								);
+							})}
+						</div>
+					</div>
+				</div>
+
+				{/* Footer */}
+				<div className="p-6 bg-white border-t border-gray-100 shrink-0 shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.05)]">
+					<div className="flex gap-4">
+						<button
+							onClick={onClose}
+							className="flex-1 h-14 rounded-2xl border border-gray-100 text-gray-500 text-xs font-black \ hover:bg-gray-100 transition-all active:scale-95 "
+						>
+							Discard
+						</button>
+						<button
+							onClick={handleInvite}
+							disabled={loading}
+							className="flex-[2] h-14 rounded-2xl bg-black/80 text-white text-xs font-black  flex items-center justify-center gap-3 hover:bg-orange-500 transition-all active:scale-95 shadow-xl shadow-gray-200 disabled:opacity-50 disabled:pointer-events-none"
+						>
+							{loading ? (
+								<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+							) : (
+								<>
+									<AddCircle className="w-4 h-4" />
+									Send Invitation
+								</>
+							)}
+						</button>
+					</div>
 				</div>
 			</div>
-		</div>
+		</div>,
+		document.body
 	);
 };
 

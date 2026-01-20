@@ -13,11 +13,19 @@ export async function PATCH(req: Request, { params }: { params: { taskId: string
 
     // Parse request body
     const body = await req.json();
+    const { phase_object_id } = body;
+
+    if (!phase_object_id) {
+      return NextResponse.json(
+        { error: "phase_object_id is required" },
+        { status: 400 }
+      );
+    }
 
     // Call backend API to update task status
     const response = await axios.patch(
       `${BACKEND_URL}/api/v1/tasks/update-task-status/${taskId}`,
-      body,
+      { phase_object_id },
       {
         headers: {
           "Content-Type": "application/json",
@@ -27,7 +35,7 @@ export async function PATCH(req: Request, { params }: { params: { taskId: string
       }
     );
 
-    console.log("response from update task status:", response.data);
+    console.log("✅ Task phase updated successfully:", response.data);
     return NextResponse.json(response.data);
   } catch (err: any) {
     console.error("Backend API error:", err.response?.data || err.message);

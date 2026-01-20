@@ -12,12 +12,12 @@ import AllUsers from "../../components/screens/dashboard/AllUsers";
 export const Dashboard = () => {
   return (
     <Layout showSidebar={true}>
-      <div className="mx-auto max-w-7xl px-4 py-6 space-y-6 hidescroll">
+      <div className="mx-auto max-w-8xl  space-y-6 hidescroll">
         {/* Header */}
         <DashboardHeader />
 
         {/* Grid */}
-        <div className="flex flex-col lg:flex-row gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Left Navigation */}
           <div className="lg:col-span-3">
             <LeftNavigation />
@@ -27,11 +27,11 @@ export const Dashboard = () => {
           <section className="lg:col-span-6 space-y-5">
             {/* <AllUsers /> */}
             <UpcomingEvent />
-            <ProjectProgress />
+
           </section>
 
           {/* Right column */}
-          <aside className="w-1/4  space-y-5">
+          <aside className="lg:col-span-3 space-y-5">
             <TimeSchedule />
             <TeamControl />
           </aside>

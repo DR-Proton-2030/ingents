@@ -15,6 +15,7 @@ export interface Participant {
     _id: string;
     full_name: string;
     email: string;
+    profile_picture?: string ;
   } | null;
 }
 
@@ -34,6 +35,7 @@ export interface Meeting {
     _id: string;
     full_name: string;
     email: string;
+    profile_picture?: string | null;
   };
   participants: Participant[];
 }
@@ -76,6 +78,23 @@ export const getMeetings = async (
   }
 };
 
+export const getUpcomingMeetings = async (
+  limit: number = 10
+): Promise<MeetingsResponse> => {
+  try {
+    const response = await API.get(`/${initialRoute}/upcoming?limit=${limit}`);
+
+    console.log("✅ Upcoming meetings fetch successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Upcoming meetings fetch failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Upcoming meetings fetch failed");
+  }
+};
+
 // Meeting Details Response Interface
 export interface MeetingDetails {
   _id: string;
@@ -107,6 +126,7 @@ export interface MeetingDetails {
     _id: string;
     full_name: string;
     email: string;
+    profile_picture?: string | null;
   };
 }
 

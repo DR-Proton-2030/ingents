@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import Image from "next/image";
 import {
   Search as SearchIcon,
@@ -11,18 +11,24 @@ import {
   Moon,
 } from "lucide-react";
 import MacModal from "../MacModal";
+import AuthContext from "@/contexts/authContext/authContext";
 
 export default function Navbar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user } = useContext(AuthContext);
 
   return (
     <>
-      <nav className="h-16  sticky top-0 bg-white flex items-center gap-4 px-4 md:px-6 border-b border-gray-100">
+      <nav className="h-16 overflow-hidden z-[999] sticky top-0 bg-white/50 backdrop-blur-sm flex items-center gap-4 px-4 md:px-6 border-b border-gray-100">
         {/* Left: Avatar + greeting */}
 
         {/* Assistant label with mic */}
         <div className="hidden md:flex items-center gap-2 pr-2 mr-2 border-r border-gray-200">
-          <button
+          <div className="text-xl  font-semibold  text-gray-900 flex items-center gap-3">
+            <img src={user?.company_details?.logo || ""} alt="" className="h-12" />
+            {/* {user?.company_details?.company_name || "Ingents"} */}
+          </div>
+          {/* <button
             onClick={() => setIsModalOpen(true)}
             className="relative h-12 w-12 rounded-full flex items-center justify-center 
              bg-gradient-to-br from-purple-500/70 via-indigo-500/60 to-blue-500/70 
@@ -37,7 +43,7 @@ export default function Navbar() {
 
           <span className="text-sm font-medium text-gray-700 mr-5">
             Virtual Assistant
-          </span>
+          </span> */}
         </div>
 
         {/* Center: Search */}
