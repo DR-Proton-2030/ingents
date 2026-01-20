@@ -5,7 +5,7 @@ export interface TaskFormData {
   description: string;
   due_date: string;
   priority: "High" | "Normal" | "Low";
-  status?: TaskStatus;
+  phase_object_id?: string;
   assigned_user_list: any[]
 }
 

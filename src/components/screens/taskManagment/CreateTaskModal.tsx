@@ -34,8 +34,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     due_date: "",
     priority: "Normal",
     assigned_user_list: [],
-    status: initialStatus,
+    phase_object_id: initialStatus,
   });
+
+  console.log("Status <======>: ", initialStatus);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
@@ -70,7 +72,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         due_date: "",
         priority: "Normal",
         assigned_user_list: [],
-        status: initialStatus
+        phase_object_id: initialStatus
       }));
       setSelectedUsers([]);
       setActivePicker(null);
