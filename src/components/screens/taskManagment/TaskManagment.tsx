@@ -17,6 +17,7 @@ import TaskEmptyState from "./TaskEmptyState";
 import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import FilterDrawer from "@/components/shared/FilterDrawer/FilterDrawer";
 import { Loading } from "@/components/shared/loadingScreen/Loading";
+import { BoardView, CalendarView, TimelineView } from "./views";
 
 const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -256,38 +257,52 @@ const TaskManagement: React.FC = () => {
           phases={phases}
         />
 
-        {/* Task Sections */}
+        {/* Task Views */}
         <div className="space-y-4">
-          {sections.length > 0 ? (
-            sections.map((section: any) => (
-              <TaskSection
-                key={section.id}
-                section={section}
-                onToggleTask={handleToggleTask}
-                onAddTask={handleAddTask}
-                expandedTasks={expandedTasks}
-                handleStatusChange={handleStatusChange}
-                handleDeleteTask={handleDeleteTaskById}
-                handleAddSubtask={handleAddSubtask}
-                handleUnAssignTask={handleUnassignTaskFromUser}
-                handleAssignTask={handleAssignTaskToUser}
-                searchUsers={searchUsers}
-                handleEditTask={handleEditTask}
+          {activeView === "spreadsheet" && (
+            sections.length > 0 ? (
+              sections.map((section: any) => (
+                <TaskSection
+                  key={section.id}
+                  section={section}
+                  onToggleTask={handleToggleTask}
+                  onAddTask={handleAddTask}
+                  expandedTasks={expandedTasks}
+                  handleStatusChange={handleStatusChange}
+                  handleDeleteTask={handleDeleteTaskById}
+                  handleAddSubtask={handleAddSubtask}
+                  handleUnAssignTask={handleUnassignTaskFromUser}
+                  handleAssignTask={handleAssignTaskToUser}
+                  searchUsers={searchUsers}
+                  handleEditTask={handleEditTask}
+                />
+              ))
+            ) : (
+              <TaskEmptyState
+                hasFilters={!!(filters.userId || filters.statusId || filters.dueDate || filters.onlyMyTasks || searchQuery)}
+                onClearFilters={() => {
+                  setFilters({
+                    userId: null,
+                    statusId: null,
+                    dueDate: null,
+                    onlyMyTasks: false,
+                  });
+                  setSearchQuery("");
+                }}
               />
-            ))
-          ) : (
-            <TaskEmptyState
-              hasFilters={!!(filters.userId || filters.statusId || filters.dueDate || filters.onlyMyTasks || searchQuery)}
-              onClearFilters={() => {
-                setFilters({
-                  userId: null,
-                  statusId: null,
-                  dueDate: null,
-                  onlyMyTasks: false,
-                });
-                setSearchQuery("");
-              }}
-            />
+            )
+          )}
+
+          {activeView === "board" && (
+            <BoardView sections={sections} onAddTask={handleAddTask} />
+          )}
+
+          {activeView === "calendar" && (
+            <CalendarView tasks={tasks} />
+          )}
+
+          {activeView === "timeline" && (
+            <TimelineView tasks={tasks} />
           )}
         </div>
 

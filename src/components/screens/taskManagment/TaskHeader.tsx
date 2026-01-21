@@ -87,14 +87,13 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}
-                <span className="relative z-10">{tab.label}</span>
+                {/* @ts-ignore */}
+                <Icon className={cn("relative z-10 w-5 h-5 transition-colors", isActive ? "text-orange-500" : "text-gray-400")} />
+                {/* <span className="relative z-10">{tab.label}</span> */}
               </button>
             );
           })}
-          <div className="w-px h-6 bg-gray-200 mx-1" />
-          <button className="flex items-center justify-center w-10 h-10 rounded-xl text-gray-400 hover:bg-gray-200 hover:text-orange-500 transition-all active:scale-90">
-            <AddCircle className="w-5 h-5" />
-          </button>
+
         </div>
 
         {/* Right Actions */}
@@ -116,8 +115,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
             onClick={onFilter}
             className={cn(
               "flex items-center gap-2 px-4 py-2.5 bg-white border rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-sm",
-              activeFilterCount > 0 
-                ? "border-orange-200 text-orange-600 bg-orange-50/50" 
+              activeFilterCount > 0
+                ? "border-orange-200 text-orange-600 bg-orange-50/50"
                 : "border-gray-100 text-gray-700 hover:bg-gray-50 hover:border-gray-200"
             )}
           >
