@@ -14,6 +14,7 @@ import { getColumns } from "@/components/shared/column/column";
 import { getFullColumns } from "@/components/shared/column/getFullColumn";
 import UserInfo from "./userInfo/UserInfo";
 import UserAccess from "./userAccess/UserAccess";
+import { Loading } from "@/components/shared/loadingScreen/Loading";
 
 
 interface IUserDetail {
@@ -25,7 +26,7 @@ interface IUserDetail {
   avatar?: string;
 }
 const UserDetailsPage = () => {
- const params = useParams();
+  const params = useParams();
   const userId = params.id;
 
   const [user, setUser] = useState<IUserDetail | null>(null);
@@ -34,14 +35,14 @@ const UserDetailsPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-       const res = await fetch(`/api/users/getUserDetails/${userId}`, {
-  method: "GET",
-  credentials: "include",
-});
+        const res = await fetch(`/api/users/getUserDetails/${userId}`, {
+          method: "GET",
+          credentials: "include",
+        });
 
 
-          const result = await res.json();
-          console.log("result:", result)
+        const result = await res.json();
+        console.log("result:", result)
         setUser(result.data); // assuming your backend returns { data: { ...user } }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -53,34 +54,30 @@ const UserDetailsPage = () => {
     fetchUser();
   }, [userId]);
 
-  if (!user) return <div className="p-6">User not found</div>;
+  if (!user && !loading) return <div className="p-6">User not found</div>;
 
   if (loading) {
     return (
       <Layout showSidebar={true}>
-        <div className="mx-auto max-w-7xl px-4 py-6 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading tasks...</p>
-          </div>
-        </div>
+        <Loading />
       </Layout>
     );
   }
 
-return (
+  return (
     <Layout showSidebar={true}>
-        <div className="w-full flex flex-col mb-4">
-            <h1 className="text-xl font-bold text-gray-700 pl-2">User Profile</h1>
-  <UserInfo user={user} />
-        </div>
-        <div className="w-full flex flex-col mt-3">
-             <h1 className="text-xl font-bold text-gray-700 pl-2">User Access</h1>
-           <UserAccess/>  
+      <div className="w-full flex flex-col mb-4">
+        <h1 className="text-xl font-bold text-gray-700 pl-2">User Profile</h1>
+        {/* //@ts-ignore */}
+        <UserInfo user={user} />
       </div>
-       
-        </Layout>
-   
+      <div className="w-full flex flex-col mt-3">
+        <h1 className="text-xl font-bold text-gray-700 pl-2">User Access</h1>
+        <UserAccess />
+      </div>
+
+    </Layout>
+
   );
 };
 

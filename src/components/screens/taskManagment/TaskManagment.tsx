@@ -16,6 +16,7 @@ import { UserOption } from "@/components/shared/userMultiSelectDropdown/UserMult
 import TaskEmptyState from "./TaskEmptyState";
 import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import FilterDrawer from "@/components/shared/FilterDrawer/FilterDrawer";
+import { Loading } from "@/components/shared/loadingScreen/Loading";
 
 const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -215,12 +216,7 @@ const TaskManagement: React.FC = () => {
   if (loading) {
     return (
       <Layout showSidebar={true}>
-        <div className="mx-auto max-w-7xl px-4 py-6 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading tasks...</p>
-          </div>
-        </div>
+        <Loading />
       </Layout>
     );
   }
