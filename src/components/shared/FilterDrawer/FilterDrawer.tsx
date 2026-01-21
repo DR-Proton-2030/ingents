@@ -22,6 +22,8 @@ import { IUser } from "@/types/interface/user.interface";
 import { cn } from "@/lib/utils";
 import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import { FilterDrawerProps } from "@/types/interface/props/filterDrawer.props";
+import SortFilter from "./components/SortFilter";
+
 
 
 
@@ -70,6 +72,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
       statusId: null,
       dueDate: null,
       onlyMyTasks: false,
+      sort_by: null,
     };
     setLocalFilters(cleared);
     onFilterChange(cleared);
@@ -312,6 +315,15 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
               <Calendar className={cn("w-5 h-5 transition-colors", activePicker === "date" ? "text-green-500" : "text-gray-400 group-hover:text-green-500")} />
             </button>
           </div>
+          <SortFilter
+            sortBy={localFilters.sort_by}
+            onSortToggle={(value) =>
+              setLocalFilters({
+                ...localFilters,
+                sort_by: localFilters.sort_by === value ? null : value,
+              })
+            }
+          />
         </div>
 
         {/* Footer Actions */}

@@ -26,6 +26,7 @@ const TaskManagement: React.FC = () => {
     statusId: null as string | null,
     dueDate: null as string | null,
     onlyMyTasks: false,
+    sort_by: null,
   });
 
   const {
@@ -279,13 +280,14 @@ const TaskManagement: React.FC = () => {
               ))
             ) : (
               <TaskEmptyState
-                hasFilters={!!(filters.userId || filters.statusId || filters.dueDate || filters.onlyMyTasks || searchQuery)}
+                hasFilters={!!(filters.userId || filters.statusId || filters.dueDate || filters.onlyMyTasks || filters.sort_by || searchQuery)}
                 onClearFilters={() => {
                   setFilters({
                     userId: null,
                     statusId: null,
                     dueDate: null,
                     onlyMyTasks: false,
+                    sort_by: null,
                   });
                   setSearchQuery("");
                 }}
