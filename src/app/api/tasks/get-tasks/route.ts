@@ -5,7 +5,7 @@ import axios from "axios";
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
 
 export async function GET(req: Request) {
-  // const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(req.url);
   try {
     // Extract cookies from the incoming request
     const cookies = req.headers.get("cookie") || "";
@@ -13,6 +13,7 @@ export async function GET(req: Request) {
     const response = await axios.get(
       `${BACKEND_URL}/api/v1/tasks/get-tasks`,
       {
+        params: Object.fromEntries(searchParams.entries()),
         headers: {
           "Content-Type": "application/json",
           "Cookie": cookies, // Forward cookies to backend

@@ -15,6 +15,8 @@ import {
 import { ViewMode } from "@/types/interface/task.interface";
 import { motion } from "framer-motion";
 import { Table } from "lucide-react";
+import { ITaskFilters } from "@/types/interface/taskFilter.interface";
+
 
 interface ViewTab {
   id: ViewMode;
@@ -37,6 +39,9 @@ interface TaskHeaderProps {
   onFilter?: () => void;
   onCreateProject?: () => void;
   onCreateTask?: () => void;
+  filters: ITaskFilters;
+  onFilterChange: (filters: ITaskFilters) => void;
+  phases: any[];
 }
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
@@ -47,7 +52,16 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   onFilter,
   onCreateProject,
   onCreateTask,
+  filters,
+  onFilterChange,
+  phases,
 }) => {
+  // Count active filters
+  const activeFilterCount = Object.entries(filters).reduce((acc, [key, value]) => {
+    if (key === "onlyMyTasks") return value ? acc + 1 : acc;
+    return value ? acc + 1 : acc;
+  }, 0);
+
   return (
     <div className="space-y-6">
       {/* Top Row - View Tabs and Search */}
@@ -100,9 +114,21 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
           {/* Filter Button */}
           <button
             onClick={onFilter}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-200 shadow-sm transition-all active:scale-95"
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 bg-white border rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-sm",
+              activeFilterCount > 0 
+                ? "border-orange-200 text-orange-600 bg-orange-50/50" 
+                : "border-gray-100 text-gray-700 hover:bg-gray-50 hover:border-gray-200"
+            )}
           >
-            <Filter className="w-4 h-4 text-gray-400" />
+            <div className="relative">
+              <Filter className={cn("w-4 h-4", activeFilterCount > 0 ? "text-orange-500" : "text-gray-400")} />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white">
+                  {activeFilterCount}
+                </span>
+              )}
+            </div>
             <span>Filter</span>
           </button>
 
