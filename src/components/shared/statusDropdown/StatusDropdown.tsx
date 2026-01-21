@@ -10,7 +10,7 @@ import {
   ClockCircle,
   PointOnMap
 } from "@solar-icons/react";
-import { Plus } from "lucide-react";
+import { Plus, Pen } from "lucide-react";
 import { api } from "@/utils/api";
 import CreateNewPhase from "../createNewPhase/createNewPhase";
 import { StatusDropdownProps } from "@/types/interface/props/statusDropDown.props";
@@ -39,6 +39,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const [phases, setPhases] = useState<IPhase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
 
   const fetchPhases = useCallback(async () => {
     try {
@@ -57,6 +61,26 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   useEffect(() => {
     fetchPhases();
   }, [fetchPhases]);
+
+  const handleUpdatePhase = async (phaseId: string) => {
+    if (isUpdating) return;
+    if (!editValue.trim()) {
+      setEditingPhaseId(null);
+      return;
+    }
+    try {
+      setIsUpdating(true);
+      await api.taskPhase.updateTaskPhase(phaseId, { name: editValue });
+      api.taskPhase.clearTaskPhasesCache();
+      await fetchPhases();
+      setEditingPhaseId(null);
+    } catch (error) {
+      console.error("Failed to update phase:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
 
   useEffect(() => {
     setMounted(true);
@@ -129,35 +153,69 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                 (currentStatus || "").toLowerCase().replace(/ /g, "-") === phase.name.toLowerCase().replace(/ /g, "-")
               );
 
+              const isEditing = editingPhaseId === phase._id;
+
               return (
-                <button
-                  key={phase._id}
-                  onClick={() => {
-                    onStatusChange(taskId, phase._id);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 w-full p-2.5 rounded- transition-all duration-200 group/item text-left",
-                    isSelected
-                      ? "bg-gray-100 border border-gray-100/50 "
-                      : "hover:bg-gray-50/50 hover:translate-x-1"
-                  )}
-                >
-
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black  transition-colors "
-                      style={{ color: isSelected ? (phase.color || '#25272aff') : '#9ca3af' }}>
-                      {phase.name}
-                    </p>
-                    {isSelected && (
-                      <p className="text-[9px] text-gray-400 font-bold">Current Status</p>
+                <div key={phase._id} className="relative group/parent">
+                  <button
+                    onClick={() => {
+                      if (!isEditing) {
+                        onStatusChange(taskId, phase._id);
+                        setIsOpen(false);
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 w-full p-2.5 rounded-xl transition-all duration-200 group/item text-left relative",
+                      isSelected
+                        ? "bg-gray-100 border border-gray-100/50 "
+                        : "hover:bg-gray-50/50 hover:translate-x-1"
                     )}
-                  </div>
-
-
-
-                </button>
+                  >
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <input
+                          autoFocus
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleUpdatePhase(phase._id);
+                            if (e.key === "Escape") setEditingPhaseId(null);
+                          }}
+                          onBlur={() => handleUpdatePhase(phase._id)}
+                          className="w-full bg-white border border-orange-200 rounded px-1 py-0.5 text-[11px] font-black focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-black transition-colors truncate"
+                            style={{ color: isSelected ? (phase.color || '#25272aff') : '#9ca3af' }}>
+                            {phase.name}
+                          </p>
+                          {!phase.is_default && !isEditing && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPhaseId(phase._id);
+                                setEditValue(phase.name);
+                              }}
+                              className="opacity-0 group-hover/parent:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
+                            >
+                              <Pen className="w-2.5 h-2.5 text-gray-400 hover:text-orange-500" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {isSelected && !isEditing && (
+                        <p className="text-[9px] text-gray-400 font-bold">Current Status</p>
+                      )}
+                    </div>
+                  </button>
+                  {isUpdating && isEditing && (
+                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-20">
+                      <div className="w-3 h-3 border border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
               );
             })
           ) : (
