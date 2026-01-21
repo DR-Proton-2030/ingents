@@ -304,6 +304,7 @@ const TaskManagement: React.FC = () => {
               onDeleteTask={handleDeleteTaskById}
               onAssignTask={handleAssignTaskToUser}
               onUnassignTask={handleUnassignTaskFromUser}
+              onStatusChange={handleStatusChange}
             />
           )}
 
