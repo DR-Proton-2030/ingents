@@ -294,15 +294,37 @@ const TaskManagement: React.FC = () => {
           )}
 
           {activeView === "board" && (
-            <BoardView sections={sections} onAddTask={handleAddTask} />
+            <BoardView
+              sections={sections}
+              onAddTask={handleAddTask}
+              onAddSubtask={handleAddSubtask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTaskById}
+              onAssignTask={handleAssignTaskToUser}
+              onUnassignTask={handleUnassignTaskFromUser}
+            />
           )}
 
           {activeView === "calendar" && (
-            <CalendarView tasks={tasks} />
+            <CalendarView
+              tasks={tasks}
+              onAddSubtask={handleAddSubtask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTaskById}
+              onAssignTask={handleAssignTaskToUser}
+              onUnassignTask={handleUnassignTaskFromUser}
+            />
           )}
 
           {activeView === "timeline" && (
-            <TimelineView tasks={tasks} />
+            <TimelineView
+              tasks={tasks}
+              onAddSubtask={handleAddSubtask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTaskById}
+              onAssignTask={handleAssignTaskToUser}
+              onUnassignTask={handleUnassignTaskFromUser}
+            />
           )}
         </div>
 
