@@ -14,7 +14,7 @@ import {
   MinusCircle,
   AddCircle,
 } from "@solar-icons/react";
-import { SearchIcon, Trash, UserCircle } from "lucide-react";
+import { Check, CheckCheck, SearchIcon, Trash, UserCircle } from "lucide-react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import AuthContext from "@/contexts/authContext/authContext";
 import { useContext } from "react";
@@ -153,9 +153,9 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
             <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               Quick Filters
             </h3>
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:bg-white transition-all group shadow-sm">
+            <div className="flex items-center justify-between p-4 border rounded-xl border-gray-100 bg-gray-50 hover:bg-white transition-all group ">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-md">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center overflow-hidden border-2 border-white ">
                   {user?.profile_picture ? (
                     <img src={user.profile_picture} className="w-full h-full object-cover" alt="Profile" />
                   ) : (
@@ -206,17 +206,19 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
                     })
                   }
                   className={cn(
-                    "flex items-center gap-3 p-3.5 rounded-2xl border text-[11px] font-bold transition-all text-left uppercase tracking-tight shadow-sm",
-                    localFilters.statusId === phase._id
-                      ? "border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/10"
-                      : "border-gray-100 bg-gray-50 text-gray-500 hover:border-gray-200 hover:bg-white"
+                    "flex items-center gap-3 p-3.5 rounded-xl h-12 text-[11px] font-bold transition-all text-left uppercase  ",
+
+
                   )}
+                  style={{ backgroundColor: localFilters.statusId === phase._id ? `${phase.color}8A` : `${phase.color}2A` }}
+
                 >
-                  <div
-                    className="w-2.5 h-2.5 rounded-full ring-4 ring-white shadow-sm"
-                    style={{ backgroundColor: phase.color }}
-                  />
+
                   {phase.name}
+                  {
+                    localFilters.statusId === phase._id &&
+                    <Check className="w-5 h-5 text-white" />
+                  }
                 </button>
               ))}
             </div>
@@ -297,7 +299,7 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
               type="button"
               onClick={() => setActivePicker(activePicker === "date" ? null : "date")}
               className={cn(
-                "w-full h-14 px-5 rounded-2xl border transition-all flex items-center justify-between group shadow-sm",
+                "w-full h-14 px-5 rounded-2xl border transition-all flex items-center justify-between group ",
                 activePicker === "date" ? "border-green-500 bg-green-50/30 ring-4 ring-green-500/5" : "border-gray-100 bg-gray-50 hover:bg-white"
               )}
             >

@@ -191,7 +191,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 active:scale-95 group ",
+          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 active:scale-95 group w-max whitespace-nowrap",
           isOpen ? "ring-4 ring-gray-100" : "hover:shadow-m"
         )}
         style={{
@@ -199,14 +199,12 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           borderColor: currentColor + '30'      // Subtle border color
         }}
       >
-
-        <span className="text-xs font-semibold text-black/80"
-        >
+        <span className="text-xs font-semibold text-black/80 whitespace-nowrap">
           {currentLabel}
         </span>
         <AltArrowDown
           className={cn(
-            "w-3.5 h-3.5 transition-transform duration-300",
+            "w-3.5 h-3.5 transition-transform duration-300 shrink-0",
             isOpen ? "rotate-180" : ""
           )}
           style={{ color: currentColor + '80' }}
