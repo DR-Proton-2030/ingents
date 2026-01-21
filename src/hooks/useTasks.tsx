@@ -13,9 +13,10 @@ import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
 import { api } from "@/utils/api";
 
-export const useTasks = () => {
+export const useTasks = (filters: any = {}, searchQuery: string = "") => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sections, setSections] = useState<TaskSection[]>([]);
+  const [phases, setPhases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,16 +30,40 @@ export const useTasks = () => {
       setLoading(true);
       setError(null);
 
+      // Map frontend filters to backend params
+      const params: any = {};
+      if (filters.userId) params.assigned_user_id = filters.userId;
+      if (filters.statusId) params.phase_object_id = filters.statusId;
+      if (filters.dueDate) {
+        params.due_date_from = new Date().toISOString().split("T")[0]; // Today's date
+        params.due_date_to = filters.dueDate; // Selected date
+      }
+      if (filters.onlyMyTasks) params.my_tasks = "true";
+      
+      // If backend supports search, we could add it here
+      // params.search = searchQuery;
+
       const [tasksRes, phasesRes] = await Promise.all([
-        api.task.getTasks(),
+        getTasks(params),
         api.taskPhase.getTaskPhases()
       ]);
 
       if (tasksRes?.data) {
-        const normalized = tasksRes.data.map(normalizeTask);
+        let normalized = tasksRes.data.map(normalizeTask);
+        
+        // If server doesn't support search yet, filter locally for title/desc
+        if (searchQuery) {
+          const query = searchQuery.toLowerCase();
+          normalized = normalized.filter((task: Task) => 
+            task.title.toLowerCase().includes(query) || 
+            task.description?.toLowerCase().includes(query)
+          );
+        }
+
         setTasks(normalized);
-        const phases = phasesRes?.data || [];
-        setSections(groupTasksByStatus(normalized, phases));
+        const fetchedPhases = phasesRes?.data || [];
+        setPhases(fetchedPhases);
+        setSections(groupTasksByStatus(normalized, fetchedPhases));
       }
     } catch (err: any) {
       const msg = err.message || "Failed to fetch tasks";
@@ -47,7 +72,7 @@ export const useTasks = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters, searchQuery]);
 
   useEffect(() => {
     fetchTasks();
@@ -94,6 +119,7 @@ export const useTasks = () => {
   return {
     tasks,
     sections,
+    phases,
     loading,
     error,
     refetchTasks: fetchTasks,
@@ -107,7 +133,7 @@ export const useTasks = () => {
 };
 
 // Helper function to group tasks by phase_info
-function groupTasksByStatus(tasks: Task[], allPhases: any[] = []): TaskSection[] {
+export function groupTasksByStatus(tasks: Task[], allPhases: any[] = []): TaskSection[] {
   // 1. Initialize sections from all available phases
   let sections: TaskSection[] = allPhases
     .sort((a, b) => a.index - b.index)

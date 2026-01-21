@@ -3,9 +3,9 @@ import API from "../api";
 
 const initialRoute = "tasks";
 
-export const getTasks = async (): Promise<any> => {
+export const getTasks = async (params: any = {}): Promise<any> => {
   try {
-    const response = await API.get(`/${initialRoute}/get-tasks`, {});
+    const response = await API.get(`/${initialRoute}/get-tasks`, { params });
 
     console.log("✅ Tasks fetch successful:", response.data);
     return response.data;
