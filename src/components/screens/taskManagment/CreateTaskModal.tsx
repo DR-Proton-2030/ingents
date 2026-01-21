@@ -37,7 +37,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     phase_object_id: initialStatus,
   });
 
-  console.log("Status <======>: ", initialStatus);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);

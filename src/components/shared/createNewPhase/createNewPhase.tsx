@@ -19,7 +19,6 @@ const CreateNewPhase: React.FC<CreateNewPhaseProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  console.log("task_object_id", task_object_id);
 
   useEffect(() => {
     setMounted(true);
@@ -31,11 +30,11 @@ const CreateNewPhase: React.FC<CreateNewPhaseProps> = ({
 
     try {
       setIsCreating(true);
-      const response = await api.taskPhase.createTaskPhase({ name: newPhaseName, task_object_id : task_object_id });
+      const response = await api.taskPhase.createTaskPhase({ name: newPhaseName, task_object_id: task_object_id });
       toast.success("New phase created successfully!");
       setNewPhaseName("");
       api.taskPhase.clearTaskPhasesCache();
-      
+
       onSuccess(response?.data?._id || response?.data?.id);
       onClose();
     } catch (error: any) {

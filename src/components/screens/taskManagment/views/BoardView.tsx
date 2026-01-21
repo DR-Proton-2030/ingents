@@ -1,7 +1,9 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Widget, AddCircle } from "@solar-icons/react";
+import { formatDate } from "@/utils/commonFunction/formatDate";
 
 interface BoardViewProps {
     sections: any[];
@@ -9,6 +11,13 @@ interface BoardViewProps {
 }
 
 const BoardView: React.FC<BoardViewProps> = ({ sections, onAddTask }) => {
+    const [hoveredUser, setHoveredUser] = useState<{ id: string; name: string; rect: DOMRect } | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     return (
         <div className="flex gap-4 overflow-x-auto pb-4 hidescroll">
             {sections.map((section, index) => (
@@ -22,7 +31,7 @@ const BoardView: React.FC<BoardViewProps> = ({ sections, onAddTask }) => {
                     {/* Column Header */}
                     <div
                         className="p-4 border-b border-gray-100"
-                        style={{ backgroundColor: section.color + "10" }}
+                        style={{ backgroundColor: section.color }}
                     >
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -30,14 +39,14 @@ const BoardView: React.FC<BoardViewProps> = ({ sections, onAddTask }) => {
                                     className="w-3 h-3 rounded-full"
                                     style={{ backgroundColor: section.color }}
                                 />
-                                <h3 className="font-bold text-gray-800">{section.name}</h3>
-                                <span className="text-xs font-bold text-gray-400 bg-gray-200/50 px-2 py-0.5 rounded-full">
+                                <h3 className="font-bold text-white">{section?.title}</h3>
+                                <span className="text-xs font-bold text-white bg-gray-200/50 px-2 py-0.5 rounded-full">
                                     {section.tasks?.length || 0}
                                 </span>
                             </div>
                             <button
                                 onClick={() => onAddTask(section.id)}
-                                className="p-1.5 hover:bg-white rounded-lg text-gray-400 hover:text-orange-500 transition-all"
+                                className="p-1.5 hover:bg-white/20 rounded-lg text-white hover:text-white transition-all"
                             >
                                 <AddCircle className="w-5 h-5" />
                             </button>
@@ -64,7 +73,7 @@ const BoardView: React.FC<BoardViewProps> = ({ sections, onAddTask }) => {
                                     <div className="flex items-center justify-between">
                                         {task.due_date && (
                                             <span className="text-[10px] font-bold text-gray-400">
-                                                {new Date(task.due_date).toLocaleDateString()}
+                                                {formatDate(task.due_date)}
                                             </span>
                                         )}
                                         {task.assignees?.length > 0 && (
@@ -72,11 +81,42 @@ const BoardView: React.FC<BoardViewProps> = ({ sections, onAddTask }) => {
                                                 {task.assignees.slice(0, 3).map((assignee: any) => (
                                                     <div
                                                         key={assignee._id}
-                                                        className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-[9px] font-bold text-white border-2 border-white"
+                                                        className="relative"
+                                                        onMouseEnter={(e) => {
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            setHoveredUser({ id: assignee._id, name: assignee.full_name || "Unknown", rect });
+                                                        }}
+                                                        onMouseLeave={() => setHoveredUser(null)}
                                                     >
-                                                        {assignee.full_name?.charAt(0) || "?"}
+                                                        <div
+                                                            className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-[9px] font-bold text-white border-2 border-white overflow-hidden cursor-pointer hover:scale-110 hover:z-10 transition-transform"
+                                                        >
+                                                            {assignee.profile_picture || assignee.avatar ? (
+                                                                <img
+                                                                    src={assignee.profile_picture || assignee.avatar}
+                                                                    alt={assignee.full_name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                assignee.full_name?.charAt(0)?.toUpperCase() || "?"
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 ))}
+                                                {task.assignees.length > 3 && (
+                                                    <div
+                                                        className="relative"
+                                                        onMouseEnter={(e) => {
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            setHoveredUser({ id: "more", name: `+${task.assignees.length - 3} more`, rect });
+                                                        }}
+                                                        onMouseLeave={() => setHoveredUser(null)}
+                                                    >
+                                                        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[9px] font-bold text-gray-600 border-2 border-white">
+                                                            +{task.assignees.length - 3}
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -91,6 +131,29 @@ const BoardView: React.FC<BoardViewProps> = ({ sections, onAddTask }) => {
                     </div>
                 </motion.div>
             ))}
+
+            {/* Portalled Tooltip */}
+            {mounted && createPortal(
+                <AnimatePresence>
+                    {hoveredUser && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 5, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 5, scale: 0.9 }}
+                            className="fixed z-[999999] px-3 py-2 bg-gray-900 text-white text-[10px] font-bold rounded-xl shadow-2xl pointer-events-none whitespace-nowrap"
+                            style={{
+                                top: hoveredUser.rect.top - 40,
+                                left: hoveredUser.rect.left,
+                                transform: "translateX(-50%)",
+                            }}
+                        >
+                            {hoveredUser.name}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1.5 border-[6px] border-transparent border-t-gray-900" />
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 };
