@@ -86,14 +86,14 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     }
   }, [isOpen]);
 
-  const activePhase = phases.find(p => 
-    p._id === currentStatus || 
-    p.name === currentStatus || 
+  const activePhase = phases.find(p =>
+    p._id === currentStatus ||
+    p.name === currentStatus ||
     p.name.toLowerCase().replace(/ /g, "-") === (currentStatus || "").toLowerCase().replace(/ /g, "-")
   );
 
   const currentLabel = activePhase ? activePhase.name : (phaseInfo?.name || currentStatus);
-  const currentColor = activePhase?.color || phaseInfo?.color || "#9CA3AF";
+  const currentColor = activePhase?.color || phaseInfo?.color || "#9a49e1ff";
   const CurrentIcon = getPhaseIcon(currentLabel);
 
   const menuContent = (
@@ -103,32 +103,32 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.95 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="fixed w-64 p-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100/50 flex flex-col gap-1 overflow-hidden"
+        className="fixed w-64 p-2 bg-white/95 backdrop-blur-xl rounded-xl flex flex-col gap-1 overflow-hidden border-2 border-gray-100/50"
         style={{
           top: menuPosition.top,
           left: Math.min(menuPosition.left, typeof window !== 'undefined' ? window.innerWidth - 270 : menuPosition.left)
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-2 py-1 mb-1 border-b border-gray-100/50">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Status</p>
+        <div className="px-2 py-1 mb-1 ">
+          <p className="text-[10px] font-bold text-gray-600 uppercase ">Select Status</p>
         </div>
 
-        <div className="max-h-64 overflow-y-auto flex flex-col gap-1 pr-1 custom-scrollbar">
+        <div className="max-h-64 overflow-y-auto border-2 border-gray-100/50 rounded-xl flex flex-col gap-1 pr-1 custom-scrollbar">
           {isLoading ? (
-             <div className="p-4 text-center">
-                <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Fetching Phases...</p>
-             </div>
+            <div className="p-4 text-center">
+              <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Fetching Phases...</p>
+            </div>
           ) : phases.length > 0 ? (
             [...phases].sort((a, b) => a.index - b.index).map((phase) => {
               const Icon = getPhaseIcon(phase.name);
               const isSelected = (
-                currentStatus === phase.name || 
-                currentStatus === phase._id || 
+                currentStatus === phase.name ||
+                currentStatus === phase._id ||
                 (currentStatus || "").toLowerCase().replace(/ /g, "-") === phase.name.toLowerCase().replace(/ /g, "-")
               );
-              
+
               return (
                 <button
                   key={phase._id}
@@ -137,20 +137,17 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     setIsOpen(false);
                   }}
                   className={cn(
-                    "flex items-center gap-3 w-full p-2.5 rounded-xl transition-all duration-200 group/item text-left",
+                    "flex items-center gap-3 w-full p-2.5 rounded- transition-all duration-200 group/item text-left",
                     isSelected
-                      ? "bg-gray-50 border border-gray-100/50 shadow-sm"
+                      ? "bg-gray-100 border border-gray-100/50 "
                       : "hover:bg-gray-50/50 hover:translate-x-1"
                   )}
                 >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300" 
-                       style={{ backgroundColor: phase.color ? phase.color + '20' : '#f3f4f6' }}>
-                    <Icon className="w-4 h-4" style={{ color: phase.color || '#9ca3af' }} />
-                  </div>
+
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black uppercase transition-colors tracking-tight"
-                       style={{ color: isSelected ? (phase.color || '#374151') : '#9ca3af' }}>
+                    <p className="text-[11px] font-black  transition-colors "
+                      style={{ color: isSelected ? (phase.color || '#25272aff') : '#9ca3af' }}>
                       {phase.name}
                     </p>
                     {isSelected && (
@@ -158,10 +155,8 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     )}
                   </div>
 
-                  {isSelected && (
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: phase.color || '#f97316', boxShadow: `0 0 10px ${phase.color}80` }} />
-                  )}
-                  
+
+
                 </button>
               );
             })
@@ -196,20 +191,17 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300 active:scale-95 group border shadow-sm",
-          isOpen ? "ring-4 ring-gray-100" : "hover:shadow-md"
+          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 active:scale-95 group ",
+          isOpen ? "ring-4 ring-gray-100" : "hover:shadow-m"
         )}
-        style={{ 
-          backgroundColor: currentColor + '12', // Subtle background color
+        style={{
+          backgroundColor: currentColor + '50', // Subtle background color
           borderColor: currentColor + '30'      // Subtle border color
         }}
       >
-        <div className="w-5 h-5 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110" 
-             style={{ backgroundColor: currentColor + '20' }}>
-          <CurrentIcon className="w-3.5 h-3.5" style={{ color: currentColor }} />
-        </div>
-        <span className="text-xs font-black whitespace-nowrap tracking-tight uppercase"
-              style={{ color: currentColor }}>
+
+        <span className="text-xs font-semibold text-black/80"
+        >
           {currentLabel}
         </span>
         <AltArrowDown
