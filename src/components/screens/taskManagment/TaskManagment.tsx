@@ -13,10 +13,26 @@ import { useTasks } from "@/hooks/useTasks";
 import { TaskFormData } from "@/types/interface/task-modal.interface";
 import CreateSubtaskModal from "./createSubtaskModal";
 import { UserOption } from "@/components/shared/userMultiSelectDropdown/UserMultiSelectDropdown";
+import TaskEmptyState from "./TaskEmptyState";
+import { ITaskFilters } from "@/types/interface/taskFilter.interface";
+import FilterDrawer from "@/components/shared/FilterDrawer/FilterDrawer";
+import { Loading } from "@/components/shared/loadingScreen/Loading";
+import { BoardView, CalendarView, TimelineView } from "./views";
 
 const TaskManagement: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<ITaskFilters>({
+    userId: null as string | null,
+    statusId: null as string | null,
+    dueDate: null as string | null,
+    onlyMyTasks: false,
+    sort_by: null,
+  });
+
   const {
+    tasks,
     sections,
+    phases,
     loading,
     error,
     handleUpdateTask,
@@ -26,16 +42,18 @@ const TaskManagement: React.FC = () => {
     handleUnassignTask,
     handleAssignTask,
     handleEditTask
-  } = useTasks();
+  } = useTasks(filters, searchQuery);
+
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | undefined>();
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] =
     useState(false);
+
 
   const handleAddSubtask = useCallback((taskId: string) => {
     setParentTaskId(taskId);
@@ -74,7 +92,7 @@ const TaskManagement: React.FC = () => {
   }, []);
 
   const handleFilter = useCallback(() => {
-    console.log("Open filter modal");
+    setIsFilterDrawerOpen(true);
   }, []);
 
   const handleStatusChange = useCallback(
@@ -200,12 +218,7 @@ const TaskManagement: React.FC = () => {
   if (loading) {
     return (
       <Layout showSidebar={true}>
-        <div className="mx-auto max-w-7xl px-4 py-6 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading tasks...</p>
-          </div>
-        </div>
+        <Loading />
       </Layout>
     );
   }
@@ -240,26 +253,82 @@ const TaskManagement: React.FC = () => {
           onFilter={handleFilter}
           onCreateProject={handleCreateProject}
           onCreateTask={handleTaskModal}
+          filters={filters}
+          onFilterChange={setFilters}
+          phases={phases}
         />
 
-        {/* Task Sections */}
+        {/* Task Views */}
         <div className="space-y-4">
-          {sections.map((section) => (
-            <TaskSection
-              key={section.id}
-              section={section}
-              onToggleTask={handleToggleTask}
+          {activeView === "spreadsheet" && (
+            sections.length > 0 ? (
+              sections.map((section: any) => (
+                <TaskSection
+                  key={section.id}
+                  section={section}
+                  onToggleTask={handleToggleTask}
+                  onAddTask={handleAddTask}
+                  expandedTasks={expandedTasks}
+                  handleStatusChange={handleStatusChange}
+                  handleDeleteTask={handleDeleteTaskById}
+                  handleAddSubtask={handleAddSubtask}
+                  handleUnAssignTask={handleUnassignTaskFromUser}
+                  handleAssignTask={handleAssignTaskToUser}
+                  searchUsers={searchUsers}
+                  handleEditTask={handleEditTask}
+                />
+              ))
+            ) : (
+              <TaskEmptyState
+                hasFilters={!!(filters.userId || filters.statusId || filters.dueDate || filters.onlyMyTasks || filters.sort_by || searchQuery)}
+                onClearFilters={() => {
+                  setFilters({
+                    userId: null,
+                    statusId: null,
+                    dueDate: null,
+                    onlyMyTasks: false,
+                    sort_by: null,
+                  });
+                  setSearchQuery("");
+                }}
+              />
+            )
+          )}
+
+          {activeView === "board" && (
+            <BoardView
+              sections={sections}
               onAddTask={handleAddTask}
-              expandedTasks={expandedTasks}
-              handleStatusChange={handleStatusChange}
-              handleDeleteTask={handleDeleteTaskById}
-              handleAddSubtask={handleAddSubtask}
-              handleUnAssignTask={handleUnassignTaskFromUser}
-              handleAssignTask={handleAssignTaskToUser}
-              searchUsers={searchUsers}
-              handleEditTask={handleEditTask}
+              onAddSubtask={handleAddSubtask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTaskById}
+              onAssignTask={handleAssignTaskToUser}
+              onUnassignTask={handleUnassignTaskFromUser}
+              onStatusChange={handleStatusChange}
             />
-          ))}
+          )}
+
+          {activeView === "calendar" && (
+            <CalendarView
+              tasks={tasks}
+              onAddSubtask={handleAddSubtask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTaskById}
+              onAssignTask={handleAssignTaskToUser}
+              onUnassignTask={handleUnassignTaskFromUser}
+            />
+          )}
+
+          {activeView === "timeline" && (
+            <TimelineView
+              tasks={tasks}
+              onAddSubtask={handleAddSubtask}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTaskById}
+              onAssignTask={handleAssignTaskToUser}
+              onUnassignTask={handleUnassignTaskFromUser}
+            />
+          )}
         </div>
 
         {/* Create Task Modal */}
@@ -279,6 +348,13 @@ const TaskManagement: React.FC = () => {
             setParentTaskId(null);
           }}
           onSubmit={handleCreateSubtaskSubmit}
+        />
+        <FilterDrawer
+          isOpen={isFilterDrawerOpen}
+          onClose={() => setIsFilterDrawerOpen(false)}
+          filters={filters}
+          onFilterChange={setFilters}
+          phases={phases}
         />
       </div>
     </Layout>

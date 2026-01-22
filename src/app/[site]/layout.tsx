@@ -15,18 +15,18 @@ export async function generateMetadata({
 }) {
   const { site } = await params;
   return {
-    title: `${site} - SEOMI AI`,
-    description: `SEO management and AI tools for ${site}`,
+    title: `Ingents`,
+    description: `Ingents - AI tools for ${site}`,
     keywords: [
-      `${site}`,
+      "Ingents",
       "SEO",
       "analytics",
       "AI tools",
       "website optimization",
     ],
     openGraph: {
-      title: `${site} - SEOMI AI`,
-      description: `SEO management and AI tools for ${site}`,
+      title: `Ingents`,
+      description: `Ingents - AI tools for ${site}`,
       url: `/${site}`,
     },
   };

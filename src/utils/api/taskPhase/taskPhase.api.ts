@@ -45,3 +45,25 @@ export const createTaskPhase = async (payload: { name: string; task_object_id?: 
     throw new Error(error.response?.data?.message || "Task phase creation failed");
   }
 };
+
+export const updateTaskPhase = async (
+  phaseId: string,
+  payload: object
+): Promise<any> => {
+  try {
+    console.log("🚀 Calling update task API...");
+    const response = await API.patch(
+      `/${initialRoute}/update-phase/${phaseId}`,
+      payload
+    );
+
+    console.log("✅ Phase update successful:", response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Phase update failed:",
+      error.response?.data || error.message
+    );
+    throw new Error(error.response?.data?.message || "Phase update failed");
+  }
+};

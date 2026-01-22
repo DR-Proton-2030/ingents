@@ -4,29 +4,43 @@ import axios from "axios";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
+export async function PATCH(req: Request, { params }: { params: { phaseId: string } }) {
   try {
+    const { phaseId } = params;
+
     // Extract cookies from the incoming request
     const cookies = req.headers.get("cookie") || "";
-    
-    const response = await axios.get(
-      `${BACKEND_URL}/api/v1/tasks/get-tasks`,
+
+    // Parse request body
+    const body = await req.json();
+   
+
+    if (!phaseId) {
+      return NextResponse.json(
+        { error: "phase_object_id is required" },
+        { status: 400 }
+      );
+    }
+
+    // Call backend API to update task status
+    const response = await axios.patch(
+      `${BACKEND_URL}/api/v1/task-phase/update/${phaseId}`,
+      body,
       {
-        params: Object.fromEntries(searchParams.entries()),
         headers: {
           "Content-Type": "application/json",
           "Cookie": cookies, // Forward cookies to backend
         },
-        withCredentials: true, // Important for cookie handling
+        withCredentials: true,
       }
     );
-    console.log("response from fetch profile back", response);
+
+    console.log("✅ Task phase updated successfully:", response.data);
     return NextResponse.json(response.data);
   } catch (err: any) {
     console.error("Backend API error:", err.response?.data || err.message);
     return NextResponse.json(
-      { error: err.response?.data?.message || "Failed to fetch user profile" },
+      { error: err.response?.data?.message || "Failed to update task status" },
       { status: err.response?.status || 500 }
     );
   }

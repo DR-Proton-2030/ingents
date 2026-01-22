@@ -14,12 +14,10 @@ export async function generateMetadata({
 }) {
   const { site } = await params;
   return {
-    title: `${site} Dashboard - SEOMI AI`,
-    description: `SEO dashboard and analytics for ${site}`,
+    title: `Ingents Dashboard`,
+    description: `Ingents dashboard and analytics for ${site}`,
     keywords: [
-      `${site}`,
-      "dashboard",
-      "SEO",
+      "Ingents",
       "analytics",
       "website optimization",
     ],

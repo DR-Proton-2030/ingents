@@ -56,40 +56,38 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   });
 
   return (
-    <div className="mb-20">
+    <div className="mb-8">
       {/* Section Header */}
       <div className="flex items-center gap-3 mb-3">
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-0.5 hover:bg-gray-200 rounded"
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
-          )}
-        </button>
+
 
         {/* Section Badge */}
-        <div 
-          className="flex items-center gap-2 px-4 py-2 rounded-full border shadow-sm" 
-          style={{ 
-            backgroundColor: sectionColor + '10', 
-            borderColor: sectionColor + '30',
-            color: sectionColor 
+        <div
+          className="flex items-center gap-2 px-4 py-2 rounded-full  "
+          style={{
+            backgroundColor: sectionColor,
+
           }}
         >
-          <span className="w-2 h-2 rounded-full shadow-inner" style={{ backgroundColor: sectionColor }} />
-          <span className="text-[10px] font-black uppercase tracking-widest">{section.title}</span>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="p-0.5 hover:bg-white/20 rounded-lg"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-4 h-4 text-white" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-white" />
+            )}
+          </button>
+          <div className="text-white text-sm -ml-1">{section.title}</div>
         </div>
 
         {/* Task Count */}
         <span
-          className="text-[11px] w-8 h-8 flex items-center justify-center rounded-xl font-black border shadow-sm"
-          style={{ 
-            backgroundColor: sectionColor + '05',
-            borderColor: sectionColor + '20',
-            color: sectionColor
+          className="text-[11px] w-8 h-8 flex items-center justify-center rounded-full font-black "
+          style={{
+            backgroundColor: sectionColor,
+            color: 'white'
           }}
         >
           {section.count}

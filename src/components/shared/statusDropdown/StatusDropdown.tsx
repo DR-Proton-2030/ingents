@@ -10,7 +10,7 @@ import {
   ClockCircle,
   PointOnMap
 } from "@solar-icons/react";
-import { Plus } from "lucide-react";
+import { Plus, Pen } from "lucide-react";
 import { api } from "@/utils/api";
 import CreateNewPhase from "../createNewPhase/createNewPhase";
 import { StatusDropdownProps } from "@/types/interface/props/statusDropDown.props";
@@ -39,6 +39,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const [phases, setPhases] = useState<IPhase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
 
   const fetchPhases = useCallback(async () => {
     try {
@@ -57,6 +61,26 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   useEffect(() => {
     fetchPhases();
   }, [fetchPhases]);
+
+  const handleUpdatePhase = async (phaseId: string) => {
+    if (isUpdating) return;
+    if (!editValue.trim()) {
+      setEditingPhaseId(null);
+      return;
+    }
+    try {
+      setIsUpdating(true);
+      await api.taskPhase.updateTaskPhase(phaseId, { name: editValue });
+      api.taskPhase.clearTaskPhasesCache();
+      await fetchPhases();
+      setEditingPhaseId(null);
+    } catch (error) {
+      console.error("Failed to update phase:", error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
 
   useEffect(() => {
     setMounted(true);
@@ -86,14 +110,14 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     }
   }, [isOpen]);
 
-  const activePhase = phases.find(p => 
-    p._id === currentStatus || 
-    p.name === currentStatus || 
+  const activePhase = phases.find(p =>
+    p._id === currentStatus ||
+    p.name === currentStatus ||
     p.name.toLowerCase().replace(/ /g, "-") === (currentStatus || "").toLowerCase().replace(/ /g, "-")
   );
 
   const currentLabel = activePhase ? activePhase.name : (phaseInfo?.name || currentStatus);
-  const currentColor = activePhase?.color || phaseInfo?.color || "#9CA3AF";
+  const currentColor = activePhase?.color || phaseInfo?.color || "#9a49e1ff";
   const CurrentIcon = getPhaseIcon(currentLabel);
 
   const menuContent = (
@@ -103,66 +127,95 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.95 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="fixed w-64 p-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100/50 flex flex-col gap-1 overflow-hidden"
+        className="fixed w-64 p-2 bg-white/95 backdrop-blur-xl rounded-xl flex flex-col gap-1 overflow-hidden border-2 border-gray-100/50"
         style={{
           top: menuPosition.top,
           left: Math.min(menuPosition.left, typeof window !== 'undefined' ? window.innerWidth - 270 : menuPosition.left)
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-2 py-1 mb-1 border-b border-gray-100/50">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Status</p>
+        <div className="px-2 py-1 mb-1 ">
+          <p className="text-[10px] font-bold text-gray-600 uppercase ">Select Status</p>
         </div>
 
-        <div className="max-h-64 overflow-y-auto flex flex-col gap-1 pr-1 custom-scrollbar">
+        <div className="max-h-64 overflow-y-auto border-2 border-gray-100/50 rounded-xl flex flex-col gap-1 pr-1 custom-scrollbar">
           {isLoading ? (
-             <div className="p-4 text-center">
-                <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Fetching Phases...</p>
-             </div>
+            <div className="p-4 text-center">
+              <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Fetching Phases...</p>
+            </div>
           ) : phases.length > 0 ? (
             [...phases].sort((a, b) => a.index - b.index).map((phase) => {
               const Icon = getPhaseIcon(phase.name);
               const isSelected = (
-                currentStatus === phase.name || 
-                currentStatus === phase._id || 
+                currentStatus === phase.name ||
+                currentStatus === phase._id ||
                 (currentStatus || "").toLowerCase().replace(/ /g, "-") === phase.name.toLowerCase().replace(/ /g, "-")
               );
-              
+
+              const isEditing = editingPhaseId === phase._id;
+
               return (
-                <button
-                  key={phase._id}
-                  onClick={() => {
-                    onStatusChange(taskId, phase._id);
-                    setIsOpen(false);
-                  }}
-                  className={cn(
-                    "flex items-center gap-3 w-full p-2.5 rounded-xl transition-all duration-200 group/item text-left",
-                    isSelected
-                      ? "bg-gray-50 border border-gray-100/50 shadow-sm"
-                      : "hover:bg-gray-50/50 hover:translate-x-1"
-                  )}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300" 
-                       style={{ backgroundColor: phase.color ? phase.color + '20' : '#f3f4f6' }}>
-                    <Icon className="w-4 h-4" style={{ color: phase.color || '#9ca3af' }} />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black uppercase transition-colors tracking-tight"
-                       style={{ color: isSelected ? (phase.color || '#374151') : '#9ca3af' }}>
-                      {phase.name}
-                    </p>
-                    {isSelected && (
-                      <p className="text-[9px] text-gray-400 font-bold">Current Status</p>
+                <div key={phase._id} className="relative group/parent">
+                  <button
+                    onClick={() => {
+                      if (!isEditing) {
+                        onStatusChange(taskId, phase._id);
+                        setIsOpen(false);
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 w-full p-2.5 rounded-xl transition-all duration-200 group/item text-left relative",
+                      isSelected
+                        ? "bg-gray-100 border border-gray-100/50 "
+                        : "hover:bg-gray-50/50 hover:translate-x-1"
                     )}
-                  </div>
-
-                  {isSelected && (
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: phase.color || '#f97316', boxShadow: `0 0 10px ${phase.color}80` }} />
+                  >
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <input
+                          autoFocus
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleUpdatePhase(phase._id);
+                            if (e.key === "Escape") setEditingPhaseId(null);
+                          }}
+                          onBlur={() => handleUpdatePhase(phase._id)}
+                          className="w-full bg-white border border-orange-200 rounded px-1 py-0.5 text-[11px] font-black focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[11px] font-black transition-colors truncate"
+                            style={{ color: isSelected ? (phase.color || '#25272aff') : '#9ca3af' }}>
+                            {phase.name}
+                          </p>
+                          {!phase.is_default && !isEditing && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPhaseId(phase._id);
+                                setEditValue(phase.name);
+                              }}
+                              className="opacity-0 group-hover/parent:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
+                            >
+                              <Pen className="w-2.5 h-2.5 text-gray-400 hover:text-orange-500" />
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      {isSelected && !isEditing && (
+                        <p className="text-[9px] text-gray-400 font-bold">Current Status</p>
+                      )}
+                    </div>
+                  </button>
+                  {isUpdating && isEditing && (
+                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-20">
+                      <div className="w-3 h-3 border border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
                   )}
-                  
-                </button>
+                </div>
               );
             })
           ) : (
@@ -196,25 +249,20 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-300 active:scale-95 group border shadow-sm",
-          isOpen ? "ring-4 ring-gray-100" : "hover:shadow-md"
+          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 active:scale-95 group w-max whitespace-nowrap",
+          isOpen ? "ring-4 ring-gray-100" : "hover:shadow-m"
         )}
-        style={{ 
-          backgroundColor: currentColor + '12', // Subtle background color
+        style={{
+          backgroundColor: currentColor + '50', // Subtle background color
           borderColor: currentColor + '30'      // Subtle border color
         }}
       >
-        <div className="w-5 h-5 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110" 
-             style={{ backgroundColor: currentColor + '20' }}>
-          <CurrentIcon className="w-3.5 h-3.5" style={{ color: currentColor }} />
-        </div>
-        <span className="text-xs font-black whitespace-nowrap tracking-tight uppercase"
-              style={{ color: currentColor }}>
+        <span className="text-xs font-semibold text-black/80 whitespace-nowrap">
           {currentLabel}
         </span>
         <AltArrowDown
           className={cn(
-            "w-3.5 h-3.5 transition-transform duration-300",
+            "w-3.5 h-3.5 transition-transform duration-300 shrink-0",
             isOpen ? "rotate-180" : ""
           )}
           style={{ color: currentColor + '80' }}

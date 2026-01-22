@@ -6,6 +6,7 @@ import DataTable from "@/components/shared/dataTable/DataTable";
 import { getFullColumns } from "@/components/shared/column/getFullColumn";
 import { useRouter } from "next/navigation";
 import { IUser } from "@/constants/@types/interface/user";
+import { Loading } from "@/components/shared/loadingScreen/Loading";
 
 export const AllUsersPage = () => {
   const [loading, setLoading] = useState(true);
@@ -47,12 +48,7 @@ export const AllUsersPage = () => {
   if (loading) {
     return (
       <Layout showSidebar={true}>
-        <div className="mx-auto max-w-7xl px-4 py-6 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading tasks...</p>
-          </div>
-        </div>
+        <Loading />
       </Layout>
     );
   }
