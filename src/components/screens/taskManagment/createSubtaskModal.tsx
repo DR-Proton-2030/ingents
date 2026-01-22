@@ -21,20 +21,31 @@ import type {
 import { SearchIcon } from "lucide-react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
+import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
+import { cn } from "@/lib/utils";
 
 const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   initialStatus,
+  phases,
 }) => {
-  const [formData, setFormData] = useState<SubTaskFormData>({
+  const getInitialPhaseId = () => {
+    if (initialStatus) return initialStatus;
+    if (phases && phases.length > 0) {
+      return [...phases].sort((a, b) => (a.index || 0) - (b.index || 0))[0]._id;
+    }
+    return undefined;
+  };
+
+  const [formData, setFormData] = useState<any>({
     title: "",
     description: "",
     due_date: "",
     priority: "Normal",
     assigned_user_list: [],
-    status: initialStatus,
+    phase_object_id: getInitialPhaseId(),
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,14 +74,14 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData((p) => ({
+      setFormData((p: any) => ({
         ...p,
         title: "",
         description: "",
         due_date: "",
         priority: "Normal",
         assigned_user_list: [],
-        status: initialStatus
+        phase_object_id: getInitialPhaseId()
       }));
       setSelectedUsers([]);
       setActivePicker(null);
@@ -95,7 +106,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     if (selAmPm === "AM" && h === 12) h = 0;
 
     const formattedDate = `${year}-${month}-${day}T${String(h).padStart(2, "0")}:${selMinute}`;
-    setFormData(prev => ({ ...prev, due_date: formattedDate }));
+    setFormData((prev: any) => ({ ...prev, due_date: formattedDate }));
   }, [selDate, selHour, selMinute, selAmPm]);
 
   // Calendar Helpers
@@ -128,7 +139,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    setFormData((p: any) => ({ ...p, [name]: value }));
   };
 
   const addAssignee = (user: IUser) => {
@@ -225,6 +236,13 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
               </div>
             </div>
 
+            {/* Task Phase Selection */}
+            <PhaseSelect
+              phases={phases}
+              selectedPhaseId={formData.phase_object_id}
+              onPhaseChange={(id) => setFormData((prev: any) => ({ ...prev, phase_object_id: id }))}
+            />
+
             {/* Timeline & Priority */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -257,7 +275,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                       <button
                         key={p}
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, priority: p as any }))}
+                        onClick={() => setFormData((prev: any) => ({ ...prev, priority: p as any }))}
                         className={`h-8 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${formData.priority === p
                           ? "bg-gradient-to-r from-black/70 to-black/70 text-white border border-gray-100"
                           : "text-gray-500 hover:text-gray-700"

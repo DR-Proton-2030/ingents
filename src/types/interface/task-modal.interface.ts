@@ -1,3 +1,4 @@
+import { IPhase } from "./phase.interface";
 import { TaskStatus } from "./task.interface";
 
 export interface AttachmentInput {
@@ -29,6 +30,7 @@ export interface CreateTaskModalProps {
   onClose: () => void;
   onSubmit: (taskData: TaskFormData) => Promise<void>;
   initialStatus?: TaskStatus;
+  phases: IPhase[];
 }
 
 export interface CreateSubtaskModalProps {
@@ -36,4 +38,5 @@ export interface CreateSubtaskModalProps {
   onClose: () => void;
   onSubmit: (taskData: TaskFormData) => Promise<void>;
   initialStatus?: TaskStatus;
+  phases: IPhase[];
 }

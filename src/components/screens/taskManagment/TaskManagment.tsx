@@ -193,6 +193,7 @@ const TaskManagement: React.FC = () => {
           : undefined,
         priority: taskData.priority,
         assigned_user_list: taskData.assigned_user_list,
+        phase_object_id: taskData.phase_object_id,
 
         // 🔥 THIS MAKES IT A SUBTASK
         parent_task_object_id: parentTaskId,
@@ -365,6 +366,7 @@ const TaskManagement: React.FC = () => {
             setSelectedStatus(undefined);
           }}
           onSubmit={handleCreateTaskSubmit}
+          phases={phases}
         />
         <CreateSubtaskModal
           isOpen={isCreateSubtaskModalOpen}
@@ -373,6 +375,7 @@ const TaskManagement: React.FC = () => {
             setParentTaskId(null);
           }}
           onSubmit={handleCreateSubtaskSubmit}
+          phases={phases}
         />
         <FilterDrawer
           isOpen={isFilterDrawerOpen}
