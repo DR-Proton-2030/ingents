@@ -137,7 +137,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                                         >
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-bold">{project.name}</span>
-                                                <span className="text-[10px] opacity-60 truncate max-w-[180px]">{project.detail}</span>
+                                                {/* <span className="text-[10px] opacity-60 truncate max-w-[180px]">{project.detail}</span> */}
                                             </div>
                                             {selectedProjectId === project._id && <CheckCircle className="w-4 h-4" />}
                                         </button>
