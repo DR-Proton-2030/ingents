@@ -21,6 +21,10 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
   const [phases, setPhases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(30);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   const normalizeTask = (task: any): Task => ({
     ...task,
@@ -41,9 +45,9 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
         params.due_date_to = filters.dueDate; // Selected date
       }
       if (filters.onlyMyTasks) params.my_tasks = "true";
-
-      // If backend supports search, we could add it here
-      // params.search = searchQuery;
+      // Add pagination to params
+      params.page = currentPage;
+      params.limit = itemsPerPage;
 
       const [tasksRes, phasesRes] = await Promise.all([
         getTasks(params),
@@ -51,18 +55,18 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
       ]);
 
       if (tasksRes?.data) {
-        let normalized = tasksRes.data.map(normalizeTask);
-
-        // If server doesn't support search yet, filter locally for title/desc
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          normalized = normalized.filter((task: Task) =>
-            task.title.toLowerCase().includes(query) ||
-            task.description?.toLowerCase().includes(query)
-          );
+        const normalized = tasksRes.data.map(normalizeTask);
+        setTasks(normalized);
+        
+        // Update pagination from backend response
+        if (tasksRes.pagination) {
+          setTotalItems(tasksRes.pagination.totalCount);
+          setTotalPages(tasksRes.pagination.totalPages);
+        } else {
+          setTotalItems(normalized.length);
+          setTotalPages(Math.ceil(normalized.length / itemsPerPage));
         }
 
-        setTasks(normalized);
         const fetchedPhases = phasesRes?.data || [];
         setPhases(fetchedPhases);
         setSections(groupTasksByStatus(normalized, fetchedPhases));
@@ -74,7 +78,7 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
     } finally {
       setLoading(false);
     }
-  }, [filters, searchQuery]);
+  }, [filters, searchQuery, currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchTasks();
@@ -130,7 +134,12 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
     handleDeleteTask,
     handleAssignTask,
     handleUnassignTask,
-    handleEditTask
+    handleEditTask,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    totalItems,
+    totalPages
   };
 };
 
