@@ -17,12 +17,14 @@ import {
 import type {
   CreateSubtaskModalProps,
   SubTaskFormData,
+  AttachmentInput,
 } from "@/types/interface/task-modal.interface";
 import { SearchIcon } from "lucide-react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
 import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
 import { cn } from "@/lib/utils";
+import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
 
 const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   isOpen,
@@ -50,6 +52,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentInput[]>([]);
   const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
 
   // Custom Picker States
@@ -84,6 +87,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
         phase_object_id: getInitialPhaseId()
       }));
       setSelectedUsers([]);
+      setAttachments([]);
       setActivePicker(null);
       setSearchQuery("");
       document.body.style.overflow = "hidden";
@@ -159,9 +163,26 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     await onSubmit({
       ...formData,
       assigned_user_list: selectedUsers.map((u) => u.id || (u as any)._id),
+      attachments,
     });
     setIsSubmitting(false);
     onClose();
+  };
+
+  // Attachment handlers
+  const handleAddFiles = (files: File[]) => {
+    const newAttachments = files.map((file) => ({ file, description: "" }));
+    setAttachments((prev) => [...prev, ...newAttachments].slice(0, 10));
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateDescription = (index: number, description: string) => {
+    setAttachments((prev) =>
+      prev.map((att, i) => (i === index ? { ...att, description } : att))
+    );
   };
 
   // Use portal to render at body level (SSR guard)
@@ -335,6 +356,14 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Attachments Section */}
+            <AttachmentsSection
+              attachments={attachments}
+              onAddFiles={handleAddFiles}
+              onRemoveAttachment={handleRemoveAttachment}
+              onUpdateDescription={handleUpdateDescription}
+            />
           </form>
         </div>
 

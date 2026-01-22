@@ -23,7 +23,8 @@ export interface SubTaskFormData {
   due_date: string;
   priority: "High" | "Normal" | "Low";
   status?: TaskStatus;
-  assigned_user_list: any[]
+  assigned_user_list: any[];
+  attachments?: AttachmentInput[];
 }
 export interface CreateTaskModalProps {
   isOpen: boolean;

@@ -197,6 +197,7 @@ const TaskManagement: React.FC = () => {
 
         // 🔥 THIS MAKES IT A SUBTASK
         parent_task_object_id: parentTaskId,
+        attachments: taskData.attachments,
       };
 
       await handleCreateTask(payload);
