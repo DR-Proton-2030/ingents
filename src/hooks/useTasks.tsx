@@ -15,6 +15,17 @@ import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
 import { api } from "@/utils/api";
 
+
+export const normalizeTask = (task: any): Task => {
+  if (!task) return {} as Task;
+  return {
+    ...task,
+    assignees: task.assignees ?? task.assigned_users_info ?? [],
+    tags: task.tags ?? task.tags_info ?? [],
+    tag_object_id_list: task.tag_object_id_list ?? task.tag_object_ids ?? [],
+  };
+};
+
 export const useTasks = (filters: any = {}, searchQuery: string = "") => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sections, setSections] = useState<TaskSection[]>([]);
@@ -25,11 +36,6 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
   const [itemsPerPage] = useState(30);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-
-  const normalizeTask = (task: any): Task => ({
-    ...task,
-    assignees: task.assignees ?? [],
-  });
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -87,15 +93,17 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
 
 
   const handleCreateTask = async (payload: TaskCreatePayload) => {
-    await createTask(payload);
+    const res = await createTask(payload);
     toast.success("Task created");
     fetchTasks();
+    return res;
   };
 
   const handleUpdateTask = async (taskId: string, payload: object) => {
-    await updateTaskStatus(taskId, payload);
+    const res = await updateTaskStatus(taskId, payload);
     toast.success("Task updated");
     fetchTasks();
+    return res;
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -106,21 +114,24 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
 
 
   const handleAssignTask = async (taskId: string, userId: string) => {
-    await assignTask(taskId, userId);
+    const res = await assignTask(taskId, userId);
     toast.success("User assigned");
     fetchTasks();
+    return res;
   };
 
   const handleUnassignTask = async (taskId: string, userId: string) => {
-    await unassignTask(taskId, userId);
+    const res = await unassignTask(taskId, userId);
     toast.success("User unassigned");
     fetchTasks();
+    return res;
   };
 
   const handleEditTask = async (taskId: string, payload: TaskUpdatePayload) => {
-    await updateTask(taskId, payload);
+    const res = await updateTask(taskId, payload);
     toast.success("Task updated");
     fetchTasks();
+    return res;
   };
   return {
     tasks,

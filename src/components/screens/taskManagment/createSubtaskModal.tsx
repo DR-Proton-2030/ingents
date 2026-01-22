@@ -25,6 +25,9 @@ import { IUser } from "@/types/interface/user.interface";
 import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
 import { cn } from "@/lib/utils";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
+import { Tag } from "lucide-react";
+import { ITag } from "@/types/interface/tag.interface";
+import TagPicker from "@/components/shared/TagPicker/TagPicker";
 
 const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   isOpen,
@@ -52,8 +55,9 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
+  const [selectedTags, setSelectedTags] = useState<ITag[]>([]);
   const [attachments, setAttachments] = useState<AttachmentInput[]>([]);
-  const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
+  const [activePicker, setActivePicker] = useState<"time" | "participants" | "tags" | null>(null);
 
   // Custom Picker States
   const [viewDate, setViewDate] = useState(new Date());
@@ -90,6 +94,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
       setAttachments([]);
       setActivePicker(null);
       setSearchQuery("");
+      setSelectedTags([]);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -163,6 +168,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     await onSubmit({
       ...formData,
       assigned_user_list: selectedUsers.map((u) => u.id || (u as any)._id),
+      tag_object_id_list: selectedTags.map(tag => tag._id),
       attachments,
     });
     setIsSubmitting(false);
@@ -357,6 +363,52 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
               </div>
             </div>
 
+            {/* Tags */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
+                    <Tag className="w-5 h-5 text-amber-500" />
+                  </div>
+                  Tags
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePicker("tags")}
+                  className="text-[10px] font-bold text-orange-600 hover:text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 transition-all active:scale-95"
+                >
+                  Add Tags
+                </button>
+              </h3>
+
+              <div className="space-y-2">
+                {selectedTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px]">
+                    {selectedTags.map(tag => (
+                      <div 
+                        key={tag._id} 
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 shadow-sm"
+                        style={{ 
+                          backgroundColor: tag.color,
+                          color: 'white'
+                        }}
+                      >
+                        <Tag className="w-3 h-3" />
+                        {tag.name}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={() => setActivePicker("tags")}>
+                    <Tag className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
+                    <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No tags selected</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to add labels</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Attachments Section */}
             <AttachmentsSection
               attachments={attachments}
@@ -404,7 +456,8 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-xl font-bold text-gray-800">
-                {activePicker === "time" ? "Select Due Time" : "Assign Teammates"}
+                {activePicker === "time" ? "Select Due Time" : 
+                 activePicker === "participants" ? "Assign Teammates" : "Manage Tags"}
               </h4>
               <button onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
                 <CloseCircle className="w-5 h-5 text-gray-400" />
@@ -598,6 +651,15 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                   Done Managing
                 </button>
               </div>
+            )}
+
+            {activePicker === "tags" && (
+              <TagPicker
+                selectedTagIds={selectedTags.map(t => t._id)}
+                onAddTag={(tag) => setSelectedTags([...selectedTags, tag])}
+                onRemoveTag={(id) => setSelectedTags(selectedTags.filter(t => t._id !== id))}
+                onClose={() => setActivePicker(null)}
+              />
             )}
           </div>
         </div>
