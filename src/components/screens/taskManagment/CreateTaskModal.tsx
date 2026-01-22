@@ -160,7 +160,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         <div className="m-3 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold flex items-center gap-2">Create New Task</h2>
-            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+            <button type="button" onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
               <CloseCircle className="w-5 h-5" />
             </button>
           </div>
@@ -235,7 +235,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               <h4 className="text-xl font-bold text-gray-800">
                 {activePicker === "time" ? "Select Due Time" : "Assign Teammates"}
               </h4>
-              <button onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
+              <button type="button" onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
                 <CloseCircle className="w-5 h-5 text-gray-400" />
               </button>
             </div>

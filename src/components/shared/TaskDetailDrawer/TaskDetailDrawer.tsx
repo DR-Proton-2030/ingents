@@ -214,12 +214,12 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 {/* Header */}
                 <div className="m-3 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">Edit Task</h2>
+                        <h2 className="text-lg font-semibold flex items-center gap-2">Task Details</h2>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setShowDeleteConfirm(true)} className="p-2 hover:bg-white/30 rounded-full transition-colors">
+                            <button type="button" onClick={() => setShowDeleteConfirm(true)} className="p-2 hover:bg-white/30 rounded-full transition-colors">
                                 <TrashBinMinimalistic className="w-5 h-5 text-white" />
                             </button>
-                            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+                            <button type="button" onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
                                 <CloseCircle className="w-5 h-5" />
                             </button>
                         </div>

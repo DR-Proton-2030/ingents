@@ -69,6 +69,7 @@ const AttachmentCard: React.FC<AttachmentCardProps> = ({
                                 </span>
                             )}
                             <button
+                                type="button"
                                 onClick={onRemove}
                                 className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all opacity-100 group-over:opacity-100"
                             >

@@ -102,7 +102,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     return (
         <section className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <h3 className="text-xs font-bold text-black/80  flex items-center gap-2">
                     <span>Attachments</span>
                     <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px]">
                         {totalFiles}/10
@@ -114,7 +114,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
+                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700  bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
                     >
                         Add More
                     </motion.button>
@@ -190,7 +190,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         className="cursor-pointer border-2 border-dashed border-gray-100 rounded-2xl p-4 flex items-center justify-center gap-2 text-gray-400 hover:text-indigo-500 transition-all"
                     >
                         <AddCircle className="w-5 h-5" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">Add another asset</span>
+                        <span className="text-[11px] font-bold uppercase ">Add another asset</span>
                     </motion.div>
                 )}
             </div>

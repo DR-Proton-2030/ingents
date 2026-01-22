@@ -28,6 +28,7 @@ const PreviewLightbox: React.FC<PreviewLightboxProps> = ({ url, onClose }) => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button
+                            type="button"
                             onClick={onClose}
                             className="absolute top-4 right-4 z-10 hover:opacity-80 text-white transition-all transition-colors"
                         >
