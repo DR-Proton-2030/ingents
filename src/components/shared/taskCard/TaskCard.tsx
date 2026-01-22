@@ -10,7 +10,8 @@ import {
   TaskDescriptionModal,
   ScheduleModal,
   DeleteConfirmationModal,
-  EditableText
+  EditableText,
+  TaskActionDropdown
 } from ".";
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
@@ -45,6 +46,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   handleUnAssignTask,
   handleAssignTask,
   searchUsers,
+  onTaskClick,
   isExpanded = false,
 }) => {
   const [showDescription, setShowDescription] = useState(false);
@@ -232,26 +234,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Actions Cell */}
         <td className="py-4 px-4">
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => handleAddSubtask(task._id)}
-              className="p-1.5 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-all active:scale-90 tooltip"
-              title="Add Subtask"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all active:scale-90"
-              title="Delete Task"
-            >
-              <Trash className="w-4 h-4" />
-            </button>
-
-            <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all active:scale-90">
-              <MenuDots className="w-4 h-4" />
-            </button>
+          <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+            <TaskActionDropdown
+              onViewDetails={() => onTaskClick?.(task)}
+              onAddSubtask={() => handleAddSubtask(task._id)}
+              onDelete={() => setIsDeleteDialogOpen(true)}
+            />
           </div>
         </td>
       </tr>
@@ -274,6 +262,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             handleAssignTask={handleAssignTask}
             searchUsers={searchUsers}
             handleEditTask={handleEditTask}
+            onTaskClick={onTaskClick}
           />
         ))}
       <DeleteConfirmationModal

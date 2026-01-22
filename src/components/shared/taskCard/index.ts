@@ -6,3 +6,4 @@ export { default as TaskDescriptionModal } from "./TaskDescriptionModal";
 export { default as ScheduleModal } from "./ScheduleModal";
 export { default as DeleteConfirmationModal } from "./DeleteConfirmationModal";
 export { default as EditableText } from "./EditableText";
+export { default as TaskActionDropdown } from "./TaskActionDropdown";

@@ -21,7 +21,7 @@ interface TaskSectionProps {
     taskId: string,
     payload: Partial<Task>
   ) => Promise<void>;
-
+  onTaskClick?: (task: Task) => void;
 }
 
 
@@ -37,6 +37,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   handleAssignTask,
   handleEditTask,
   searchUsers,
+  onTaskClick,
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -137,7 +138,12 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                     isExpanded={expandedTasks.has(task._id)}
                     handleDeleteTask={handleDeleteTask}
                     handleAddSubtask={() => handleAddSubtask(task._id)}
-                    handleUnAssignTask={handleUnAssignTask} handleAssignTask={handleAssignTask} searchUsers={searchUsers} handleEditTask={handleEditTask} />
+                    handleUnAssignTask={handleUnAssignTask}
+                    handleAssignTask={handleAssignTask}
+                    searchUsers={searchUsers}
+                    handleEditTask={handleEditTask}
+                    onTaskClick={onTaskClick}
+                  />
                   {/* Render subtasks if any */}
                   {subTasksMap[task._id]?.map((subtask) => (
                     <TaskCard
@@ -153,6 +159,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                       handleAssignTask={handleUnAssignTask}
                       searchUsers={searchUsers}
                       handleEditTask={handleEditTask}
+                      onTaskClick={onTaskClick}
                     />
                   ))}
                 </React.Fragment>

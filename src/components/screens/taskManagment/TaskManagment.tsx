@@ -19,6 +19,7 @@ import FilterDrawer from "@/components/shared/FilterDrawer/FilterDrawer";
 import { Loading } from "@/components/shared/loadingScreen/Loading";
 import { BoardView, CalendarView, TimelineView } from "./views";
 import Pagination from "@/components/shared/Pagination/Pagination";
+import { TaskDetailDrawer } from "@/components/shared/TaskDetailDrawer";
 
 const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,6 +60,7 @@ const TaskManagement: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] =
     useState(false);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
 
   const handleAddSubtask = useCallback((taskId: string) => {
@@ -291,6 +293,7 @@ const TaskManagement: React.FC = () => {
                   handleAssignTask={handleAssignTaskToUser}
                   searchUsers={searchUsers}
                   handleEditTask={handleEditTask}
+                  onTaskClick={setSelectedTask}
                 />
               ))
             ) : (
@@ -387,6 +390,16 @@ const TaskManagement: React.FC = () => {
             setCurrentPage(1);
           }}
           phases={phases}
+        />
+        <TaskDetailDrawer
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+          task={selectedTask}
+          onEditTask={handleEditTask}
+          onDeleteTask={handleDeleteTaskById}
+          onAddSubtask={handleAddSubtask}
+          onAssignTask={handleAssignTaskToUser}
+          onUnassignTask={handleUnassignTaskFromUser}
         />
       </div>
     </Layout>
