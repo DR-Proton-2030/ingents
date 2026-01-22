@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useRef } from "react";
-import { AddCircle, CloseCircle, File, Gallery } from "@solar-icons/react";
+import React, { useRef, useState } from "react";
+import { AddCircle, CloseCircle, File, Gallery, GalleryMinimalistic } from "@solar-icons/react";
 import { AttachmentInput } from "@/types/interface/task-modal.interface";
 import { TaskAttachment } from "@/types/interface/task.interface";
+import { motion, AnimatePresence } from "framer-motion";
+import { UploadCloud, FileIcon, ImageIcon, X, Check, Trash2 } from "lucide-react";
+import { FileText } from "@solar-icons/react/ssr";
 
 interface AttachmentsSectionProps {
     attachments: AttachmentInput[];
@@ -25,30 +28,57 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     onUpdateExistingDescription,
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
             onAddFiles(Array.from(files));
         }
-        // Reset input so same file can be selected again
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const getFileIcon = (file: File | string) => {
-        if (typeof file === "string") {
-            // It's a URL, check extension
-            const ext = file.split(".").pop()?.toLowerCase();
-            if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "")) {
-                return <Gallery className="w-5 h-5 text-orange-500" />;
-            }
-            return <File className="w-5 h-5 text-blue-500" />;
+    const onDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const onDragLeave = () => {
+        setIsDragging(false);
+    };
+
+    const onDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = e.dataTransfer.files;
+        if (files && files.length > 0) {
+            onAddFiles(Array.from(files));
         }
-        // It's a File object
-        if (file.type.startsWith("image/")) {
-            return <Gallery className="w-5 h-5 text-orange-500" />;
+    };
+
+    const getFileTheme = (file: File | string) => {
+        const isImage = typeof file === "string"
+            ? ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(file.split(".").pop()?.toLowerCase() || "")
+            : file.type.startsWith("image/");
+
+        if (isImage) {
+            return {
+                bg: "bg-green-700/70",
+                bgStrong: "bg-green-700/60",
+                text: "text-green-100 00/60",
+                border: "border-green-100",
+                badge: "bg-green-100 text-green-700/60",
+                icon: <GalleryMinimalistic className="w-6 h-6" />
+            };
         }
-        return <File className="w-5 h-5 text-blue-500" />;
+        return {
+            bg: "bg-red-700/60",
+            bgStrong: "bg-red-700/60",
+            text: "text-white -700/60",
+            border: "border-red-100",
+            badge: "bg-red-100 text-red-700/60",
+            icon: <FileText className="w-6 h-6" />
+        };
     };
 
     const getFileName = (file: File | string) => {
@@ -69,20 +99,24 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     const canAddMore = totalFiles < 10;
 
     return (
-        <section>
-            <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    Attachments ({totalFiles}/10)
+        <section className="space-y-4">
+            <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                    <span>Attachments</span>
+                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-[10px]">
+                        {totalFiles}/10
+                    </span>
                 </h3>
-                {canAddMore && (
-                    <button
+                {canAddMore && totalFiles > 0 && (
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-1 text-xs font-medium text-blue-500 hover:text-blue-600 transition-colors"
+                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700 uppercase tracking-wider bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
                     >
-                        <AddCircle className="w-4 h-4" />
-                        Add Files
-                    </button>
+                        Add More
+                    </motion.button>
                 )}
             </div>
 
@@ -95,108 +129,176 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                 className="hidden"
             />
 
-            {totalFiles === 0 ? (
-                <div
+            {/* Main Upload Dropzone */}
+            {canAddMore && totalFiles === 0 && (
+                <motion.div
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onDragOver={onDragOver}
+                    onDragLeave={onDragLeave}
+                    onDrop={onDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50/50 transition-all"
+                    className={`
+            relative overflow-hidden cursor-pointer rounded-3xl p-4 
+            flex flex-col items-center justify-center text-center
+            transition-all duration-300 border-2 border-dashed
+            ${isDragging
+                            ? "border-indigo-400 bg-indigo-50/50 shadow-inner"
+                            : "border-gray-200 bg-gray-50/30 hover:bg-gray-50 hover:border-indigo-300"
+                        }
+          `}
                 >
-                    <Gallery className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-400">
-                        Drop files here or <span className="text-blue-500 font-medium">browse</span>
-                    </p>
-                    <p className="text-xs text-gray-300 mt-1">
-                        Max 10 files (images, documents, etc.)
-                    </p>
-                </div>
-            ) : (
-                <div className="space-y-2">
-                    {/* Existing attachments (URLs) */}
-                    {existingAttachments.map((att, index) => (
-                        <div
-                            key={`existing-${index}`}
-                            className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 group"
-                        >
-                            <div className="shrink-0 w-10 h-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center">
-                                {getFileIcon(att.url)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <a
-                                    href={att.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm font-medium text-gray-700 truncate block hover:text-orange-500 transition-colors"
-                                >
-                                    {getFileName(att.url)}
-                                </a>
-                                <input
-                                    type="text"
-                                    placeholder="Add description..."
-                                    value={att.description || ""}
-                                    onChange={(e) => onUpdateExistingDescription?.(index, e.target.value)}
-                                    className="text-xs text-gray-400 bg-transparent border-none outline-none w-full mt-1 placeholder:text-gray-300"
-                                />
-                            </div>
-                            {onRemoveExisting && (
-                                <button
-                                    type="button"
-                                    onClick={() => onRemoveExisting(index)}
-                                    className="p-1 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                                >
-                                    <CloseCircle className="w-4 h-4 text-red-400" />
-                                </button>
-                            )}
-                        </div>
-                    ))}
+                    {/* Animated Background Blob */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-20 bg-indigo-100/30 blur-3xl rounded-full pointer-events-none" />
 
-                    {/* New attachments (Files) */}
-                    {attachments.map((att, index) => (
-                        <div
-                            key={`new-${index}`}
-                            className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-blue-100 group"
-                        >
-                            <div className="shrink-0 w-10 h-10 rounded-lg bg-white border border-blue-100 flex items-center justify-center">
-                                {att.file && getFileIcon(att.file)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-700 truncate">
-                                    {att.file?.name}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs text-orange-500">
-                                        {att.file && getFileSize(att.file)}
-                                    </span>
-                                    <span className="text-xs text-gray-300">• New</span>
-                                </div>
-                                <input
-                                    type="text"
-                                    placeholder="Add description..."
-                                    value={att.description || ""}
-                                    onChange={(e) => onUpdateDescription(index, e.target.value)}
-                                    className="text-xs text-gray-500 bg-transparent border-none outline-none w-full mt-1 placeholder:text-gray-300"
-                                />
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => onRemoveAttachment(index)}
-                                className="p-1 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                                <CloseCircle className="w-4 h-4 text-red-400" />
-                            </button>
-                        </div>
-                    ))}
+                    <motion.div
+                        animate={{ y: isDragging ? -5 : 0 }}
+                        className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${isDragging ? "bg-indigo-500 text-white" : "bg-white text-indigo-500 shadow-sm"
+                            }`}
+                    >
+                        <UploadCloud className="w-8 h-8" />
+                    </motion.div>
 
-                    {/* Add more button */}
-                    {canAddMore && (
-                        <button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-full p-3 border-2 border-dashed border-gray-200 rounded-xl text-center text-xs text-gray-400 hover:border-orange-300 hover:text-orange-500 transition-all"
-                        >
-                            + Add more files
-                        </button>
-                    )}
-                </div>
+                    <h4 className="text-sm font-bold text-gray-800 mb-1">
+                        {isDragging ? "Drop your files here" : "Upload your assets"}
+                    </h4>
+                    <p className="text-[11px] text-gray-500 max-w-[200px] leading-relaxed">
+                        Drag and drop or <span className="text-indigo-600 font-bold">browse</span> your computer.
+                    </p>
+                    <p className="text-[9px] text-gray-400 mt-4 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-gray-100">
+                        SVG, JPG, PNG, PDF
+                    </p>
+                </motion.div>
             )}
+
+            {/* Files List */}
+            <div className="space-y-3">
+                <AnimatePresence mode="popLayout">
+                    {/* Existing Files */}
+                    {existingAttachments.map((att, index) => {
+                        const theme = getFileTheme(att.url);
+                        return (
+                            <motion.div
+                                key={`existing-${index}`}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="group relative bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all"
+                            >
+                                <div className="flex items-start gap-4">
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${theme.bg} ${theme.text}`}>
+                                        {theme.icon}
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                            <h5 className="text-xs font-bold text-gray-800 truncate">
+                                                {getFileName(att.url)}
+                                            </h5>
+                                            <button
+                                                onClick={() => onRemoveExisting?.(index)}
+                                                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-2">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: "100%" }}
+                                                className={`h-full ${theme.bgStrong}`}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider ${theme.text}`}>
+                                                Successfully Uploaded
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-bold">100%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+
+                    {/* New Files */}
+                    {attachments.map((att, index) => {
+                        if (!att.file) return null;
+                        const theme = getFileTheme(att.file);
+                        return (
+                            <motion.div
+                                key={`new-${index}`}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="group relative bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                            >
+                                {/* Progress Bar Background Glow */}
+                                {/* <div className={`absolute top-0 left-0 w-1 h-full ${theme.bgStrong}`} /> */}
+
+                                <div className="flex items-start gap-4">
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${theme.bg} ${theme.text}`}>
+                                        {theme.icon}
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between gap-2 mb-1">
+                                            <h5 className="text-xs font-bold text-gray-800 truncate">
+                                                {att.file?.name}
+                                            </h5>
+                                            <button
+                                                onClick={() => onRemoveAttachment(index)}
+                                                className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
+                                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-2">
+                                            <motion.div
+                                                initial={{ width: 0 }}
+                                                animate={{ width: "100%" }}
+                                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                                className={`h-full bg-green-600/80`}
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${theme.bg} ${theme.text}`}>
+                                                    {getFileSize(att.file)}
+                                                </span>
+
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 font-bold tracking-wider">
+                                                Ready
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                </AnimatePresence>
+
+                {/* Small "Add More" box if files exist */}
+                {canAddMore && totalFiles > 0 && (
+                    <motion.div
+                        whileHover={{ scale: 1.01, borderColor: "rgb(129, 140, 248)" }}
+                        whileTap={{ scale: 0.99 }}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="cursor-pointer border-2 border-dashed border-gray-100 rounded-2xl p-4 flex items-center justify-center gap-2 text-gray-400 hover:text-indigo-500 transition-all"
+                    >
+                        <AddCircle className="w-5 h-5" />
+                        <span className="text-[11px] font-bold uppercase tracking-widest">Add another asset</span>
+                    </motion.div>
+                )}
+            </div>
         </section>
     );
 };
