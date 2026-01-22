@@ -2,6 +2,7 @@
 import React from "react";
 import { Document, Calendar, UsersGroupRounded } from "@solar-icons/react";
 import { cn } from "@/lib/utils";
+import { Edit } from "lucide-react";
 
 interface CreateGeneralInfoProps {
     title: string;
@@ -12,8 +13,8 @@ interface CreateGeneralInfoProps {
 export const CreateGeneralInfo: React.FC<CreateGeneralInfoProps> = ({ title, description, onChange }) => (
     <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
-                <Document className="w-5 h-5 text-amber-500" />
+            <div className="p-2 bg-blue-50 border border-blue-100 rounded-lg">
+                <Document className="w-5 h-5 text-blue-500" />
             </div>
             General Information
         </h3>
@@ -63,8 +64,8 @@ export const CreateSchedule: React.FC<CreateScheduleProps> = ({
 }) => (
     <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-            <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
-                <Calendar className="w-5 h-5 text-amber-500" />
+            <div className="p-2 bg-green-50 border border-green-100 rounded-lg">
+                <Calendar className="w-5 h-5 text-green-500" />
             </div>
             Schedule & Urgency
         </h3>
@@ -120,8 +121,8 @@ export const CreateAssignees: React.FC<CreateAssigneesProps> = ({ selectedUsers,
     <div className="space-y-4">
         <h3 className="text-sm font-semibold text-gray-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
-                <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
-                    <UsersGroupRounded className="w-5 h-5 text-amber-500" />
+                <div className="p-2 bg-purple-50 border border-purple-100 rounded-lg">
+                    <UsersGroupRounded className="w-5 h-5 text-purple-500" />
                 </div>
                 Assignees
             </div>
@@ -129,7 +130,7 @@ export const CreateAssignees: React.FC<CreateAssigneesProps> = ({ selectedUsers,
             <button
                 type="button"
                 onClick={onManageClick}
-                className="text-[10px] font-bold text-orange-600 hover:text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 transition-all active:scale-95"
+                className="text-[10px] font-bold text-purple-600 hover:text-purple-700  bg-purple-50 px-3 py-1.5 rounded-lg border border-purple-100 transition-all active:scale-95"
             >
                 Manage
             </button>
@@ -154,8 +155,8 @@ export const CreateAssignees: React.FC<CreateAssigneesProps> = ({ selectedUsers,
                     </div>
                 </div>
             ) : (
-                <div className="p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={onManageClick}>
-                    <UsersGroupRounded className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
+                <div className="p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-purple-200 transition-colors cursor-pointer" onClick={onManageClick}>
+                    <UsersGroupRounded className="w-8 h-8 text-gray-300 group-hover:text-purple-300 transition-colors mb-2" />
                     <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No assignees yet</p>
                     <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to assign teammates</p>
                 </div>

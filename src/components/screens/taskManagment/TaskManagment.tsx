@@ -166,6 +166,7 @@ const TaskManagement: React.FC = () => {
         priority: taskData.priority,
         phase_object_id: taskData.phase_object_id,
         assigned_user_list: taskData.assigned_user_list,
+        attachments: taskData.attachments,
       };
 
       await handleCreateTask(payload);

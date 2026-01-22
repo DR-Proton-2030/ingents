@@ -15,6 +15,11 @@ export interface Assignee {
   color: string;
 }
 
+export interface TaskAttachment {
+  url: string;
+  description?: string;
+}
+
 export interface Task {
   _id: string;
   title: string;
@@ -34,6 +39,7 @@ export interface Task {
   assignees?: Assignee[];
   subtask?: Task[];
   assigned_user_list?: any[];
+  attachments?: TaskAttachment[];
   phase_info?: {
     _id: string;
     name: string;

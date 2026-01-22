@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { CloseCircle, CheckCircle, TrashBinMinimalistic } from "@solar-icons/react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
+import { TaskAttachment } from "@/types/interface/task.interface";
+import { AttachmentInput } from "@/types/interface/task-modal.interface";
 import { cn } from "@/lib/utils";
 import {
     GeneralInfoSection,
@@ -15,6 +17,7 @@ import {
     ParticipantsPicker,
     DeleteConfirmModal,
 } from "./components";
+import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
 
 interface TaskDetailDrawerProps {
     isOpen: boolean;

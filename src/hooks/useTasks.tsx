@@ -8,6 +8,8 @@ import {
   unassignTask,
   assignTask,
   updateTaskStatus,
+  TaskCreatePayload,
+  TaskUpdatePayload,
 } from "@/utils/api/task/task.api";
 import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
@@ -39,7 +41,7 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
         params.due_date_to = filters.dueDate; // Selected date
       }
       if (filters.onlyMyTasks) params.my_tasks = "true";
-      
+
       // If backend supports search, we could add it here
       // params.search = searchQuery;
 
@@ -50,12 +52,12 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
 
       if (tasksRes?.data) {
         let normalized = tasksRes.data.map(normalizeTask);
-        
+
         // If server doesn't support search yet, filter locally for title/desc
         if (searchQuery) {
           const query = searchQuery.toLowerCase();
-          normalized = normalized.filter((task: Task) => 
-            task.title.toLowerCase().includes(query) || 
+          normalized = normalized.filter((task: Task) =>
+            task.title.toLowerCase().includes(query) ||
             task.description?.toLowerCase().includes(query)
           );
         }
@@ -80,7 +82,7 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
 
 
 
-  const handleCreateTask = async (payload: object) => {
+  const handleCreateTask = async (payload: TaskCreatePayload) => {
     await createTask(payload);
     toast.success("Task created");
     fetchTasks();
@@ -102,16 +104,16 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
   const handleAssignTask = async (taskId: string, userId: string) => {
     await assignTask(taskId, userId);
     toast.success("User assigned");
-    fetchTasks(); 
+    fetchTasks();
   };
 
   const handleUnassignTask = async (taskId: string, userId: string) => {
     await unassignTask(taskId, userId);
     toast.success("User unassigned");
-    fetchTasks(); 
+    fetchTasks();
   };
 
-  const handleEditTask = async (taskId: string, payload: object) => {
+  const handleEditTask = async (taskId: string, payload: TaskUpdatePayload) => {
     await updateTask(taskId, payload);
     toast.success("Task updated");
     fetchTasks();
@@ -154,7 +156,7 @@ export function groupTasksByStatus(tasks: Task[], allPhases: any[] = []): TaskSe
         phaseMap.set(t.phase_info._id, t.phase_info);
       }
     });
-    
+
     sections = Array.from(phaseMap.values())
       .sort((a, b) => (a.index || 0) - (b.index || 0))
       .map(p => ({
@@ -181,12 +183,12 @@ export function groupTasksByStatus(tasks: Task[], allPhases: any[] = []): TaskSe
   const parentTasks = tasks.filter((task) => !task.parent_task_object_id);
   parentTasks.forEach((task) => {
     // Try matching by phase ID, then by name
-    const section = sections.find(s => 
-      s.id === task.phase_info?._id || 
+    const section = sections.find(s =>
+      s.id === task.phase_info?._id ||
       s.title === task.phase_info?.name ||
       s.status === task.status
     );
-    
+
     if (section) {
       section.tasks.push(task);
       section.count++;

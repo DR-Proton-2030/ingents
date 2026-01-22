@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { CloseCircle, CheckCircle } from "@solar-icons/react";
-import type { CreateTaskModalProps, TaskFormData } from "@/types/interface/task-modal.interface";
+import type { CreateTaskModalProps, TaskFormData, AttachmentInput } from "@/types/interface/task-modal.interface";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ import {
   CreateDateTimePicker,
   CreateParticipantsPicker,
 } from "./components";
+import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
@@ -33,6 +34,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
   const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
+  const [attachments, setAttachments] = useState<AttachmentInput[]>([]);
 
   // Custom Picker States
   const [viewDate, setViewDate] = useState(new Date());
@@ -63,6 +65,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         phase_object_id: initialStatus
       }));
       setSelectedUsers([]);
+      setAttachments([]);
       setActivePicker(null);
       setSearchQuery("");
       document.body.style.overflow = "hidden";
@@ -112,9 +115,26 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     await onSubmit({
       ...formData,
       assigned_user_list: selectedUsers.map((u) => u.id || (u as any)._id),
+      attachments: attachments,
     });
     setIsSubmitting(false);
     onClose();
+  };
+
+  // Attachment handlers
+  const handleAddFiles = (files: File[]) => {
+    const newAttachments = files.map((file) => ({ file, description: "" }));
+    setAttachments((prev) => [...prev, ...newAttachments].slice(0, 10));
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateDescription = (index: number, description: string) => {
+    setAttachments((prev) =>
+      prev.map((att, i) => (i === index ? { ...att, description } : att))
+    );
   };
 
   if (typeof document === "undefined") return null;
@@ -164,6 +184,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             <CreateAssignees
               selectedUsers={selectedUsers}
               onManageClick={() => setActivePicker("participants")}
+            />
+            <AttachmentsSection
+              attachments={attachments}
+              onAddFiles={handleAddFiles}
+              onRemoveAttachment={handleRemoveAttachment}
+              onUpdateDescription={handleUpdateDescription}
             />
           </form>
         </div>
