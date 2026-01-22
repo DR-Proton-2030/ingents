@@ -57,6 +57,10 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     const [selMinute, setSelMinute] = useState("00");
     const [selAmPm, setSelAmPm] = useState("AM");
 
+    // Attachments State
+    const [newAttachments, setNewAttachments] = useState<AttachmentInput[]>([]);
+    const [existingAttachments, setExistingAttachments] = useState<TaskAttachment[]>([]);
+
     // User search
     const { users: allUsers } = useGetUsers();
     const [searchQuery, setSearchQuery] = useState("");
@@ -78,6 +82,8 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 description: task.description || "",
                 priority: task.priority || "Normal",
             });
+            setExistingAttachments(task.attachments || []);
+            setNewAttachments([]);
             setActivePicker(null);
             setShowDeleteConfirm(false);
             setSearchQuery("");
@@ -137,9 +143,35 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             title: formData.title,
             description: formData.description,
             priority: formData.priority,
+            attachments: [
+                ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
+                ...newAttachments
+            ]
         });
         setIsSaving(false);
         onClose();
+    };
+
+    // Attachment Handlers
+    const handleAddFiles = (files: File[]) => {
+        const newAtts = files.map(file => ({ file, description: "" }));
+        setNewAttachments(prev => [...prev, ...newAtts].slice(0, 10 - existingAttachments.length));
+    };
+
+    const handleRemoveNewAttachment = (index: number) => {
+        setNewAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleRemoveExistingAttachment = (index: number) => {
+        setExistingAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateNewDescription = (index: number, description: string) => {
+        setNewAttachments(prev => prev.map((att, i) => i === index ? { ...att, description } : att));
+    };
+
+    const handleUpdateExistingDescription = (index: number, description: string) => {
+        setExistingAttachments(prev => prev.map((att, i) => i === index ? { ...att, description } : att));
     };
 
     const handleDelete = () => {
@@ -212,6 +244,15 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                         <SubtasksSection
                             subtasks={task?.subtask || []}
                             onAddSubtask={() => { onAddSubtask(task._id); onClose(); }}
+                        />
+                        <AttachmentsSection
+                            attachments={newAttachments}
+                            existingAttachments={existingAttachments}
+                            onAddFiles={handleAddFiles}
+                            onRemoveAttachment={handleRemoveNewAttachment}
+                            onRemoveExisting={handleRemoveExistingAttachment}
+                            onUpdateDescription={handleUpdateNewDescription}
+                            onUpdateExistingDescription={handleUpdateExistingDescription}
                         />
                     </form>
                 </div>

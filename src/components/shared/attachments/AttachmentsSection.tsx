@@ -63,20 +63,20 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 
         if (isImage) {
             return {
-                bg: "bg-green-700/70",
-                bgStrong: "bg-green-700/60",
-                text: "text-green-100 00/60",
-                border: "border-green-100",
-                badge: "bg-green-100 text-green-700/60",
+                bg: "bg-green-700/10",
+                bgStrong: "bg-green-600",
+                text: "text-green-700",
+                border: "border-green-200",
+                badge: "bg-green-100 text-green-700",
                 icon: <GalleryMinimalistic className="w-6 h-6" />
             };
         }
         return {
-            bg: "bg-red-700/60",
-            bgStrong: "bg-red-700/60",
-            text: "text-white -700/60",
-            border: "border-red-100",
-            badge: "bg-red-100 text-red-700/60",
+            bg: "bg-red-700/10",
+            bgStrong: "bg-red-600",
+            text: "text-red-700",
+            border: "border-red-200",
+            badge: "bg-red-100 text-red-700",
             icon: <FileText className="w-6 h-6" />
         };
     };
@@ -219,6 +219,17 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                                             </span>
                                             <span className="text-[10px] text-gray-400 font-bold">100%</span>
                                         </div>
+
+                                        {/* Description Input for Existing Files */}
+                                        <div className="mt-3 relative">
+                                            <input
+                                                type="text"
+                                                placeholder="Add a description..."
+                                                value={att.description || ""}
+                                                onChange={(e) => onUpdateExistingDescription?.(index, e.target.value)}
+                                                className="w-full bg-gray-50/50 border border-transparent hover:border-gray-200 focus:border-indigo-300 focus:bg-white px-3 py-1.5 rounded-xl text-[10px] text-gray-600 outline-none transition-all placeholder:text-gray-400 placeholder:font-medium"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -238,9 +249,6 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className="group relative bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden"
                             >
-                                {/* Progress Bar Background Glow */}
-                                {/* <div className={`absolute top-0 left-0 w-1 h-full ${theme.bgStrong}`} /> */}
-
                                 <div className="flex items-start gap-4">
                                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${theme.bg} ${theme.text}`}>
                                         {theme.icon}
@@ -273,11 +281,21 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${theme.bg} ${theme.text}`}>
                                                     {getFileSize(att.file)}
                                                 </span>
-
                                             </div>
                                             <span className="text-[10px] text-gray-400 font-bold tracking-wider">
                                                 Ready
                                             </span>
+                                        </div>
+
+                                        {/* Description Input for New Files */}
+                                        <div className="mt-3 relative">
+                                            <input
+                                                type="text"
+                                                placeholder="Add a description..."
+                                                value={att.description || ""}
+                                                onChange={(e) => onUpdateDescription(index, e.target.value)}
+                                                className="w-full bg-gray-50/50 border border-transparent hover:border-gray-200 focus:border-indigo-300 focus:bg-white px-3 py-1.5 rounded-xl text-[10px] text-gray-600 outline-none transition-all placeholder:text-gray-400 placeholder:font-medium"
+                                            />
                                         </div>
                                     </div>
                                 </div>
