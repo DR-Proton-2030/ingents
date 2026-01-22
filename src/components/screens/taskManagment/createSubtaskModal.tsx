@@ -309,7 +309,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={() => setActivePicker("participants")}>
+                  <div className="p-4 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={() => setActivePicker("participants")}>
                     <UsersGroupRounded className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
                     <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No assignees yet</p>
                     <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to assign teammates</p>
