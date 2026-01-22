@@ -52,6 +52,7 @@ export interface Task {
     index: number;
     is_default: boolean;
   };
+  phase_object_id?: string;
 }
 
 export interface TaskSection {
@@ -61,4 +62,6 @@ export interface TaskSection {
   color: string;
   count: number;
   tasks: Task[];
+  currentPage: number;
+  totalPages: number;
 }

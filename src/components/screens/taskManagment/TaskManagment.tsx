@@ -45,10 +45,7 @@ const TaskManagement: React.FC = () => {
     handleUnassignTask,
     handleAssignTask,
     handleEditTask,
-    currentPage,
-    setCurrentPage,
-    totalItems,
-    totalPages,
+    setSectionPage,
     itemsPerPage
   } = useTasks(filters, searchQuery);
 
@@ -254,7 +251,7 @@ const TaskManagement: React.FC = () => {
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
             <button
-              onClick={refetchTasks}
+              onClick={() => refetchTasks()}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Retry
@@ -275,7 +272,6 @@ const TaskManagement: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={(query) => {
             setSearchQuery(query);
-            setCurrentPage(1);
           }}
           onFilter={handleFilter}
           onCreateProject={handleCreateProject}
@@ -283,7 +279,6 @@ const TaskManagement: React.FC = () => {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setCurrentPage(1);
           }}
           phases={phases}
           selectedProjectId={filters.project_object_id || undefined}
@@ -292,7 +287,6 @@ const TaskManagement: React.FC = () => {
               ...prev,
               project_object_id: project ? project._id : null,
             }));
-            setCurrentPage(1);
           }}
         />
 
@@ -315,6 +309,8 @@ const TaskManagement: React.FC = () => {
                   searchUsers={searchUsers}
                   handleEditTask={handleEditTask}
                   onTaskClick={setSelectedTask}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setSectionPage}
                 />
               ))
             ) : (
@@ -330,7 +326,6 @@ const TaskManagement: React.FC = () => {
                     project_object_id: null,
                   });
                   setSearchQuery("");
-                  setCurrentPage(1);
                 }}
               />
             )
@@ -372,16 +367,6 @@ const TaskManagement: React.FC = () => {
           )}
         </div>
 
-        {/* Pagination */}
-        <div className="mt-8 border-t border-gray-100 pt-2">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-          />
-        </div>
 
         {/* Create Task Modal */}
         <CreateTaskModal
@@ -411,7 +396,6 @@ const TaskManagement: React.FC = () => {
           filters={filters}
           onFilterChange={(newFilters) => {
             setFilters(newFilters);
-            setCurrentPage(1);
           }}
           phases={phases}
         />

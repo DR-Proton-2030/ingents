@@ -246,6 +246,35 @@ const TaskCard: React.FC<TaskCardProps> = ({
           />
         </td>
 
+        {/* Tags Cell */}
+        <td className="py-4 px-4">
+          <div className="flex flex-wrap gap-1.5">
+            {task.tags && task.tags.length > 0 ? (
+              <>
+                {task.tags.slice(0, 2).map((tag: any) => (
+                  <span
+                    key={tag._id}
+                    className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border border-white/50 shadow-sm"
+                    style={{
+                      backgroundColor: `${tag.color}30`,
+                      color: tag.color,
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+                {task.tags.length > 2 && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-500 border border-white/50 shadow-sm">
+                    +{task.tags.length - 2}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-gray-300 ml-2 text-sm">—</span>
+            )}
+          </div>
+        </td>
+
         {/* Priority Cell */}
         <td className="py-4 px-4">
           <PriorityBadge priority={task.priority} />
