@@ -18,6 +18,7 @@ import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import FilterDrawer from "@/components/shared/FilterDrawer/FilterDrawer";
 import { Loading } from "@/components/shared/loadingScreen/Loading";
 import { BoardView, CalendarView, TimelineView } from "./views";
+import Pagination from "@/components/shared/Pagination/Pagination";
 
 const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +42,12 @@ const TaskManagement: React.FC = () => {
     handleDeleteTask,
     handleUnassignTask,
     handleAssignTask,
-    handleEditTask
+    handleEditTask,
+    currentPage,
+    setCurrentPage,
+    totalItems,
+    totalPages,
+    itemsPerPage
   } = useTasks(filters, searchQuery);
 
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
@@ -187,6 +193,7 @@ const TaskManagement: React.FC = () => {
           : undefined,
         priority: taskData.priority,
         assigned_user_list: taskData.assigned_user_list,
+        phase_object_id: taskData.phase_object_id,
 
         // 🔥 THIS MAKES IT A SUBTASK
         parent_task_object_id: parentTaskId,
@@ -250,12 +257,18 @@ const TaskManagement: React.FC = () => {
           activeView={activeView}
           onViewChange={setActiveView}
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={(query) => {
+            setSearchQuery(query);
+            setCurrentPage(1);
+          }}
           onFilter={handleFilter}
           onCreateProject={handleCreateProject}
           onCreateTask={handleTaskModal}
           filters={filters}
-          onFilterChange={setFilters}
+          onFilterChange={(newFilters) => {
+            setFilters(newFilters);
+            setCurrentPage(1);
+          }}
           phases={phases}
         />
 
@@ -291,6 +304,7 @@ const TaskManagement: React.FC = () => {
                     sort_by: null,
                   });
                   setSearchQuery("");
+                  setCurrentPage(1);
                 }}
               />
             )
@@ -332,6 +346,17 @@ const TaskManagement: React.FC = () => {
           )}
         </div>
 
+        {/* Pagination */}
+        <div className="mt-8 border-t border-gray-100 pt-2">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+          />
+        </div>
+
         {/* Create Task Modal */}
         <CreateTaskModal
           isOpen={isCreateModalOpen}
@@ -341,6 +366,7 @@ const TaskManagement: React.FC = () => {
             setSelectedStatus(undefined);
           }}
           onSubmit={handleCreateTaskSubmit}
+          phases={phases}
         />
         <CreateSubtaskModal
           isOpen={isCreateSubtaskModalOpen}
@@ -349,12 +375,16 @@ const TaskManagement: React.FC = () => {
             setParentTaskId(null);
           }}
           onSubmit={handleCreateSubtaskSubmit}
+          phases={phases}
         />
         <FilterDrawer
           isOpen={isFilterDrawerOpen}
           onClose={() => setIsFilterDrawerOpen(false)}
           filters={filters}
-          onFilterChange={setFilters}
+          onFilterChange={(newFilters) => {
+            setFilters(newFilters);
+            setCurrentPage(1);
+          }}
           phases={phases}
         />
       </div>

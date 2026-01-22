@@ -15,20 +15,30 @@ import {
   CreateParticipantsPicker,
 } from "./components";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
+import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   initialStatus,
+  phases,
 }) => {
+  const getInitialPhaseId = () => {
+    if (initialStatus) return initialStatus;
+    if (phases && phases.length > 0) {
+      return [...phases].sort((a, b) => (a.index || 0) - (b.index || 0))[0]._id;
+    }
+    return undefined;
+  };
+
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
     description: "",
     due_date: "",
     priority: "Normal",
     assigned_user_list: [],
-    phase_object_id: initialStatus,
+    phase_object_id: getInitialPhaseId(),
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +72,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         due_date: "",
         priority: "Normal",
         assigned_user_list: [],
-        phase_object_id: initialStatus
+        phase_object_id: getInitialPhaseId()
       }));
       setSelectedUsers([]);
       setAttachments([]);
@@ -173,6 +183,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               title={formData.title}
               description={formData.description}
               onChange={handleChange}
+            />
+            <PhaseSelect
+              phases={phases}
+              selectedPhaseId={formData.phase_object_id}
+              onPhaseChange={(id) => setFormData(prev => ({ ...prev, phase_object_id: id }))}
             />
             <CreateSchedule
               dueDate={formData.due_date}
