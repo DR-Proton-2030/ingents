@@ -22,7 +22,10 @@ interface TaskSectionProps {
     payload: Partial<Task>
   ) => Promise<void>;
   onTaskClick?: (task: Task) => void;
+  itemsPerPage?: number;
+  onPageChange?: (sectionId: string, page: number) => void;
 }
+import Pagination from "@/components/shared/Pagination/Pagination";
 
 
 const TaskSection: React.FC<TaskSectionProps> = ({
@@ -38,6 +41,8 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   handleEditTask,
   searchUsers,
   onTaskClick,
+  itemsPerPage = 30,
+  onPageChange,
   expandedTasks = new Set(),
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -120,6 +125,9 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                   Due Date
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Tags
+                </th>
+                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Priority
                 </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
@@ -175,6 +183,20 @@ const TaskSection: React.FC<TaskSectionProps> = ({
             <Plus className="w-4 h-4" />
             Add task
           </button>
+
+          {/* Section Pagination */}
+          {section.tasks.length > 0 && (
+            <div className="border-t border-gray-100 px-4 bg-gray-50/30">
+              <Pagination
+                currentPage={section.currentPage}
+                totalPages={section.totalPages}
+                onPageChange={(page) => onPageChange?.(section.id, page)}
+                totalItems={section.count}
+                itemsPerPage={itemsPerPage}
+                className="py-3"
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

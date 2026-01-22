@@ -10,9 +10,9 @@ const Pagination: React.FC<PaginationProps> = ({
   itemsPerPage,
   className = "",
 }) => {
-  if (totalPages <= 1) return null;
+  const showPages = totalPages > 1;
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const startItem = totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
   const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   const getPageNumbers = () => {
@@ -43,48 +43,50 @@ const Pagination: React.FC<PaginationProps> = ({
         <span className="text-gray-900 font-semibold">{totalItems}</span> results
       </div>
 
-      <div className="flex items-center gap-1.5 order-1 sm:order-2">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:text-orange-500 hover:border-orange-500/30 disabled:opacity-40 disabled:hover:text-gray-600 disabled:hover:border-gray-200 transition-all duration-200 shadow-sm active:scale-95"
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+      {showPages && (
+        <div className="flex items-center gap-1.5 order-1 sm:order-2">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:text-orange-500 hover:border-orange-500/30 disabled:opacity-40 disabled:hover:text-gray-600 disabled:hover:border-gray-200 transition-all duration-200 shadow-sm active:scale-95"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
 
-        <div className="flex items-center gap-1.5">
-          {getPageNumbers().map((page, index) => (
-            <React.Fragment key={index}>
-              {page === "ellipsis" ? (
-                <div className="w-10 h-10 flex items-center justify-center text-gray-400">
-                  <MoreHorizontal className="w-4 h-4" />
-                </div>
-              ) : (
-                <button
-                  onClick={() => onPageChange(page as number)}
-                  className={`w-10 h-10 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
-                    currentPage === page
-                      ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
-                      : "bg-white border border-gray-200 text-gray-600 hover:border-orange-500/30 hover:text-orange-500"
-                  }`}
-                >
-                  {page}
-                </button>
-              )}
-            </React.Fragment>
-          ))}
+          <div className="flex items-center gap-1.5">
+            {getPageNumbers().map((page, index) => (
+              <React.Fragment key={index}>
+                {page === "ellipsis" ? (
+                  <div className="w-10 h-10 flex items-center justify-center text-gray-400">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onPageChange(page as number)}
+                    className={`w-10 h-10 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
+                      currentPage === page
+                        ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                        : "bg-white border border-gray-200 text-gray-600 hover:border-orange-500/30 hover:text-orange-500"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:text-orange-500 hover:border-orange-500/30 disabled:opacity-40 disabled:hover:text-gray-600 disabled:hover:border-gray-200 transition-all duration-200 shadow-sm active:scale-95"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
-
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-xl border border-gray-200 bg-white text-gray-600 hover:text-orange-500 hover:border-orange-500/30 disabled:opacity-40 disabled:hover:text-gray-600 disabled:hover:border-gray-200 transition-all duration-200 shadow-sm active:scale-95"
-          aria-label="Next page"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </div>
+      )}
     </div>
   );
 };
