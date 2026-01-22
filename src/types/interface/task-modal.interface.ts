@@ -14,6 +14,7 @@ export interface TaskFormData {
   priority: "High" | "Normal" | "Low";
   phase_object_id?: string;
   assigned_user_list: any[];
+  tag_object_id_list?: string[];
   attachments?: AttachmentInput[];
   project_object_id?: string | null;
 }

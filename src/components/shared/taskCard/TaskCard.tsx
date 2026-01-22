@@ -145,6 +145,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   onSave={(value: string) => handleEditTask(task._id, { title: value })}
                 />
 
+                {/* {task.tags && task.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {task.tags.slice(0, 4).map((tag: any) => (
+                      <span 
+                        key={tag._id} 
+                        className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider"
+                        style={{ backgroundColor: `${tag.color}20`, color: tag.color, border: `1px solid ${tag.color}40` }}
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                    {task.tags.length > 4 && (
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-gray-100 text-gray-400 border border-gray-200 uppercase tracking-wider">
+                        +{task.tags.length - 4}
+                      </span>
+                    )}
+                  </div>
+                )} */}
+                
                 {/* Indicators */}
                 <div className="flex items-center gap-1.5">
                   {(task.subtaskCount || 0) > 0 && (

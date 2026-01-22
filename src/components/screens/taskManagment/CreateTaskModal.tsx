@@ -11,9 +11,12 @@ import {
   CreateGeneralInfo,
   CreateSchedule,
   CreateAssignees,
+  CreateTags,
   CreateDateTimePicker,
   CreateParticipantsPicker,
 } from "./components";
+import TagPicker from "@/components/shared/TagPicker/TagPicker";
+import { ITag } from "@/types/interface/tag.interface";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
 import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
 import useProjects from "@/hooks/useProjects";
@@ -47,7 +50,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
-  const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
+  const [selectedTags, setSelectedTags] = useState<ITag[]>([]);
+  const [activePicker, setActivePicker] = useState<"time" | "participants" | "tags" | null>(null);
   const [attachments, setAttachments] = useState<AttachmentInput[]>([]);
 
   // Custom Picker States
@@ -86,6 +90,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       setAttachments([]);
       setActivePicker(null);
       setSearchQuery("");
+      setSelectedTags([]);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -133,6 +138,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     await onSubmit({
       ...formData,
       assigned_user_list: selectedUsers.map((u) => u.id || (u as any)._id),
+      tag_object_id_list: selectedTags.map(tag => tag._id),
       attachments: attachments,
     });
     setIsSubmitting(false);
@@ -213,6 +219,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               selectedUsers={selectedUsers}
               onManageClick={() => setActivePicker("participants")}
             />
+            <CreateTags
+              selectedTags={selectedTags}
+              onManageClick={() => setActivePicker("tags")}
+            />
             <AttachmentsSection
               attachments={attachments}
               onAddFiles={handleAddFiles}
@@ -261,7 +271,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-xl font-bold text-gray-800">
-                {activePicker === "time" ? "Select Due Time" : "Assign Teammates"}
+                {activePicker === "time" ? "Select Due Time" : 
+                 activePicker === "participants" ? "Assign Teammates" : "Manage Tags"}
               </h4>
               <button type="button" onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
                 <CloseCircle className="w-5 h-5 text-gray-400" />
@@ -292,6 +303,15 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 onSearchChange={setSearchQuery}
                 onAddAssignee={addAssignee}
                 onRemoveAssignee={removeAssignee}
+                onClose={() => setActivePicker(null)}
+              />
+            )}
+
+            {activePicker === "tags" && (
+              <TagPicker
+                selectedTagIds={selectedTags.map(t => t._id)}
+                onAddTag={(tag) => setSelectedTags([...selectedTags, tag])}
+                onRemoveTag={(id) => setSelectedTags(selectedTags.filter(t => t._id !== id))}
                 onClose={() => setActivePicker(null)}
               />
             )}

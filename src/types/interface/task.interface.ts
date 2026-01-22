@@ -40,6 +40,11 @@ export interface Task {
   subtask?: Task[];
   assigned_user_list?: any[];
   attachments?: TaskAttachment[];
+  tags?: {
+    _id: string;
+    name: string;
+    color: string;
+  }[];
   phase_info?: {
     _id: string;
     name: string;

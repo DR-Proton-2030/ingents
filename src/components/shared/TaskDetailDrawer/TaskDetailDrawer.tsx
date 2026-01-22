@@ -12,12 +12,15 @@ import {
     GeneralInfoSection,
     ScheduleSection,
     AssigneesSection,
+    TagsSection,
     SubtasksSection,
     DateTimePicker,
     ParticipantsPicker,
     DeleteConfirmModal,
 } from "./components";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
+import TagPicker from "@/components/shared/TagPicker/TagPicker";
+import { ITag } from "@/types/interface/tag.interface";
 import useProjects from "@/hooks/useProjects";
 import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
 
@@ -49,7 +52,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         project_object_id: null as string | null,
     });
 
-    const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
+    const [activePicker, setActivePicker] = useState<"time" | "participants" | "tags" | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -154,7 +157,8 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             attachments: [
                 ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
                 ...newAttachments
-            ]
+            ],
+            tag_object_id_list: task?.tags?.map((t: any) => t._id)
         });
         setIsSaving(false);
         onClose();
@@ -254,6 +258,10 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                             assignees={task?.assignees || []}
                             onManageClick={() => setActivePicker("participants")}
                         />
+                        <TagsSection
+                            tags={task?.tags || []}
+                            onManageClick={() => setActivePicker("tags")}
+                        />
                         <SubtasksSection
                             subtasks={task?.subtask || []}
                             onAddSubtask={() => { onAddSubtask(task._id); onClose(); }}
@@ -319,6 +327,20 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                             onRemoveAssignee={removeAssignee}
                             onClose={() => setActivePicker(null)}
                         />
+                    )}
+                    {activePicker === "tags" && (
+                        <div className="p-6">
+                            <TagPicker
+                                selectedTagIds={task?.tags?.map((t: any) => t._id) || []}
+                                onAddTag={(tag) => onEditTask(task._id, {
+                                    tag_object_id_list: [...(task?.tags?.map((t: any) => t._id) || []), tag._id]
+                                })}
+                                onRemoveTag={(id) => onEditTask(task._id, {
+                                    tag_object_id_list: (task?.tags?.map((t: any) => t._id) || []).filter((tid: string) => tid !== id)
+                                })}
+                                onClose={() => setActivePicker(null)}
+                            />
+                        </div>
                     )}
                 </div>
 

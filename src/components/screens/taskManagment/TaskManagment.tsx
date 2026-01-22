@@ -9,7 +9,7 @@ import {
   Task as TaskType,
   TaskStatus,
 } from "@/types/interface/task.interface";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, normalizeTask } from "@/hooks/useTasks";
 import { TaskFormData } from "@/types/interface/task-modal.interface";
 import CreateSubtaskModal from "./createSubtaskModal";
 import { UserOption } from "@/components/shared/userMultiSelectDropdown/UserMultiSelectDropdown";
@@ -107,13 +107,16 @@ const TaskManagement: React.FC = () => {
   const handleStatusChange = useCallback(
     async (taskId: string, newPhaseId: string) => {
       try {
-        await handleUpdateTask(taskId, { phase_object_id: newPhaseId });
-        // ✅ handleUpdateTask already refetches tasks
+        const res = await (handleUpdateTask(taskId, { phase_object_id: newPhaseId }) as any);
+        if (selectedTask && selectedTask._id === taskId) {
+          const rawTask = res?.data || res;
+          setSelectedTask(normalizeTask(rawTask));
+        }
       } catch (error) {
         console.error("Failed to update task status:", error);
       }
     },
-    [handleUpdateTask]
+    [handleUpdateTask, selectedTask]
   );
 
   const handleDeleteTaskById = useCallback(
@@ -130,26 +133,32 @@ const TaskManagement: React.FC = () => {
 
   const handleUnassignTaskFromUser = useCallback(
     async (taskId: string, userId: string) => {
-      console.log("🔵 Parent delete handler called:", taskId);
       try {
-        await handleUnassignTask(taskId, userId);
+        const res = await (handleUnassignTask(taskId, userId) as any);
+        if (selectedTask && selectedTask._id === taskId) {
+          const rawTask = res?.data || res;
+          setSelectedTask(normalizeTask(rawTask));
+        }
       } catch (error) {
         console.error("Failed to delete task:", error);
       }
     },
-    [handleUnassignTask]
+    [handleUnassignTask, selectedTask]
   );
 
   const handleAssignTaskToUser = useCallback(
     async (taskId: string, userId: string) => {
-      console.log("🔵 Parent delete handler called:", taskId);
       try {
-        await handleAssignTask(taskId, userId);
+        const res = await (handleAssignTask(taskId, userId) as any);
+        if (selectedTask && selectedTask._id === taskId) {
+          const rawTask = res?.data || res;
+          setSelectedTask(normalizeTask(rawTask));
+        }
       } catch (error) {
         console.error("Failed to delete task:", error);
       }
     },
-    [handleAssignTask]
+    [handleAssignTask, selectedTask]
   );
   const handleCreateProject = useCallback(() => {
     console.log("Create project");
@@ -175,6 +184,7 @@ const TaskManagement: React.FC = () => {
         priority: taskData.priority,
         phase_object_id: taskData.phase_object_id,
         assigned_user_list: taskData.assigned_user_list,
+        tag_object_ids: taskData.tag_object_id_list,
         attachments: taskData.attachments,
         project_object_id: taskData.project_object_id || filters.project_object_id,
       };
@@ -409,7 +419,13 @@ const TaskManagement: React.FC = () => {
           isOpen={!!selectedTask}
           onClose={() => setSelectedTask(null)}
           task={selectedTask}
-          onEditTask={handleEditTask}
+          onEditTask={async (id, payload) => {
+            const res = await (handleEditTask(id, payload) as any);
+            if (selectedTask && selectedTask._id === id) {
+              const rawTask = res?.data || res;
+              setSelectedTask(normalizeTask(rawTask));
+            }
+          }}
           onDeleteTask={handleDeleteTaskById}
           onAddSubtask={handleAddSubtask}
           onAssignTask={handleAssignTaskToUser}

@@ -1,8 +1,9 @@
 "use client";
 import React from "react";
 import { Document, Calendar, UsersGroupRounded, Layers, CheckCircle } from "@solar-icons/react";
-import { Plus } from "lucide-react";
+import { Plus, Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ITag } from "@/types/interface/tag.interface";
 
 interface GeneralInfoSectionProps {
     formData: { title: string; description: string };
@@ -48,7 +49,7 @@ export const GeneralInfoSection: React.FC<GeneralInfoSectionProps> = ({ formData
 interface ScheduleSectionProps {
     currentDueDate: string;
     priority: "High" | "Normal" | "Low";
-    activePicker: "time" | "participants" | null;
+    activePicker: "time" | "participants" | "tags" | null;
     onTogglePicker: () => void;
     onPriorityChange: (p: "High" | "Normal" | "Low") => void;
 }
@@ -155,6 +156,64 @@ export const AssigneesSection: React.FC<AssigneesSectionProps> = ({ assignees, o
                     <UsersGroupRounded className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
                     <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No assignees yet</p>
                     <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to assign teammates</p>
+                </div>
+            )}
+        </div>
+    </div>
+);
+
+interface TagsSectionProps {
+    tags: ITag[];
+    onManageClick: () => void;
+}
+
+export const TagsSection: React.FC<TagsSectionProps> = ({ tags, onManageClick }) => (
+    <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-gray-700 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
+                    <Tag className="w-5 h-5 text-amber-500" />
+                </div>
+                Tags
+            </div>
+
+            <button
+                type="button"
+                onClick={onManageClick}
+                className="text-[10px] font-bold text-orange-600 hover:text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 transition-all active:scale-95"
+            >
+                Add Tags
+            </button>
+        </h3>
+
+        <div className="space-y-2">
+            {Array.isArray(tags) && tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px]">
+                    {tags.map((tag: any) => {
+                        // Ensure it's an object with valid properties
+                        if (!tag || typeof tag !== 'object') return null;
+                        const bgColor = tag.color || "#9CA3AF";
+                        return (
+                            <div 
+                                key={tag._id || Math.random()} 
+                                className="px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm border"
+                                style={{ 
+                                    backgroundColor: `${bgColor}15`,
+                                    color: bgColor,
+                                    borderColor: `${bgColor}30`
+                                }}
+                            >
+                                <Tag className="w-3 h-3" />
+                                {tag.name || "Unnamed"}
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="p-4 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={onManageClick}>
+                    <Tag className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
+                    <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No tags yet</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to add labels</p>
                 </div>
             )}
         </div>
