@@ -16,6 +16,8 @@ import {
 } from "./components";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
 import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
+import useProjects from "@/hooks/useProjects";
+import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
@@ -23,6 +25,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   onSubmit,
   initialStatus,
   phases,
+  initialProjectId,
 }) => {
   const getInitialPhaseId = () => {
     if (initialStatus) return initialStatus;
@@ -39,6 +42,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     priority: "Normal",
     assigned_user_list: [],
     phase_object_id: getInitialPhaseId(),
+    project_object_id: initialProjectId || null,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,6 +56,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [selHour, setSelHour] = useState("09");
   const [selMinute, setSelMinute] = useState("00");
   const [selAmPm, setSelAmPm] = useState("AM");
+
+  // Project State
+  const { projects } = useProjects();
 
   // User Search State
   const { users: allUsers } = useGetUsers();
@@ -72,7 +79,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         due_date: "",
         priority: "Normal",
         assigned_user_list: [],
-        phase_object_id: getInitialPhaseId()
+        phase_object_id: getInitialPhaseId(),
+        project_object_id: initialProjectId || null,
       }));
       setSelectedUsers([]);
       setAttachments([]);
@@ -188,6 +196,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               phases={phases}
               selectedPhaseId={formData.phase_object_id}
               onPhaseChange={(id) => setFormData(prev => ({ ...prev, phase_object_id: id }))}
+            />
+            <ProjectSelect
+              projects={projects}
+              selectedProjectId={formData.project_object_id}
+              onProjectChange={(id) => setFormData(prev => ({ ...prev, project_object_id: id }))}
             />
             <CreateSchedule
               dueDate={formData.due_date}

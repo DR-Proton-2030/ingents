@@ -13,6 +13,7 @@ import { createTask, deleteTask, getTasks, updateTask } from "./task/task.api";
 import { sendMessage } from "./chat/chat.api";
 import { getUser, searchUsers } from "./user/user.api";
 import { getTaskPhases, createTaskPhase, clearTaskPhasesCache, updateTaskPhase } from "./taskPhase/taskPhase.api";
+import { getProjects, createProject, updateProject, deleteProject } from "./project/project.api";
 
 export const api = {
   auth: {
@@ -44,5 +45,11 @@ export const api = {
   user:{
     searchUsers,
     getUser
+  },
+  project: {
+    getProjects,
+    createProject,
+    updateProject,
+    deleteProject
   }
 }

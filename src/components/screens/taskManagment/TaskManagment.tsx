@@ -29,6 +29,7 @@ const TaskManagement: React.FC = () => {
     dueDate: null as string | null,
     onlyMyTasks: false,
     sort_by: null,
+    project_object_id: null,
   });
 
   const {
@@ -175,6 +176,7 @@ const TaskManagement: React.FC = () => {
         phase_object_id: taskData.phase_object_id,
         assigned_user_list: taskData.assigned_user_list,
         attachments: taskData.attachments,
+        project_object_id: taskData.project_object_id || filters.project_object_id,
       };
 
       await handleCreateTask(payload);
@@ -200,6 +202,7 @@ const TaskManagement: React.FC = () => {
         // 🔥 THIS MAKES IT A SUBTASK
         parent_task_object_id: parentTaskId,
         attachments: taskData.attachments,
+        project_object_id: taskData.project_object_id || filters.project_object_id,
       };
 
       await handleCreateTask(payload);
@@ -273,6 +276,14 @@ const TaskManagement: React.FC = () => {
             setCurrentPage(1);
           }}
           phases={phases}
+          selectedProjectId={filters.project_object_id || undefined}
+          onProjectSelect={(project) => {
+            setFilters((prev) => ({
+              ...prev,
+              project_object_id: project ? project._id : null,
+            }));
+            setCurrentPage(1);
+          }}
         />
 
         {/* Task Views */}
@@ -306,6 +317,7 @@ const TaskManagement: React.FC = () => {
                     dueDate: null,
                     onlyMyTasks: false,
                     sort_by: null,
+                    project_object_id: null,
                   });
                   setSearchQuery("");
                   setCurrentPage(1);
@@ -371,6 +383,7 @@ const TaskManagement: React.FC = () => {
           }}
           onSubmit={handleCreateTaskSubmit}
           phases={phases}
+          initialProjectId={filters.project_object_id}
         />
         <CreateSubtaskModal
           isOpen={isCreateSubtaskModalOpen}
@@ -380,6 +393,7 @@ const TaskManagement: React.FC = () => {
           }}
           onSubmit={handleCreateSubtaskSubmit}
           phases={phases}
+          initialProjectId={filters.project_object_id}
         />
         <FilterDrawer
           isOpen={isFilterDrawerOpen}

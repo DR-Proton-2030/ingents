@@ -15,6 +15,7 @@ export interface TaskFormData {
   phase_object_id?: string;
   assigned_user_list: any[];
   attachments?: AttachmentInput[];
+  project_object_id?: string | null;
 }
 
 export interface SubTaskFormData {
@@ -25,6 +26,7 @@ export interface SubTaskFormData {
   status?: TaskStatus;
   assigned_user_list: any[];
   attachments?: AttachmentInput[];
+  project_object_id?: string | null;
 }
 export interface CreateTaskModalProps {
   isOpen: boolean;
@@ -32,6 +34,7 @@ export interface CreateTaskModalProps {
   onSubmit: (taskData: TaskFormData) => Promise<void>;
   initialStatus?: TaskStatus;
   phases: IPhase[];
+  initialProjectId?: string | null;
 }
 
 export interface CreateSubtaskModalProps {
@@ -40,4 +43,5 @@ export interface CreateSubtaskModalProps {
   onSubmit: (taskData: TaskFormData) => Promise<void>;
   initialStatus?: TaskStatus;
   phases: IPhase[];
+  initialProjectId?: string | null;
 }

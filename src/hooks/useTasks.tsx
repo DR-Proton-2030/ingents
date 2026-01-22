@@ -45,6 +45,7 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
         params.due_date_to = filters.dueDate; // Selected date
       }
       if (filters.onlyMyTasks) params.my_tasks = "true";
+      if (filters.project_object_id) params.project_object_id = filters.project_object_id;
       // Add pagination to params
       params.page = currentPage;
       params.limit = itemsPerPage;
@@ -57,7 +58,7 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
       if (tasksRes?.data) {
         const normalized = tasksRes.data.map(normalizeTask);
         setTasks(normalized);
-        
+
         // Update pagination from backend response
         if (tasksRes.pagination) {
           setTotalItems(tasksRes.pagination.totalCount);

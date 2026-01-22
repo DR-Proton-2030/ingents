@@ -18,6 +18,8 @@ import {
     DeleteConfirmModal,
 } from "./components";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
+import useProjects from "@/hooks/useProjects";
+import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
 
 interface TaskDetailDrawerProps {
     isOpen: boolean;
@@ -44,6 +46,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         title: "",
         description: "",
         priority: "Normal" as "High" | "Normal" | "Low",
+        project_object_id: null as string | null,
     });
 
     const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
@@ -60,6 +63,9 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     // Attachments State
     const [newAttachments, setNewAttachments] = useState<AttachmentInput[]>([]);
     const [existingAttachments, setExistingAttachments] = useState<TaskAttachment[]>([]);
+
+    // Project State
+    const { projects } = useProjects();
 
     // User search
     const { users: allUsers } = useGetUsers();
@@ -81,6 +87,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 title: task.title || "",
                 description: task.description || "",
                 priority: task.priority || "Normal",
+                project_object_id: task.project_object_id || null,
             });
             setExistingAttachments(task.attachments || []);
             setNewAttachments([]);
@@ -143,6 +150,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             title: formData.title,
             description: formData.description,
             priority: formData.priority,
+            project_object_id: formData.project_object_id,
             attachments: [
                 ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
                 ...newAttachments
@@ -236,6 +244,11 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                             activePicker={activePicker}
                             onTogglePicker={() => setActivePicker(activePicker === "time" ? null : "time")}
                             onPriorityChange={(p) => setFormData(prev => ({ ...prev, priority: p }))}
+                        />
+                        <ProjectSelect
+                            projects={projects}
+                            selectedProjectId={formData.project_object_id}
+                            onProjectChange={(id) => setFormData(prev => ({ ...prev, project_object_id: id }))}
                         />
                         <AssigneesSection
                             assignees={task?.assignees || []}

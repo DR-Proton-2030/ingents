@@ -25,6 +25,8 @@ import { IUser } from "@/types/interface/user.interface";
 import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
 import { cn } from "@/lib/utils";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
+import useProjects from "@/hooks/useProjects";
+import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
 
 const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   isOpen,
@@ -32,6 +34,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   onSubmit,
   initialStatus,
   phases,
+  initialProjectId,
 }) => {
   const getInitialPhaseId = () => {
     if (initialStatus) return initialStatus;
@@ -48,6 +51,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     priority: "Normal",
     assigned_user_list: [],
     phase_object_id: getInitialPhaseId(),
+    project_object_id: initialProjectId || null,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -61,6 +65,9 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   const [selHour, setSelHour] = useState("09");
   const [selMinute, setSelMinute] = useState("00");
   const [selAmPm, setSelAmPm] = useState("AM");
+
+  // Project State
+  const { projects } = useProjects();
 
   // User Search State
   const { users: allUsers } = useGetUsers();
@@ -84,7 +91,8 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
         due_date: "",
         priority: "Normal",
         assigned_user_list: [],
-        phase_object_id: getInitialPhaseId()
+        phase_object_id: getInitialPhaseId(),
+        project_object_id: initialProjectId || null,
       }));
       setSelectedUsers([]);
       setAttachments([]);
@@ -262,6 +270,11 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
               phases={phases}
               selectedPhaseId={formData.phase_object_id}
               onPhaseChange={(id) => setFormData((prev: any) => ({ ...prev, phase_object_id: id }))}
+            />
+            <ProjectSelect
+              projects={projects}
+              selectedProjectId={formData.project_object_id}
+              onProjectChange={(id) => setFormData((prev: any) => ({ ...prev, project_object_id: id }))}
             />
 
             {/* Timeline & Priority */}

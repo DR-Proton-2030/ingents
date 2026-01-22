@@ -4,4 +4,5 @@ export interface ITaskFilters {
   dueDate: string | null;
   onlyMyTasks: boolean;
   sort_by?: "asc" | "desc" | null;
+  project_object_id?: string | null;
 }
