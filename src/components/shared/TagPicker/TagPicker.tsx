@@ -47,7 +47,7 @@ const TagPicker: React.FC<TagPickerProps> = ({
 
     return (
         <div className="space-y-6">
-            <div className="relative">
+            {/* <div className="relative">
                 <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                     type="text"
@@ -56,7 +56,7 @@ const TagPicker: React.FC<TagPickerProps> = ({
                     placeholder="Search tags..."
                     className="w-full h-12 pl-11 pr-4 rounded-2xl transition-all outline-none text-sm font-bold bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-500/10 border border-transparent focus:border-orange-500 text-gray-800"
                 />
-            </div>
+            </div> */}
 
             {!isCreating ? (
                 <button
