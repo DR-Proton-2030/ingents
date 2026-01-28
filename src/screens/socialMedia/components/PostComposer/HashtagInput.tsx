@@ -56,6 +56,7 @@ export default function HashtagInput({
                     <div className="flex items-center gap-1">
                         <input
                             type="text"
+                            id="hashtag-input-field"
                             value={newHashtag}
                             onChange={(e) => setNewHashtag(e.target.value)}
                             onKeyDown={(e) => {

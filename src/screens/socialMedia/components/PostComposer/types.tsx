@@ -41,5 +41,12 @@ export interface UploadedImage {
     preview: string;
 }
 
+export interface UploadedVideo {
+    id: string;
+    file?: File;
+    preview: string;
+    url?: string;
+}
+
 export type TabType = "compose" | "preview";
 export type PreviewPlatform = "instagram" | "facebook" | "X";

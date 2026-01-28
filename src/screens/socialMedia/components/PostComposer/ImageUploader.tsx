@@ -31,6 +31,7 @@ export default function ImageUploader({
             </label>
             <input
                 type="file"
+                id="image-upload-input"
                 ref={fileInputRef}
                 onChange={handleChange}
                 accept="image/*"
