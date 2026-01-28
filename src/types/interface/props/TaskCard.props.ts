@@ -20,5 +20,6 @@ export interface TaskCardProps {
   taskId: string,
   payload: Partial<Task>
 ) => Promise<void>;
+  onTaskClick?: (task: Task) => void;
   isExpanded?: boolean;
 }

@@ -10,7 +10,8 @@ import {
   TaskDescriptionModal,
   ScheduleModal,
   DeleteConfirmationModal,
-  EditableText
+  EditableText,
+  TaskActionDropdown
 } from ".";
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
@@ -45,6 +46,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   handleUnAssignTask,
   handleAssignTask,
   searchUsers,
+  onTaskClick,
   isExpanded = false,
 }) => {
   const [showDescription, setShowDescription] = useState(false);
@@ -143,6 +145,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   onSave={(value: string) => handleEditTask(task._id, { title: value })}
                 />
 
+                {/* {task.tags && task.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {task.tags.slice(0, 4).map((tag: any) => (
+                      <span 
+                        key={tag._id} 
+                        className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider"
+                        style={{ backgroundColor: `${tag.color}20`, color: tag.color, border: `1px solid ${tag.color}40` }}
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                    {task.tags.length > 4 && (
+                      <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-gray-100 text-gray-400 border border-gray-200 uppercase tracking-wider">
+                        +{task.tags.length - 4}
+                      </span>
+                    )}
+                  </div>
+                )} */}
+                
                 {/* Indicators */}
                 <div className="flex items-center gap-1.5">
                   {(task.subtaskCount || 0) > 0 && (
@@ -225,6 +246,35 @@ const TaskCard: React.FC<TaskCardProps> = ({
           />
         </td>
 
+        {/* Tags Cell */}
+        <td className="py-4 px-4">
+          <div className="flex flex-wrap gap-1.5">
+            {task.tags && task.tags.length > 0 ? (
+              <>
+                {task.tags.slice(0, 2).map((tag: any) => (
+                  <span
+                    key={tag._id}
+                    className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all border border-white/50 shadow-sm"
+                    style={{
+                      backgroundColor: `${tag.color}30`,
+                      color: tag.color,
+                    }}
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+                {task.tags.length > 2 && (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-500 border border-white/50 shadow-sm">
+                    +{task.tags.length - 2}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="text-gray-300 ml-2 text-sm">—</span>
+            )}
+          </div>
+        </td>
+
         {/* Priority Cell */}
         <td className="py-4 px-4">
           <PriorityBadge priority={task.priority} />
@@ -232,26 +282,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Actions Cell */}
         <td className="py-4 px-4">
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={() => handleAddSubtask(task._id)}
-              className="p-1.5 rounded-lg hover:bg-orange-50 text-gray-400 hover:text-orange-500 transition-all active:scale-90 tooltip"
-              title="Add Subtask"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all active:scale-90"
-              title="Delete Task"
-            >
-              <Trash className="w-4 h-4" />
-            </button>
-
-            <button className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all active:scale-90">
-              <MenuDots className="w-4 h-4" />
-            </button>
+          <div className="flex items-center justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+            <TaskActionDropdown
+              onViewDetails={() => onTaskClick?.(task)}
+              onAddSubtask={() => handleAddSubtask(task._id)}
+              onDelete={() => setIsDeleteDialogOpen(true)}
+            />
           </div>
         </td>
       </tr>
@@ -274,6 +310,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             handleAssignTask={handleAssignTask}
             searchUsers={searchUsers}
             handleEditTask={handleEditTask}
+            onTaskClick={onTaskClick}
           />
         ))}
       <DeleteConfirmationModal

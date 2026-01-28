@@ -9,7 +9,7 @@ import {
   Task as TaskType,
   TaskStatus,
 } from "@/types/interface/task.interface";
-import { useTasks } from "@/hooks/useTasks";
+import { useTasks, normalizeTask } from "@/hooks/useTasks";
 import { TaskFormData } from "@/types/interface/task-modal.interface";
 import CreateSubtaskModal from "./createSubtaskModal";
 import { UserOption } from "@/components/shared/userMultiSelectDropdown/UserMultiSelectDropdown";
@@ -18,6 +18,8 @@ import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import FilterDrawer from "@/components/shared/FilterDrawer/FilterDrawer";
 import { Loading } from "@/components/shared/loadingScreen/Loading";
 import { BoardView, CalendarView, TimelineView } from "./views";
+import Pagination from "@/components/shared/Pagination/Pagination";
+import { TaskDetailDrawer } from "@/components/shared/TaskDetailDrawer";
 
 const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +29,7 @@ const TaskManagement: React.FC = () => {
     dueDate: null as string | null,
     onlyMyTasks: false,
     sort_by: null,
+    project_object_id: null,
   });
 
   const {
@@ -41,7 +44,9 @@ const TaskManagement: React.FC = () => {
     handleDeleteTask,
     handleUnassignTask,
     handleAssignTask,
-    handleEditTask
+    handleEditTask,
+    setSectionPage,
+    itemsPerPage
   } = useTasks(filters, searchQuery);
 
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
@@ -53,6 +58,7 @@ const TaskManagement: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] =
     useState(false);
+  const [selectedTask, setSelectedTask] = useState<any | null>(null);
 
 
   const handleAddSubtask = useCallback((taskId: string) => {
@@ -98,13 +104,16 @@ const TaskManagement: React.FC = () => {
   const handleStatusChange = useCallback(
     async (taskId: string, newPhaseId: string) => {
       try {
-        await handleUpdateTask(taskId, { phase_object_id: newPhaseId });
-        // ✅ handleUpdateTask already refetches tasks
+        const res = await (handleUpdateTask(taskId, { phase_object_id: newPhaseId }) as any);
+        if (selectedTask && selectedTask._id === taskId) {
+          const rawTask = res?.data || res;
+          setSelectedTask(normalizeTask(rawTask));
+        }
       } catch (error) {
         console.error("Failed to update task status:", error);
       }
     },
-    [handleUpdateTask]
+    [handleUpdateTask, selectedTask]
   );
 
   const handleDeleteTaskById = useCallback(
@@ -121,26 +130,32 @@ const TaskManagement: React.FC = () => {
 
   const handleUnassignTaskFromUser = useCallback(
     async (taskId: string, userId: string) => {
-      console.log("🔵 Parent delete handler called:", taskId);
       try {
-        await handleUnassignTask(taskId, userId);
+        const res = await (handleUnassignTask(taskId, userId) as any);
+        if (selectedTask && selectedTask._id === taskId) {
+          const rawTask = res?.data || res;
+          setSelectedTask(normalizeTask(rawTask));
+        }
       } catch (error) {
         console.error("Failed to delete task:", error);
       }
     },
-    [handleUnassignTask]
+    [handleUnassignTask, selectedTask]
   );
 
   const handleAssignTaskToUser = useCallback(
     async (taskId: string, userId: string) => {
-      console.log("🔵 Parent delete handler called:", taskId);
       try {
-        await handleAssignTask(taskId, userId);
+        const res = await (handleAssignTask(taskId, userId) as any);
+        if (selectedTask && selectedTask._id === taskId) {
+          const rawTask = res?.data || res;
+          setSelectedTask(normalizeTask(rawTask));
+        }
       } catch (error) {
         console.error("Failed to delete task:", error);
       }
     },
-    [handleAssignTask]
+    [handleAssignTask, selectedTask]
   );
   const handleCreateProject = useCallback(() => {
     console.log("Create project");
@@ -166,6 +181,9 @@ const TaskManagement: React.FC = () => {
         priority: taskData.priority,
         phase_object_id: taskData.phase_object_id,
         assigned_user_list: taskData.assigned_user_list,
+        tag_object_ids: taskData.tag_object_id_list,
+        attachments: taskData.attachments,
+        project_object_id: taskData.project_object_id || filters.project_object_id,
       };
 
       await handleCreateTask(payload);
@@ -186,9 +204,12 @@ const TaskManagement: React.FC = () => {
           : undefined,
         priority: taskData.priority,
         assigned_user_list: taskData.assigned_user_list,
+        phase_object_id: taskData.phase_object_id,
 
         // 🔥 THIS MAKES IT A SUBTASK
         parent_task_object_id: parentTaskId,
+        attachments: taskData.attachments,
+        project_object_id: taskData.project_object_id || filters.project_object_id,
       };
 
       await handleCreateTask(payload);
@@ -230,7 +251,7 @@ const TaskManagement: React.FC = () => {
           <div className="text-center">
             <p className="text-red-600 mb-4">{error}</p>
             <button
-              onClick={refetchTasks}
+              onClick={() => refetchTasks()}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Retry
@@ -249,13 +270,24 @@ const TaskManagement: React.FC = () => {
           activeView={activeView}
           onViewChange={setActiveView}
           searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
+          onSearchChange={(query) => {
+            setSearchQuery(query);
+          }}
           onFilter={handleFilter}
           onCreateProject={handleCreateProject}
           onCreateTask={handleTaskModal}
           filters={filters}
-          onFilterChange={setFilters}
+          onFilterChange={(newFilters) => {
+            setFilters(newFilters);
+          }}
           phases={phases}
+          selectedProjectId={filters.project_object_id || undefined}
+          onProjectSelect={(project) => {
+            setFilters((prev) => ({
+              ...prev,
+              project_object_id: project ? project._id : null,
+            }));
+          }}
         />
 
         {/* Task Views */}
@@ -276,6 +308,9 @@ const TaskManagement: React.FC = () => {
                   handleAssignTask={handleAssignTaskToUser}
                   searchUsers={searchUsers}
                   handleEditTask={handleEditTask}
+                  onTaskClick={setSelectedTask}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setSectionPage}
                 />
               ))
             ) : (
@@ -288,6 +323,7 @@ const TaskManagement: React.FC = () => {
                     dueDate: null,
                     onlyMyTasks: false,
                     sort_by: null,
+                    project_object_id: null,
                   });
                   setSearchQuery("");
                 }}
@@ -331,6 +367,7 @@ const TaskManagement: React.FC = () => {
           )}
         </div>
 
+
         {/* Create Task Modal */}
         <CreateTaskModal
           isOpen={isCreateModalOpen}
@@ -340,6 +377,8 @@ const TaskManagement: React.FC = () => {
             setSelectedStatus(undefined);
           }}
           onSubmit={handleCreateTaskSubmit}
+          phases={phases}
+          initialProjectId={filters.project_object_id}
         />
         <CreateSubtaskModal
           isOpen={isCreateSubtaskModalOpen}
@@ -348,13 +387,33 @@ const TaskManagement: React.FC = () => {
             setParentTaskId(null);
           }}
           onSubmit={handleCreateSubtaskSubmit}
+          phases={phases}
+          initialProjectId={filters.project_object_id}
         />
         <FilterDrawer
           isOpen={isFilterDrawerOpen}
           onClose={() => setIsFilterDrawerOpen(false)}
           filters={filters}
-          onFilterChange={setFilters}
+          onFilterChange={(newFilters) => {
+            setFilters(newFilters);
+          }}
           phases={phases}
+        />
+        <TaskDetailDrawer
+          isOpen={!!selectedTask}
+          onClose={() => setSelectedTask(null)}
+          task={selectedTask}
+          onEditTask={async (id, payload) => {
+            const res = await (handleEditTask(id, payload) as any);
+            if (selectedTask && selectedTask._id === id) {
+              const rawTask = res?.data || res;
+              setSelectedTask(normalizeTask(rawTask));
+            }
+          }}
+          onDeleteTask={handleDeleteTaskById}
+          onAddSubtask={handleAddSubtask}
+          onAssignTask={handleAssignTaskToUser}
+          onUnassignTask={handleUnassignTaskFromUser}
         />
       </div>
     </Layout>

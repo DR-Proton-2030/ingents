@@ -236,7 +236,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
               <Plus className="w-4 h-4 text-orange-600" />
             </div>
-            <p className="text-[11px] font-black uppercase text-orange-600 tracking-tight">Create New Phase</p>
+            <p className="text-[11px] font-semibold  text-orange-600 ">Create New Phase</p>
           </button>
         </div>
       </motion.div>

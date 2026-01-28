@@ -5,16 +5,24 @@ import { createPortal } from "react-dom";
 import { CloseCircle, CheckCircle, TrashBinMinimalistic } from "@solar-icons/react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
+import { TaskAttachment } from "@/types/interface/task.interface";
+import { AttachmentInput } from "@/types/interface/task-modal.interface";
 import { cn } from "@/lib/utils";
 import {
     GeneralInfoSection,
     ScheduleSection,
     AssigneesSection,
+    TagsSection,
     SubtasksSection,
     DateTimePicker,
     ParticipantsPicker,
     DeleteConfirmModal,
 } from "./components";
+import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
+import TagPicker from "@/components/shared/TagPicker/TagPicker";
+import { ITag } from "@/types/interface/tag.interface";
+import useProjects from "@/hooks/useProjects";
+import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
 
 interface TaskDetailDrawerProps {
     isOpen: boolean;
@@ -41,9 +49,10 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         title: "",
         description: "",
         priority: "Normal" as "High" | "Normal" | "Low",
+        project_object_id: null as string | null,
     });
 
-    const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
+    const [activePicker, setActivePicker] = useState<"time" | "participants" | "tags" | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -53,6 +62,13 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     const [selHour, setSelHour] = useState("09");
     const [selMinute, setSelMinute] = useState("00");
     const [selAmPm, setSelAmPm] = useState("AM");
+
+    // Attachments State
+    const [newAttachments, setNewAttachments] = useState<AttachmentInput[]>([]);
+    const [existingAttachments, setExistingAttachments] = useState<TaskAttachment[]>([]);
+
+    // Project State
+    const { projects } = useProjects();
 
     // User search
     const { users: allUsers } = useGetUsers();
@@ -74,7 +90,10 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 title: task.title || "",
                 description: task.description || "",
                 priority: task.priority || "Normal",
+                project_object_id: task.project_object_id || null,
             });
+            setExistingAttachments(task.attachments || []);
+            setNewAttachments([]);
             setActivePicker(null);
             setShowDeleteConfirm(false);
             setSearchQuery("");
@@ -134,9 +153,37 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             title: formData.title,
             description: formData.description,
             priority: formData.priority,
+            project_object_id: formData.project_object_id,
+            attachments: [
+                ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
+                ...newAttachments
+            ],
+            tag_object_id_list: task?.tags?.map((t: any) => t._id)
         });
         setIsSaving(false);
         onClose();
+    };
+
+    // Attachment Handlers
+    const handleAddFiles = (files: File[]) => {
+        const newAtts = files.map(file => ({ file, description: "" }));
+        setNewAttachments(prev => [...prev, ...newAtts].slice(0, 10 - existingAttachments.length));
+    };
+
+    const handleRemoveNewAttachment = (index: number) => {
+        setNewAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleRemoveExistingAttachment = (index: number) => {
+        setExistingAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleUpdateNewDescription = (index: number, description: string) => {
+        setNewAttachments(prev => prev.map((att, i) => i === index ? { ...att, description } : att));
+    };
+
+    const handleUpdateExistingDescription = (index: number, description: string) => {
+        setExistingAttachments(prev => prev.map((att, i) => i === index ? { ...att, description } : att));
     };
 
     const handleDelete = () => {
@@ -179,12 +226,12 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 {/* Header */}
                 <div className="m-3 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">Edit Task</h2>
+                        <h2 className="text-lg font-semibold flex items-center gap-2">Task Details</h2>
                         <div className="flex items-center gap-2">
-                            <button onClick={() => setShowDeleteConfirm(true)} className="p-2 hover:bg-white/30 rounded-full transition-colors">
+                            <button type="button" onClick={() => setShowDeleteConfirm(true)} className="p-2 hover:bg-white/30 rounded-full transition-colors">
                                 <TrashBinMinimalistic className="w-5 h-5 text-white" />
                             </button>
-                            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+                            <button type="button" onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
                                 <CloseCircle className="w-5 h-5" />
                             </button>
                         </div>
@@ -202,13 +249,31 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                             onTogglePicker={() => setActivePicker(activePicker === "time" ? null : "time")}
                             onPriorityChange={(p) => setFormData(prev => ({ ...prev, priority: p }))}
                         />
+                        <ProjectSelect
+                            projects={projects}
+                            selectedProjectId={formData.project_object_id}
+                            onProjectChange={(id) => setFormData(prev => ({ ...prev, project_object_id: id }))}
+                        />
                         <AssigneesSection
                             assignees={task?.assignees || []}
                             onManageClick={() => setActivePicker("participants")}
                         />
+                        <TagsSection
+                            tags={task?.tags || []}
+                            onManageClick={() => setActivePicker("tags")}
+                        />
                         <SubtasksSection
                             subtasks={task?.subtask || []}
                             onAddSubtask={() => { onAddSubtask(task._id); onClose(); }}
+                        />
+                        <AttachmentsSection
+                            attachments={newAttachments}
+                            existingAttachments={existingAttachments}
+                            onAddFiles={handleAddFiles}
+                            onRemoveAttachment={handleRemoveNewAttachment}
+                            onRemoveExisting={handleRemoveExistingAttachment}
+                            onUpdateDescription={handleUpdateNewDescription}
+                            onUpdateExistingDescription={handleUpdateExistingDescription}
                         />
                     </form>
                 </div>
@@ -262,6 +327,20 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                             onRemoveAssignee={removeAssignee}
                             onClose={() => setActivePicker(null)}
                         />
+                    )}
+                    {activePicker === "tags" && (
+                        <div className="p-6">
+                            <TagPicker
+                                selectedTagIds={task?.tags?.map((t: any) => t._id) || []}
+                                onAddTag={(tag) => onEditTask(task._id, {
+                                    tag_object_id_list: [...(task?.tags?.map((t: any) => t._id) || []), tag._id]
+                                })}
+                                onRemoveTag={(id) => onEditTask(task._id, {
+                                    tag_object_id_list: (task?.tags?.map((t: any) => t._id) || []).filter((tid: string) => tid !== id)
+                                })}
+                                onClose={() => setActivePicker(null)}
+                            />
+                        </div>
                     )}
                 </div>
 

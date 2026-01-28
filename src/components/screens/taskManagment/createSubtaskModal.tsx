@@ -17,29 +17,51 @@ import {
 import type {
   CreateSubtaskModalProps,
   SubTaskFormData,
+  AttachmentInput,
 } from "@/types/interface/task-modal.interface";
 import { SearchIcon } from "lucide-react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
+import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
+import { cn } from "@/lib/utils";
+import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
+import { Tag } from "lucide-react";
+import { ITag } from "@/types/interface/tag.interface";
+import TagPicker from "@/components/shared/TagPicker/TagPicker";
+import useProjects from "@/hooks/useProjects";
+import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
 
 const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
   initialStatus,
+  phases,
+  initialProjectId,
 }) => {
-  const [formData, setFormData] = useState<SubTaskFormData>({
+  const getInitialPhaseId = () => {
+    if (initialStatus) return initialStatus;
+    if (phases && phases.length > 0) {
+      return [...phases].sort((a, b) => (a.index || 0) - (b.index || 0))[0]._id;
+    }
+    return undefined;
+  };
+
+  const [formData, setFormData] = useState<any>({
     title: "",
     description: "",
     due_date: "",
     priority: "Normal",
     assigned_user_list: [],
-    status: initialStatus,
+    phase_object_id: getInitialPhaseId(),
+    project_object_id: initialProjectId || null,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<IUser[]>([]);
-  const [activePicker, setActivePicker] = useState<"time" | "participants" | null>(null);
+  const [selectedTags, setSelectedTags] = useState<ITag[]>([]);
+  const [attachments, setAttachments] = useState<AttachmentInput[]>([]);
+  const [activePicker, setActivePicker] = useState<"time" | "participants" | "tags" | null>(null);
 
   // Custom Picker States
   const [viewDate, setViewDate] = useState(new Date());
@@ -47,6 +69,9 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
   const [selHour, setSelHour] = useState("09");
   const [selMinute, setSelMinute] = useState("00");
   const [selAmPm, setSelAmPm] = useState("AM");
+
+  // Project State
+  const { projects } = useProjects();
 
   // User Search State
   const { users: allUsers } = useGetUsers();
@@ -63,18 +88,21 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData((p) => ({
+      setFormData((p: any) => ({
         ...p,
         title: "",
         description: "",
         due_date: "",
         priority: "Normal",
         assigned_user_list: [],
-        status: initialStatus
+        phase_object_id: getInitialPhaseId(),
+        project_object_id: initialProjectId || null,
       }));
       setSelectedUsers([]);
+      setAttachments([]);
       setActivePicker(null);
       setSearchQuery("");
+      setSelectedTags([]);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -95,7 +123,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     if (selAmPm === "AM" && h === 12) h = 0;
 
     const formattedDate = `${year}-${month}-${day}T${String(h).padStart(2, "0")}:${selMinute}`;
-    setFormData(prev => ({ ...prev, due_date: formattedDate }));
+    setFormData((prev: any) => ({ ...prev, due_date: formattedDate }));
   }, [selDate, selHour, selMinute, selAmPm]);
 
   // Calendar Helpers
@@ -128,7 +156,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((p) => ({ ...p, [name]: value }));
+    setFormData((p: any) => ({ ...p, [name]: value }));
   };
 
   const addAssignee = (user: IUser) => {
@@ -148,9 +176,27 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
     await onSubmit({
       ...formData,
       assigned_user_list: selectedUsers.map((u) => u.id || (u as any)._id),
+      tag_object_id_list: selectedTags.map(tag => tag._id),
+      attachments,
     });
     setIsSubmitting(false);
     onClose();
+  };
+
+  // Attachment handlers
+  const handleAddFiles = (files: File[]) => {
+    const newAttachments = files.map((file) => ({ file, description: "" }));
+    setAttachments((prev) => [...prev, ...newAttachments].slice(0, 10));
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateDescription = (index: number, description: string) => {
+    setAttachments((prev) =>
+      prev.map((att, i) => (i === index ? { ...att, description } : att))
+    );
   };
 
   // Use portal to render at body level (SSR guard)
@@ -225,6 +271,18 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
               </div>
             </div>
 
+            {/* Task Phase Selection */}
+            <PhaseSelect
+              phases={phases}
+              selectedPhaseId={formData.phase_object_id}
+              onPhaseChange={(id) => setFormData((prev: any) => ({ ...prev, phase_object_id: id }))}
+            />
+            <ProjectSelect
+              projects={projects}
+              selectedProjectId={formData.project_object_id}
+              onProjectChange={(id) => setFormData((prev: any) => ({ ...prev, project_object_id: id }))}
+            />
+
             {/* Timeline & Priority */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -257,7 +315,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                       <button
                         key={p}
                         type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, priority: p as any }))}
+                        onClick={() => setFormData((prev: any) => ({ ...prev, priority: p as any }))}
                         className={`h-8 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${formData.priority === p
                           ? "bg-gradient-to-r from-black/70 to-black/70 text-white border border-gray-100"
                           : "text-gray-500 hover:text-gray-700"
@@ -309,7 +367,7 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="p-8 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={() => setActivePicker("participants")}>
+                  <div className="p-4 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={() => setActivePicker("participants")}>
                     <UsersGroupRounded className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
                     <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No assignees yet</p>
                     <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to assign teammates</p>
@@ -317,6 +375,60 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Tags */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-gray-700 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-amber-50 border border-amber-100 rounded-lg">
+                    <Tag className="w-5 h-5 text-amber-500" />
+                  </div>
+                  Tags
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActivePicker("tags")}
+                  className="text-[10px] font-bold text-orange-600 hover:text-orange-700 uppercase tracking-widest bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100 transition-all active:scale-95"
+                >
+                  Add Tags
+                </button>
+              </h3>
+
+              <div className="space-y-2">
+                {selectedTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 p-4 bg-gray-50 rounded-2xl border border-gray-100 min-h-[60px]">
+                    {selectedTags.map(tag => (
+                      <div
+                        key={tag._id}
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-2 shadow-sm"
+                        style={{
+                          backgroundColor: tag.color,
+                          color: 'white'
+                        }}
+                      >
+                        <Tag className="w-3 h-3" />
+                        {tag.name}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center group hover:border-orange-200 transition-colors cursor-pointer" onClick={() => setActivePicker("tags")}>
+                    <Tag className="w-8 h-8 text-gray-300 group-hover:text-orange-300 transition-colors mb-2" />
+                    <p className="text-xs font-bold text-gray-400 group-hover:text-gray-500">No tags selected</p>
+                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">Click to add labels</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Attachments Section */}
+            <AttachmentsSection
+              attachments={attachments}
+              onAddFiles={handleAddFiles}
+              onRemoveAttachment={handleRemoveAttachment}
+              onUpdateDescription={handleUpdateDescription}
+            />
           </form>
         </div>
 
@@ -357,7 +469,8 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-xl font-bold text-gray-800">
-                {activePicker === "time" ? "Select Due Time" : "Assign Teammates"}
+                {activePicker === "time" ? "Select Due Time" :
+                  activePicker === "participants" ? "Assign Teammates" : "Manage Tags"}
               </h4>
               <button onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
                 <CloseCircle className="w-5 h-5 text-gray-400" />
@@ -551,6 +664,15 @@ const CreateSubtaskModal: React.FC<CreateSubtaskModalProps> = ({
                   Done Managing
                 </button>
               </div>
+            )}
+
+            {activePicker === "tags" && (
+              <TagPicker
+                selectedTagIds={selectedTags.map(t => t._id)}
+                onAddTag={(tag) => setSelectedTags([...selectedTags, tag])}
+                onRemoveTag={(id) => setSelectedTags(selectedTags.filter(t => t._id !== id))}
+                onClose={() => setActivePicker(null)}
+              />
             )}
           </div>
         </div>

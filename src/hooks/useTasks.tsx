@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   getTasks,
   createTask,
@@ -8,10 +8,23 @@ import {
   unassignTask,
   assignTask,
   updateTaskStatus,
+  TaskCreatePayload,
+  TaskUpdatePayload,
 } from "@/utils/api/task/task.api";
 import { Task, TaskSection } from "@/types/interface/task.interface";
 import { toast } from "react-toastify";
 import { api } from "@/utils/api";
+
+
+export const normalizeTask = (task: any): Task => {
+  if (!task) return {} as Task;
+  return {
+    ...task,
+    assignees: task.assignees ?? task.assigned_users_info ?? [],
+    tags: task.tags ?? task.tags_info ?? [],
+    tag_object_id_list: task.tag_object_id_list ?? task.tag_object_ids ?? [],
+  };
+};
 
 export const useTasks = (filters: any = {}, searchQuery: string = "") => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -19,52 +32,61 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
   const [phases, setPhases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [itemsPerPage] = useState(10);
+  
+  // Track page for each section
+  const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
+  const lastSectionIdRef = useRef<string | null>(null);
 
-  const normalizeTask = (task: any): Task => ({
-    ...task,
-    assignees: task.assignees ?? [],
-  });
-
-  const fetchTasks = useCallback(async () => {
+  const fetchTasks = useCallback(async (targetPhaseId?: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Map frontend filters to backend params
-      const params: any = {};
-      if (filters.userId) params.assigned_user_id = filters.userId;
-      if (filters.statusId) params.phase_object_id = filters.statusId;
+      // 1. Fetch phases
+      const phasesRes = await api.taskPhase.getTaskPhases();
+      const fetchedPhases = phasesRes?.data || [];
+      setPhases(fetchedPhases);
+
+      // 2. Prepare common params
+      const commonParams: any = {};
+      if (filters.userId) commonParams.assigned_user_id = filters.userId;
       if (filters.dueDate) {
-        params.due_date_from = new Date().toISOString().split("T")[0]; // Today's date
-        params.due_date_to = filters.dueDate; // Selected date
+        commonParams.due_date_from = new Date().toISOString().split("T")[0];
+        commonParams.due_date_to = filters.dueDate;
       }
-      if (filters.onlyMyTasks) params.my_tasks = "true";
-      
-      // If backend supports search, we could add it here
-      // params.search = searchQuery;
+      if (filters.onlyMyTasks) commonParams.my_tasks = "true";
+      if (filters.project_object_id) commonParams.project_object_id = filters.project_object_id;
+      if (searchQuery) commonParams.query = searchQuery;
+      commonParams.limit = itemsPerPage;
 
-      const [tasksRes, phasesRes] = await Promise.all([
-        getTasks(params),
-        api.taskPhase.getTaskPhases()
-      ]);
+      const phaseId = typeof targetPhaseId === 'string' ? targetPhaseId : null;
 
-      if (tasksRes?.data) {
-        let normalized = tasksRes.data.map(normalizeTask);
+      if (phaseId) {
+        // Targeted Pagination: Only triggered when user clicks a specific page
+        const page = sectionPages[phaseId] || 1;
+        const res = await getTasks({ ...commonParams, phase_object_id: phaseId, page });
+        const normalized = (res?.data || []).map(normalizeTask);
         
-        // If server doesn't support search yet, filter locally for title/desc
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          normalized = normalized.filter((task: Task) => 
-            task.title.toLowerCase().includes(query) || 
-            task.description?.toLowerCase().includes(query)
-          );
-        }
+        setSections(prev => prev.map(s => s.id === phaseId ? {
+          ...s,
+          tasks: normalized,
+          currentPage: page,
+          count: res?.pagination?.totalCount ?? s.count,
+          totalPages: res?.pagination?.totalPages ?? s.totalPages,
+        } : s));
+      } else {
+        // Initial / Global Load: SINGLE API CALL for all tasks
+        // We fetch a larger initial set (e.g. limit * number of phases) to populate sections
+        const globalRes = await getTasks({ ...commonParams, limit: 100 });
+        const allFetchedTasks = (globalRes?.data || []).map(normalizeTask);
+        setTasks(allFetchedTasks);
 
-        setTasks(normalized);
-        const fetchedPhases = phasesRes?.data || [];
-        setPhases(fetchedPhases);
-        setSections(groupTasksByStatus(normalized, fetchedPhases));
+        // Group the single response into sections locally
+        const grouped = groupTasksIntoSections(allFetchedTasks, fetchedPhases, itemsPerPage);
+        setSections(grouped);
       }
+
     } catch (err: any) {
       const msg = err.message || "Failed to fetch tasks";
       setError(msg);
@@ -72,24 +94,39 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
     } finally {
       setLoading(false);
     }
+  }, [filters, searchQuery, sectionPages, itemsPerPage]);
+
+  // Initial fetch on filters or search change
+  useEffect(() => {
+    setSectionPages({});
+    fetchTasks();
   }, [filters, searchQuery]);
 
+  // Pagination-specific trigger
   useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks]);
+    if (lastSectionIdRef.current) {
+      fetchTasks(lastSectionIdRef.current);
+      lastSectionIdRef.current = null;
+    }
+  }, [sectionPages]);
 
+  const setSectionPage = (sectionId: string, page: number) => {
+    lastSectionIdRef.current = sectionId;
+    setSectionPages(prev => ({ ...prev, [sectionId]: page }));
+  };
 
-
-  const handleCreateTask = async (payload: object) => {
-    await createTask(payload);
+  const handleCreateTask = async (payload: TaskCreatePayload) => {
+    const res = await createTask(payload);
     toast.success("Task created");
     fetchTasks();
+    return res;
   };
 
   const handleUpdateTask = async (taskId: string, payload: object) => {
-    await updateTaskStatus(taskId, payload);
+    const res = await updateTaskStatus(taskId, payload);
     toast.success("Task updated");
     fetchTasks();
+    return res;
   };
 
   const handleDeleteTask = async (taskId: string) => {
@@ -98,24 +135,27 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
     fetchTasks();
   };
 
-
   const handleAssignTask = async (taskId: string, userId: string) => {
-    await assignTask(taskId, userId);
+    const res = await assignTask(taskId, userId);
     toast.success("User assigned");
-    fetchTasks(); 
+    fetchTasks();
+    return res;
   };
 
   const handleUnassignTask = async (taskId: string, userId: string) => {
-    await unassignTask(taskId, userId);
+    const res = await unassignTask(taskId, userId);
     toast.success("User unassigned");
-    fetchTasks(); 
+    fetchTasks();
+    return res;
   };
 
-  const handleEditTask = async (taskId: string, payload: object) => {
-    await updateTask(taskId, payload);
+  const handleEditTask = async (taskId: string, payload: TaskUpdatePayload) => {
+    const res = await updateTask(taskId, payload);
     toast.success("Task updated");
     fetchTasks();
+    return res;
   };
+
   return {
     tasks,
     sections,
@@ -128,14 +168,17 @@ export const useTasks = (filters: any = {}, searchQuery: string = "") => {
     handleDeleteTask,
     handleAssignTask,
     handleUnassignTask,
-    handleEditTask
+    handleEditTask,
+    setSectionPage,
+    itemsPerPage
   };
 };
 
-// Helper function to group tasks by phase_info
-export function groupTasksByStatus(tasks: Task[], allPhases: any[] = []): TaskSection[] {
-  // 1. Initialize sections from all available phases
-  let sections: TaskSection[] = allPhases
+/**
+ * Groups a flat tasks list into sections based on phase_info
+ */
+export function groupTasksIntoSections(tasks: Task[], allPhases: any[] = [], itemsPerPage: number = 10): TaskSection[] {
+  const sections: TaskSection[] = allPhases
     .sort((a, b) => a.index - b.index)
     .map(phase => ({
       id: phase._id,
@@ -144,56 +187,29 @@ export function groupTasksByStatus(tasks: Task[], allPhases: any[] = []): TaskSe
       color: phase.color || "#9CA3AF",
       count: 0,
       tasks: [],
+      currentPage: 1,
+      totalPages: 1
     }));
 
-  // 2. If no phases fetched, find unique phases used in tasks
-  if (sections.length === 0) {
-    const phaseMap = new Map<string, any>();
-    tasks.forEach(t => {
-      if (t.phase_info && !phaseMap.has(t.phase_info._id)) {
-        phaseMap.set(t.phase_info._id, t.phase_info);
-      }
-    });
-    
-    sections = Array.from(phaseMap.values())
-      .sort((a, b) => (a.index || 0) - (b.index || 0))
-      .map(p => ({
-        id: p._id,
-        title: p.name,
-        status: p.name,
-        color: p.color || "#9CA3AF",
-        count: 0,
-        tasks: [],
-      }));
-  }
-
-  // 3. Fallback to default sections if still nothing
-  if (sections.length === 0) {
-    sections = [
-      { id: "pending", title: "In Progress", status: "pending", color: "#F97316", count: 0, tasks: [] },
-      { id: "ready-to-check", title: "Review", status: "ready-to-check", color: "#3B82F6", count: 0, tasks: [] },
-      { id: "completed", title: "Completed", status: "completed", color: "#22C55E", count: 0, tasks: [] },
-      { id: "backlog", title: "Backlog", status: "backlog", color: "#6B7280", count: 0, tasks: [] },
-    ];
-  }
-
-  // 4. Group parent tasks into sections
   const parentTasks = tasks.filter((task) => !task.parent_task_object_id);
+  
+  // First, count all tasks per phase to get correct pagination info
   parentTasks.forEach((task) => {
-    // Try matching by phase ID, then by name
-    const section = sections.find(s => 
-      s.id === task.phase_info?._id || 
-      s.title === task.phase_info?.name ||
-      s.status === task.status
+    const section = sections.find(s =>
+      s.id === (task.phase_info?._id || task.phase_object_id)
     );
-    
-    if (section) {
-      section.tasks.push(task);
-      section.count++;
-    }
+    if (section) section.count++;
   });
 
-  // 5. If we fetched all phases, keep them even if empty (optional, but original code filtered empty)
-  // For better UX with dynamic phases, we'll keep them if we fetched them explicitly
-  return sections.filter(s => s.count > 0);
+  // Then, populate only the first page (top 10) for each section
+  sections.forEach(section => {
+    const phaseTasks = parentTasks.filter(t => 
+      (t.phase_info?._id || t.phase_object_id) === section.id
+    );
+    
+    section.tasks = phaseTasks.slice(0, itemsPerPage);
+    section.totalPages = Math.ceil(section.count / itemsPerPage);
+  });
+
+  return sections;
 }

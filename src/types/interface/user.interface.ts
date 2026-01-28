@@ -21,4 +21,9 @@ export interface IUser {
     name: string;
     access_token: string;
   };
+  youtube?: {
+    access_token: string;
+    refresh_token?: string;
+    expiry_date?: number;
+  };
 }
