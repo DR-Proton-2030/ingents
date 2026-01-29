@@ -19,13 +19,8 @@ import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import { ProjectSelector, CreateProjectDrawer } from "./components";
 import { IProject } from "@/types/interface/project.interface";
 import useProjects from "@/hooks/useProjects";
+import { TaskHeaderProps, ViewTab } from "@/types/interface/props/taskHeader.props";
 
-
-interface ViewTab {
-  id: ViewMode;
-  label: string;
-  icon: React.ElementType;
-}
 
 const viewTabs: ViewTab[] = [
   { id: "spreadsheet", label: "Spreadsheet", icon: Table },
@@ -33,21 +28,6 @@ const viewTabs: ViewTab[] = [
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "board", label: "Board", icon: Widget },
 ];
-
-interface TaskHeaderProps {
-  activeView: ViewMode;
-  onViewChange: (view: ViewMode) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onFilter?: () => void;
-  onCreateProject?: () => void;
-  onCreateTask?: () => void;
-  filters: ITaskFilters;
-  onFilterChange: (filters: ITaskFilters) => void;
-  phases: any[];
-  selectedProjectId?: string;
-  onProjectSelect: (project: IProject | null) => void;
-}
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
   activeView,
@@ -62,6 +42,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   phases,
   selectedProjectId,
   onProjectSelect,
+  onDownloadReport,
 }) => {
   const [isProjectDrawerOpen, setIsProjectDrawerOpen] = React.useState(false);
   const { handleCreateProject } = useProjects();
@@ -148,6 +129,18 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                 )}
               </div>
               <span>Filter</span>
+            </button>
+
+            <button
+              onClick={onDownloadReport}
+              className="group flex items-center gap-1 py-2 px-4 bg-white/70 border shadow-sm border-gray-100 rounded-full relative overflow-hidden active:scale-95 transition-all hover:border-blue-200"
+            >
+              <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center transition-transform duration-500 group-hover:rotate-6">
+                <Document className="w-5 h-5 text-blue-500" />
+              </div>
+              <div className="flex flex-col">
+                <p className="font-sm text-sm">Download Report</p>
+              </div>
             </button>
 
             <QuickActionCard
