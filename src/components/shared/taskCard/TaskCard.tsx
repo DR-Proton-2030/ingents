@@ -11,8 +11,11 @@ import {
   ScheduleModal,
   DeleteConfirmationModal,
   EditableText,
-  TaskActionDropdown
+  TaskActionDropdown,
+  AttachmentsModal
 } from ".";
+import { Gallery, CloseCircle } from "@solar-icons/react";
+
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
 import StatusDropdown from "../statusDropdown/StatusDropdown";
@@ -50,12 +53,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
   isExpanded = false,
 }) => {
   const [showDescription, setShowDescription] = useState(false);
+  const [showAttachments, setShowAttachments] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const descTriggerRef = useRef<HTMLDivElement>(null);
+  const attachmentsTriggerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLTableCellElement>(null);
   const [descPosition, setDescPosition] = useState({ top: 0, left: 0 });
+  const [attachmentsPosition, setAttachmentsPosition] = useState({ top: 0, left: 0 });
+
+
   const hasChildren = task.subtask && task.subtask.length > 0;
   const paddingLeft = depth * 24;
 
@@ -68,14 +76,18 @@ const TaskCard: React.FC<TaskCardProps> = ({
       if (descTriggerRef.current && !descTriggerRef.current.contains(event.target as Node)) {
         setShowDescription(false);
       }
+      if (attachmentsTriggerRef.current && !attachmentsTriggerRef.current.contains(event.target as Node)) {
+        setShowAttachments(false);
+      }
     };
-    if (showDescription) {
+    if (showDescription || showAttachments) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showDescription]);
+  }, [showDescription, showAttachments]);
+
 
   useEffect(() => {
     if (showDescription && descTriggerRef.current) {
@@ -103,6 +115,34 @@ const TaskCard: React.FC<TaskCardProps> = ({
       };
     }
   }, [showDescription]);
+
+  useEffect(() => {
+    if (showAttachments && attachmentsTriggerRef.current) {
+      const rect = attachmentsTriggerRef.current.getBoundingClientRect();
+      setAttachmentsPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+      });
+
+      const handleResize = () => {
+        const newRect = attachmentsTriggerRef.current?.getBoundingClientRect();
+        if (newRect) {
+          setAttachmentsPosition({
+            top: newRect.bottom + 8,
+            left: newRect.left,
+          });
+        }
+      };
+
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('scroll', handleResize, true);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('scroll', handleResize, true);
+      };
+    }
+  }, [showAttachments]);
+
 
   return (
     <>
@@ -189,7 +229,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <div
             ref={descTriggerRef}
             className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-orange-600 transition-all group/desc w-fit"
-            onClick={() => setShowDescription(!showDescription)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDescription(!showDescription);
+            }}
           >
             <Notes className={cn("w-4 h-4 shrink-0 transition-transform duration-300", showDescription ? "scale-110 text-orange-500" : "group-hover/desc:scale-110")} />
             <span className={cn("font-medium transition-colors", showDescription && "text-orange-600")}>View</span>
@@ -276,8 +319,40 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </td>
 
         {/* Priority Cell */}
-        <td className="py-4 px-4">
+        <td className="py-4 px-4 font-bold text-gray-700">
           <PriorityBadge priority={task.priority} />
+        </td>
+
+        {/* Attachments Cell */}
+        <td className="py-4 px-4">
+          <div
+            ref={attachmentsTriggerRef}
+            className={cn(
+              "flex items-center gap-2 text-sm transition-all group/attach w-fit",
+              task.attachments && task.attachments.length > 0
+                ? "cursor-pointer text-gray-500 hover:text-blue-600"
+                : "text-gray-300 pointer-events-none"
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (task.attachments && task.attachments.length > 0) {
+                setShowAttachments(!showAttachments);
+              }
+            }}
+          >
+            <Gallery className={cn("w-4 h-4 shrink-0 transition-transform duration-300", showAttachments ? "scale-110 text-blue-500" : "group-hover/attach:scale-110")} />
+            <span className={cn("font-medium transition-colors", showAttachments && "text-blue-600")}>
+              {task.attachments && task.attachments.length > 0 ? `(${task.attachments.length})` : "—"}
+            </span>
+          </div>
+
+          <AttachmentsModal
+            isOpen={showAttachments}
+            onClose={() => setShowAttachments(false)}
+            attachments={task.attachments || []}
+            taskTitle={task.title}
+            position={attachmentsPosition}
+          />
         </td>
 
         {/* Actions Cell */}
