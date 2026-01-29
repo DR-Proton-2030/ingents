@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AltArrowLeft, AltArrowRight } from "@solar-icons/react";
 import { FileText, Download as DownloadIcon, X } from "lucide-react";
@@ -14,7 +15,9 @@ const AttachmentPreviewer: React.FC<AttachmentPreviewerProps> = ({
     onPrev,
     onDownload,
 }) => {
-    return (
+    if (typeof document === "undefined") return null;
+
+    return createPortal(
         <AnimatePresence>
             {isOpen && (
                 <motion.div
@@ -103,7 +106,8 @@ const AttachmentPreviewer: React.FC<AttachmentPreviewerProps> = ({
                     </motion.div>
                 </motion.div>
             )}
-        </AnimatePresence>
+        </AnimatePresence>,
+        document.body
     );
 };
 

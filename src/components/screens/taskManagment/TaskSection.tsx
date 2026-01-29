@@ -130,9 +130,6 @@ const TaskSection: React.FC<TaskSectionProps> = ({
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Priority
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Attachments
-                </th>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                   Actions
                 </th>

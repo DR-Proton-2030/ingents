@@ -12,9 +12,8 @@ import {
   DeleteConfirmationModal,
   EditableText,
   TaskActionDropdown,
-  AttachmentsModal
 } from ".";
-import { Gallery, CloseCircle } from "@solar-icons/react";
+import { CloseCircle } from "@solar-icons/react";
 
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
@@ -53,15 +52,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
   isExpanded = false,
 }) => {
   const [showDescription, setShowDescription] = useState(false);
-  const [showAttachments, setShowAttachments] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const descTriggerRef = useRef<HTMLDivElement>(null);
-  const attachmentsTriggerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLTableCellElement>(null);
   const [descPosition, setDescPosition] = useState({ top: 0, left: 0 });
-  const [attachmentsPosition, setAttachmentsPosition] = useState({ top: 0, left: 0 });
 
 
   const hasChildren = task.subtask && task.subtask.length > 0;
@@ -76,17 +72,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
       if (descTriggerRef.current && !descTriggerRef.current.contains(event.target as Node)) {
         setShowDescription(false);
       }
-      if (attachmentsTriggerRef.current && !attachmentsTriggerRef.current.contains(event.target as Node)) {
-        setShowAttachments(false);
-      }
     };
-    if (showDescription || showAttachments) {
+    if (showDescription) {
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showDescription, showAttachments]);
+  }, [showDescription]);
 
 
   useEffect(() => {
@@ -115,33 +108,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
       };
     }
   }, [showDescription]);
-
-  useEffect(() => {
-    if (showAttachments && attachmentsTriggerRef.current) {
-      const rect = attachmentsTriggerRef.current.getBoundingClientRect();
-      setAttachmentsPosition({
-        top: rect.bottom + 8,
-        left: rect.left,
-      });
-
-      const handleResize = () => {
-        const newRect = attachmentsTriggerRef.current?.getBoundingClientRect();
-        if (newRect) {
-          setAttachmentsPosition({
-            top: newRect.bottom + 8,
-            left: newRect.left,
-          });
-        }
-      };
-
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('scroll', handleResize, true);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('scroll', handleResize, true);
-      };
-    }
-  }, [showAttachments]);
 
 
   return (
@@ -323,37 +289,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <PriorityBadge priority={task.priority} />
         </td>
 
-        {/* Attachments Cell */}
-        <td className="py-4 px-4">
-          <div
-            ref={attachmentsTriggerRef}
-            className={cn(
-              "flex items-center gap-2 text-sm transition-all group/attach w-fit",
-              task.attachments && task.attachments.length > 0
-                ? "cursor-pointer text-gray-500 hover:text-blue-600"
-                : "text-gray-300 pointer-events-none"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (task.attachments && task.attachments.length > 0) {
-                setShowAttachments(!showAttachments);
-              }
-            }}
-          >
-            <Gallery className={cn("w-4 h-4 shrink-0 transition-transform duration-300", showAttachments ? "scale-110 text-blue-500" : "group-hover/attach:scale-110")} />
-            <span className={cn("font-medium transition-colors", showAttachments && "text-blue-600")}>
-              {task.attachments && task.attachments.length > 0 ? `(${task.attachments.length})` : "—"}
-            </span>
-          </div>
-
-          <AttachmentsModal
-            isOpen={showAttachments}
-            onClose={() => setShowAttachments(false)}
-            attachments={task.attachments || []}
-            taskTitle={task.title}
-            position={attachmentsPosition}
-          />
-        </td>
 
         {/* Actions Cell */}
         <td className="py-4 px-4">
