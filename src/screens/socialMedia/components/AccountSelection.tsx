@@ -283,8 +283,11 @@ export default function AccountSelection() {
               handleConnect(social.id);
             }}
             onView={(integration) => {
-              console.log("View connection details for:", integration.title);
-              // Add view logic here if needed
+              if (integration.title === "YouTube") {
+                router.push(`${pathname}/youtube`);
+              } else {
+                console.log("View connection details for:", integration.title);
+              }
             }}
             onDisconnect={(integration) => {
               console.log("Disconnect:", integration.title);

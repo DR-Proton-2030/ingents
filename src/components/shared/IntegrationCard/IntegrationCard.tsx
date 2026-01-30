@@ -105,7 +105,7 @@ const IntegrationCard: React.FC<IntegrationCardProps> = ({
                                 className="bg-indigo-50 text-indigo-600 font-semibold py-2 px-3 rounded-xl hover:bg-indigo-100 transition-all duration-200 text-[10px] flex items-center gap-1 border border-indigo-100/30"
                             >
                                 <FiRefreshCw size={11} />
-                                <span>Sync</span>
+                               
                             </button>
                         </div>
                     )}
