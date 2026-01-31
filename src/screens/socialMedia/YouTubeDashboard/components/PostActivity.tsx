@@ -3,22 +3,17 @@ import React from "react";
 import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
-const PostActivity = () => {
+const PostActivity = ({ activity }: { activity: any }) => {
   const stats = [
-    { label: "Shorts", value: "687" },
-    { label: "Videos", value: "189" },
-    { label: "Lives", value: "24" },
+    { label: "Shorts", value: activity?.shorts || "0" },
+    { label: "Videos", value: activity?.videos || "0" },
+    { label: "Lives", value: activity?.lives || "0" },
   ];
 
   const days = ["S", "M", "T", "W", "T", "F", "S"];
   
   // Mock grid data [value, isActive/intensity]
-  const gridData = [
-    [0, 0], [0, 0], [35, 3], [7, 1], [9, 1], [6, 1], [1, 0],
-    [1, 0], [7, 1], [18, 2], [24, 3], [18, 2], [9, 1], [24, 3],
-    [6, 1], [18, 2], [9, 1], [8, 1], [24, 3], [24, 3], [8, 1],
-    [32, 3], [8, 1], [24, 3], [2, 0], [9, 1], [0, 0], [0, 0]
-  ];
+  const gridData = activity?.growthTrend || [];
 
   const getCircleStyle = (intensity: number) => {
     switch (intensity) {
@@ -57,7 +52,7 @@ const PostActivity = () => {
           ))}
         </div>
         <div className="grid grid-cols-7 gap-3">
-          {gridData.map((cell, idx) => (
+          {gridData.map((cell: any, idx: number) => (
             <motion.div
               key={idx}
               initial={{ scale: 0, opacity: 0 }}

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useContext } from "react";
 import Layout from "@/screens/layout/Layout";
 import { motion } from "framer-motion";
 import ProfileCard from "@/screens/socialMedia/YouTubeDashboard/components/ProfileCard";
@@ -11,8 +11,23 @@ import PostInsights from "@/screens/socialMedia/YouTubeDashboard/components/Post
 import YourAccounts from "@/screens/socialMedia/YouTubeDashboard/components/YourAccounts";
 import Header from "@/screens/socialMedia/components/Header";
 import Link from "next/link";
+import { useYouTubeDetails } from "@/hooks/useYouTubeDetails";
+import AuthContext from "@/contexts/authContext/authContext";
 
 const YouTubeStatsDashboard = () => {
+  const { user } = useContext(AuthContext);
+  const { data, loading, error } = useYouTubeDetails(user?.id);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-[#EAEEF6] flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-[#EAEEF6] p-4 lg:p-8 font-sans">
@@ -30,21 +45,21 @@ const YouTubeStatsDashboard = () => {
             
             {/* Left Column */}
             <div className="lg:col-span-4 space-y-6">
-              <ProfileCard />
-              <ProfileViews />
+              <ProfileCard data={data?.channel} demographics={data?.demographics} />
+              <ProfileViews statistics={data?.channel?.statistics} data={data?.postActivity?.growthTrend} />
               <YourAccounts />
             </div>
 
             {/* Middle Column */}
             <div className="lg:col-span-4 space-y-6">
-              <PostActivity />
-              <AnomalyCard />
+              <PostActivity activity={data?.postActivity} />
+              <AnomalyCard statistics={data?.channel?.statistics} />
             </div>
 
             {/* Right Column */}
             <div className="lg:col-span-4 space-y-6">
               <PostSchedule />
-              <PostInsights />
+              <PostInsights videos={data?.recentVideos} />
             </div>
 
           </div>

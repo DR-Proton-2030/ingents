@@ -26,3 +26,13 @@ export const uploadYoutubeVideo = async (payload: YoutubeUploadPayload) => {
     throw error;
   }
 };
+
+export const getChannelDetails = async (userId: string) => {
+  try {
+    const response = await axios.get(`/api/youtube/get-channel-details?userId=${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error("Frontend Youtube Service Error:", error.response?.data || error.message);
+    throw error;
+  }
+};
