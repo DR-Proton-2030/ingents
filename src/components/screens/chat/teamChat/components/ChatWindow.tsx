@@ -15,7 +15,7 @@ interface ChatWindowProps {
     messageText: string;
     setMessageText: (text: string) => void;
     handleSendMessage: () => void;
-    onStartCall: (type: "audio" | "video") => void;
+    onStartCall: (type: "audio" | "video", user: IUser) => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -110,14 +110,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={() => onStartCall("audio")}
-                        className="p-2.5 hover:bg-gray-50 rounded-full text-gray-400 transition-colors"
+                        onClick={() => chatUser && onStartCall("audio", chatUser)}
+                        disabled={!chatUser}
+                        className="p-2.5 hover:bg-gray-50 rounded-full text-gray-400 transition-colors disabled:opacity-50"
                     >
                         <Phone className="h-5 w-5" />
                     </button>
                     <button
-                        onClick={() => onStartCall("video")}
-                        className="p-2.5 hover:bg-gray-50 rounded-full text-gray-400 transition-colors"
+                        onClick={() => chatUser && onStartCall("video", chatUser)}
+                        disabled={!chatUser}
+                        className="p-2.5 hover:bg-gray-50 rounded-full text-gray-400 transition-colors disabled:opacity-50"
                     >
                         <Video className="h-5 w-5" />
                     </button>
