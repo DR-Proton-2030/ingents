@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     X,
@@ -20,34 +20,45 @@ import Image from "next/image";
 import { IUser } from "@/types/interface/user.interface";
 import { useSearchParams } from "next/navigation";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
+import { db } from "@/lib/firebase";
+import {
+    collection,
+    addDoc,
+    onSnapshot,
+    query,
+    orderBy,
+    where,
+    serverTimestamp,
+    Timestamp
+} from "firebase/firestore";
+import AuthContext from "@/contexts/authContext/authContext";
 
 interface Message {
     id: string;
     text: string;
     senderId: string;
-    timestamp: string;
+    timestamp: any;
     isRead: boolean;
     type: "text" | "image";
 }
 
-interface Chat {
-    id: string;
-    user: Partial<IUser>;
-    lastMessage: string;
-    time: string;
-    unreadCount: number;
-    isOnline: boolean;
-    isTyping?: boolean;
-}
-
 const TeamChatScreen = () => {
+    const { user: currentUser } = useContext(AuthContext);
     const searchParams = useSearchParams();
     const userId = searchParams.get("userId");
     const { users } = useGetUsers();
+
     const [activeTab, setActiveTab] = useState<"chats" | "calls">("chats");
     const [activeChatId, setActiveChatId] = useState<string | null>(userId);
     const [messageText, setMessageText] = useState("");
     const [chatUser, setChatUser] = useState<IUser | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    useEffect(() => {
+        console.log("Chat Debug - Current User:", currentUser);
+        console.log("Chat Debug - Active Chat ID:", activeChatId);
+    }, [currentUser, activeChatId]);
 
     useEffect(() => {
         if (activeChatId && users) {
@@ -56,83 +67,93 @@ const TeamChatScreen = () => {
         }
     }, [activeChatId, users]);
 
-    // Mock data for demo
-    const mockChats: Chat[] = [
-        {
-            id: "1",
-            user: { full_name: "Leader-nim", profile_picture: "" },
-            lastMessage: "Time is running!",
-            time: "1m",
-            unreadCount: 4,
-            isOnline: true
-        },
-        {
-            id: "2",
-            user: { full_name: "Se Hun Oh", profile_picture: "" },
-            lastMessage: "Just stop, I'm already late!!",
-            time: "3m",
-            unreadCount: 0,
-            isOnline: false
-        },
-        {
-            id: "3",
-            user: { full_name: "Jong Dae Hyung", profile_picture: "" },
-            lastMessage: "Typing...",
-            time: "12m",
-            unreadCount: 0,
-            isOnline: true,
-            isTyping: true
-        }
-    ];
-
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: "m1",
-            text: "which one you need? I kinda busy rn",
-            senderId: "other",
-            timestamp: "09:52",
-            isRead: true,
-            type: "text"
-        },
-        {
-            id: "m2",
-            text: "just explain it, I'll send some of it later",
-            senderId: "other",
-            timestamp: "09:52",
-            isRead: true,
-            type: "text"
-        },
-        {
-            id: "m3",
-            text: "I can't send all of them, it's quite a lot. Let's meet up, and I'll transfer them using airdrops.",
-            senderId: "me",
-            timestamp: "10:05",
-            isRead: true,
-            type: "text"
-        }
-    ]);
-
-    const handleSendMessage = () => {
-        if (!messageText.trim()) return;
-
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            text: messageText,
-            senderId: "me",
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
-            isRead: false,
-            type: "text"
-        };
-
-        setMessages([...messages, newMessage]);
-        setMessageText("");
+    // Get conversation ID (sorted user IDs to always hit the same document path)
+    const getConversationId = (uid1: string, uid2: string) => {
+        return [uid1, uid2].sort().join('_');
     };
+
+    // Real-time message listener
+    useEffect(() => {
+        if (!activeChatId || !currentUser?.id) {
+            setMessages([]);
+            return;
+        }
+
+        const convoId = getConversationId(currentUser.id, activeChatId);
+        const q = query(
+            collection(db, "conversations", convoId, "messages"),
+            orderBy("timestamp", "asc")
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            console.log(`Chat Debug - Received ${snapshot.docs.length} messages for convo ${convoId}`);
+            const msgs: Message[] = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    timestamp: data.timestamp?.toDate()
+                        ? data.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                        : "Sending..."
+                } as Message;
+            });
+            console.log("Chat Debug - Parsed Messages:", msgs);
+            setMessages(msgs);
+        }, (error) => {
+            console.error("Chat Debug - Firestore Listener Error:", error);
+            alert("Firestore Error: " + error.message);
+        });
+
+        return () => unsubscribe();
+    }, [activeChatId, currentUser]);
+
+    const handleSendMessage = async () => {
+        console.log("Attempting to send message...");
+        if (!messageText.trim()) {
+            console.log("Send failed: Message text is empty");
+            return;
+        }
+        if (!activeChatId) {
+            console.log("Send failed: No active chat ID");
+            return;
+        }
+        if (!currentUser?.id) {
+            console.log("Send failed: No current user logged in", currentUser);
+            alert("You must be logged in to send messages.");
+            return;
+        }
+
+        const text = messageText;
+        setMessageText(""); // Clear input immediately for better UX
+
+        const convoId = getConversationId(currentUser.id, activeChatId);
+
+        try {
+            await addDoc(collection(db, "conversations", convoId, "messages"), {
+                text: text,
+                senderId: currentUser.id,
+                timestamp: serverTimestamp(),
+                isRead: false,
+                type: "text"
+            });
+            console.log("Message sent successfully!");
+        } catch (error) {
+            console.error("Error sending message:", error);
+            alert("Failed to send message: " + (error instanceof Error ? error.message : String(error)));
+        }
+    };
+
+    const filteredUsers = users?.filter(user =>
+        user.id !== currentUser?.id &&
+        (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+    ) || [];
 
     return (
         <div className="h-[80vh] w-full flex overflow-hidden  ">
             {/* Left Side: Chat List */}
             <div className={cn(
-                "w-full lg:w-[380px] border-r border-white/20 rounded-2xl flex flex-col bg-white/80 mr-4",
+                "w-full lg:w-[385px] border-r border-white/20 rounded-2xl flex flex-col bg-white/80 mr-4",
                 activeChatId && "hidden lg:flex"
             )}>
                 {/* Tabs */}
@@ -170,6 +191,8 @@ const TeamChatScreen = () => {
                         <input
                             type="text"
                             placeholder="Search messages or contact"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-white/40 border-none rounded-2xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-white/20 transition-all font-medium placeholder:text-gray-400"
                         />
                     </div>
@@ -177,51 +200,50 @@ const TeamChatScreen = () => {
 
                 {/* Chat Items */}
                 <div className="flex-1 overflow-y-auto px-2 space-y-1">
-                    {mockChats.map((chat) => (
+                    {filteredUsers.map((user) => (
                         <button
-                            key={chat.id}
-                            onClick={() => setActiveChatId(chat.id)}
+                            key={user.id}
+                            onClick={() => setActiveChatId(user.id)}
                             className={cn(
                                 "w-full flex items-center gap-4 p-4 rounded-3xl transition-all",
-                                activeChatId === chat.id ? "bg-gray-50" : "hover:bg-gray-50/50"
+                                activeChatId === user.id ? "bg-gray-50" : "hover:bg-gray-50/50"
                             )}
                         >
                             <div className="relative">
                                 <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
-                                    {chat.user.profile_picture ? (
-                                        <Image src={chat.user.profile_picture} alt="" width={48} height={48} />
+                                    {user.profile_picture ? (
+                                        <Image src={user.profile_picture} alt="" width={48} height={48} />
                                     ) : (
                                         <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-500 font-bold">
-                                            {chat.user.full_name?.charAt(0)}
+                                            {user.full_name?.charAt(0)}
                                         </div>
                                     )}
                                 </div>
-                                {chat.isOnline && (
-                                    <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full" />
-                                )}
+                                {/* Online Status (Mock for now, could be implemented with Firebase Realtime DB) */}
+                                <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full" />
                             </div>
 
                             <div className="flex-1 text-left">
                                 <div className="flex justify-between items-center mb-0.5">
-                                    <span className="font-bold text-gray-900">{chat.user.full_name}</span>
-                                    <span className="text-xs text-gray-400 font-medium">{chat.time}</span>
+                                    <span className="font-bold text-gray-900">{user.full_name}</span>
+                                    <span className="text-xs text-gray-400 font-medium">Just now</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <span className={cn(
                                         "text-sm truncate max-w-[180px]",
-                                        chat.unreadCount > 0 ? "text-gray-900 font-bold" : "text-gray-500"
+                                        "text-gray-500"
                                     )}>
-                                        {chat.isTyping ? <span className="text-blue-500 italic">Typing...</span> : chat.lastMessage}
+                                        Click to start chatting
                                     </span>
-                                    {chat.unreadCount > 0 && (
-                                        <div className="h-5 min-w-[20px] px-1 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold">
-                                            {chat.unreadCount}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </button>
                     ))}
+                    {filteredUsers.length === 0 && (
+                        <div className="text-center py-10">
+                            <p className="text-gray-400 text-sm">No users found</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -251,7 +273,7 @@ const TeamChatScreen = () => {
                                     )}
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-gray-900">{chatUser?.full_name || "Baek Hyunnie"}</h4>
+                                    <h4 className="font-bold text-gray-900">{chatUser?.full_name || "Chat User"}</h4>
                                     <div className="flex items-center gap-1.5">
                                         <div className="h-1.5 w-1.5 bg-green-500 rounded-full" />
                                         <span className="text-[11px] text-green-500 font-bold uppercase tracking-wider">Online</span>
@@ -273,19 +295,19 @@ const TeamChatScreen = () => {
                         </div>
 
                         {/* Messages Area */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            <div className="flex justify-center">
-                                <span className="px-4 py-1.5 bg-white shadow-sm rounded-full text-[10px] font-black text-gray-400 uppercase tracking-widest">Today</span>
-                            </div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col">
+                            {/* Visual Debug (Temporary) */}
+
+
 
                             {messages.map((msg) => (
                                 <div key={msg.id} className={cn(
                                     "flex flex-col max-w-[80%]",
-                                    msg.senderId === "me" ? "ml-auto items-end" : "items-start"
+                                    msg.senderId === currentUser?.id ? "ml-auto items-end" : "items-start"
                                 )}>
                                     <div className={cn(
                                         "px-5 py-3.5 rounded-2xl text-sm font-medium shadow-sm backdrop-blur-sm transition-all",
-                                        msg.senderId === "me"
+                                        msg.senderId === currentUser?.id
                                             ? "bg-gray-900 text-white rounded-tr-none shadow-gray-200/50"
                                             : "bg-white/70 text-gray-800 rounded-tl-none border border-white/50 shadow-white/20"
                                     )}>
@@ -293,25 +315,18 @@ const TeamChatScreen = () => {
                                     </div>
                                     <div className="mt-1 flex items-center gap-1.5 px-1">
                                         <span className="text-[10px] text-gray-400 font-bold">{msg.timestamp}</span>
-                                        {msg.senderId === "me" && (
+                                        {msg.senderId === currentUser?.id && (
                                             msg.isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3 text-gray-300" />
                                         )}
                                     </div>
                                 </div>
                             ))}
-
-                            {/* Mock Image Message */}
-                            <div className="flex flex-col items-start max-w-[80%]">
-                                <div className="p-2 bg-white rounded-2xl border border-gray-100 shadow-sm rounded-tl-none">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="h-32 w-32 bg-gray-200 rounded-xl overflow-hidden relative" />
-                                        <div className="h-32 w-32 bg-gray-200 rounded-xl overflow-hidden relative" />
-                                    </div>
+                            {messages.length === 0 && (
+                                <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm">
+                                    <MessageSquare className="h-12 w-12 mb-2 opacity-20" />
+                                    <p>No messages yet. Say hello!</p>
                                 </div>
-                                <div className="mt-1 px-1">
-                                    <span className="text-[10px] text-gray-400 font-bold">10:15</span>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Input Area */}
