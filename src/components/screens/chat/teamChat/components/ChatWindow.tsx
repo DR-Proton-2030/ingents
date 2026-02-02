@@ -132,27 +132,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"
             >
-                {messages.map((msg) => (
-                    <div key={msg.id} className={cn(
-                        "flex flex-col max-w-[80%]",
-                        msg.senderId === currentUserId ? "ml-auto items-end" : "items-start"
-                    )}>
-                        <div className={cn(
-                            "px-5 py-3.5 rounded-2xl text-sm font-medium shadow-sm backdrop-blur-sm transition-all",
-                            msg.senderId === currentUserId
-                                ? "bg-gray-900 text-white rounded-tr-none shadow-gray-200/50"
-                                : "bg-white/70 text-gray-800 rounded-tl-none border border-white/50 shadow-white/20"
+                {messages.map((msg) => {
+                    if (msg.type === "call") {
+                        const isVideo = msg.text.toLowerCase().includes("video");
+                        return (
+                            <div key={msg.id} className="w-full flex justify-center my-2">
+                                <div className="flex flex-col items-center gap-1.5">
+                                    <div className="px-4 py-2 bg-gray-100/50 backdrop-blur-sm rounded-full border border-gray-200/50 flex items-center gap-2 text-gray-500 shadow-sm">
+                                        {isVideo ? <Video className="h-3.5 w-3.5" /> : <Phone className="h-3.5 w-3.5" />}
+                                        <span className="text-[12px] font-bold uppercase tracking-tight">{msg.text}</span>
+                                    </div>
+                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{msg.timestamp}</span>
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div key={msg.id} className={cn(
+                            "flex flex-col max-w-[80%]",
+                            msg.senderId === currentUserId ? "ml-auto items-end" : "items-start"
                         )}>
-                            {msg.text}
+                            <div className={cn(
+                                "px-5 py-3.5 rounded-2xl text-sm font-medium shadow-sm backdrop-blur-sm transition-all",
+                                msg.senderId === currentUserId
+                                    ? "bg-gray-900 text-white rounded-tr-none shadow-gray-200/50"
+                                    : "bg-white/70 text-gray-800 rounded-tl-none border border-white/50 shadow-white/20"
+                            )}>
+                                {msg.text}
+                            </div>
+                            <div className="mt-1 flex items-center gap-1.5 px-1">
+                                <span className="text-[10px] text-gray-400 font-bold">{msg.timestamp}</span>
+                                {msg.senderId === currentUserId && (
+                                    msg.isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3 text-gray-300" />
+                                )}
+                            </div>
                         </div>
-                        <div className="mt-1 flex items-center gap-1.5 px-1">
-                            <span className="text-[10px] text-gray-400 font-bold">{msg.timestamp}</span>
-                            {msg.senderId === currentUserId && (
-                                msg.isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3 text-gray-300" />
-                            )}
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
                 {messages.length === 0 && (
                     <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm">
                         <MessageSquare className="h-12 w-12 mb-2 opacity-20" />

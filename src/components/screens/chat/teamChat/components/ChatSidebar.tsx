@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Search, Pin, Users, Phone, MessageSquare, Plus } from "lucide-react";
+import { Search, Pin, Users, Phone, MessageSquare, Plus, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,8 @@ interface ChatSidebarProps {
     setActiveTab: (tab: "chats" | "calls" | "groups") => void;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
+    callHistory: any[];
+    onStartCall: (type: "audio" | "video", user: IUser) => void;
 }
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
@@ -31,6 +33,8 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     setActiveTab,
     searchTerm,
     setSearchTerm,
+    callHistory,
+    onStartCall,
 }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
@@ -209,6 +213,38 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     </div>
                                     <h3 className="text-gray-900 font-bold mb-2">No Groups Yet</h3>
                                     <p className="text-gray-400 text-sm">Create a group to start collaborating with your team.</p>
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                    {activeTab === "calls" && (
+                        <motion.div
+                            key="calls"
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 10 }}
+                            className="space-y-1"
+                        >
+                            {callHistory.map(call => {
+                                const otherParticipantId = call.callerId === currentUserId ? call.receiverId : call.callerId;
+                                const otherUser = users.find(u => u.id === otherParticipantId);
+                                return (
+                                    <CallHistoryItem
+                                        key={call.id}
+                                        call={call}
+                                        user={otherUser}
+                                        isOutgoing={call.callerId === currentUserId}
+                                        onRedial={onStartCall}
+                                    />
+                                );
+                            })}
+                            {callHistory.length === 0 && (
+                                <div className="text-center py-20 px-10">
+                                    <div className="h-20 w-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <Phone className="h-10 w-10 text-green-200" />
+                                    </div>
+                                    <h3 className="text-gray-900 font-bold mb-2">No Calls Yet</h3>
+                                    <p className="text-gray-400 text-sm">Your recent voice and video calls will appear here.</p>
                                 </div>
                             )}
                         </motion.div>
@@ -438,6 +474,74 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
                 <Pin className={cn("h-3.5 w-3.5", isPinned && "fill-current")} />
             </button>
         </button>
+    );
+};
+
+const CallHistoryItem = ({
+    call,
+    user,
+    isOutgoing,
+    onRedial
+}: {
+    call: any;
+    user?: IUser;
+    isOutgoing: boolean;
+    onRedial: (type: "audio" | "video", user: IUser) => void;
+}) => {
+    const isMissed = call.status === "missed";
+    const StatusIcon = call.type === "video" ? Video : Phone;
+
+    return (
+        <div className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50/50 transition-all group">
+            <div className="flex items-center gap-4">
+                <div className="h-11 w-11 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white transition-transform group-hover:scale-105">
+                    {user?.profile_picture ? (
+                        <Image src={user.profile_picture} alt="" width={44} height={44} />
+                    ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-gray-400 text-white font-bold">
+                            {user?.full_name?.charAt(0) || "?"}
+                        </div>
+                    )}
+                </div>
+                <div className="flex-1 text-left">
+                    <div className="flex flex-col">
+                        <span className={cn("font-bold text-[13px]", isMissed ? "text-red-500" : "text-gray-900")}>
+                            {user?.full_name || "Unknown"}
+                        </span>
+                        <div className={cn(
+                            "flex items-center gap-1 text-[11px] font-bold uppercase tracking-tight mt-0.5",
+                            isMissed ? "text-red-400" : "text-gray-400"
+                        )}>
+                            <StatusIcon className="h-3 w-3" />
+                            <span>{isMissed ? "Missed" : isOutgoing ? "Outgoing" : "Incoming"}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+                <span className="text-[10px] text-gray-400 font-bold whitespace-nowrap">
+                    {call.timestamp?.toDate() ? call.timestamp.toDate().toLocaleDateString() : "Recent"}
+                </span>
+
+                {user && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onRedial(call.type, user);
+                        }}
+                        className={cn(
+                            "h-9 w-9 rounded-xl flex items-center justify-center transition-all",
+                            call.type === "video"
+                                ? "bg-purple-50 text-purple-600 hover:bg-purple-600 hover:text-white"
+                                : "bg-green-50 text-green-600 hover:bg-green-600 hover:text-white"
+                        )}
+                    >
+                        {call.type === "video" ? <Video className="h-4 w-4" /> : <Phone className="h-4 w-4" />}
+                    </button>
+                )}
+            </div>
+        </div>
     );
 };
 

@@ -45,6 +45,8 @@ const TeamChatScreen = () => {
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
+    const [callHistory, setCallHistory] = useState<any[]>([]);
+    const currentCallDocId = useRef<string | null>(null);
 
     // Refs
     const peerRef = useRef<any>(null);
@@ -111,6 +113,21 @@ const TeamChatScreen = () => {
             }
         }
     }, [callStatus, callInfo.isOpen]);
+
+    // Fetch Call History
+    useEffect(() => {
+        if (!currentUser?.id) return;
+        const q = query(
+            collection(db, "calls"),
+            where("participants", "array-contains", currentUser.id),
+            orderBy("timestamp", "desc")
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const calls = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setCallHistory(calls);
+        });
+        return () => unsubscribe();
+    }, [currentUser?.id]);
 
     // Component Unmount Cleanup
     useEffect(() => {
@@ -364,8 +381,9 @@ const TeamChatScreen = () => {
         }
     };
 
-    const handleStartCall = async (type: "audio" | "video") => {
-        if (!chatUser || !peerRef.current || !currentUser?.id) return;
+    const handleStartCall = async (type: "audio" | "video", targetUser?: IUser) => {
+        const userToCall = targetUser || chatUser;
+        if (!userToCall || !peerRef.current || !currentUser?.id) return;
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -373,20 +391,45 @@ const TeamChatScreen = () => {
                 audio: true
             });
 
+            const callDoc = await addDoc(collection(db, "calls"), {
+                callerId: currentUser.id,
+                receiverId: userToCall.id,
+                participants: [currentUser.id, userToCall.id],
+                type,
+                status: "ringing",
+                timestamp: serverTimestamp(),
+                duration: 0
+            });
+            currentCallDocId.current = callDoc.id;
+
+            // Also send a shadow message to chat for "Missed/Call" UI
+            const convoId = [currentUser.id, userToCall.id].sort().join('_');
+            await addDoc(collection(db, "conversations", convoId, "messages"), {
+                senderId: currentUser.id,
+                text: `${type === "video" ? "Video" : "Audio"} call`,
+                type: "call",
+                callId: callDoc.id,
+                timestamp: serverTimestamp(),
+                isRead: false
+            });
+
             setLocalStream(stream);
             localStreamRef.current = stream;
             setCallStatus("calling");
-            setCallInfo({ isOpen: true, type, user: chatUser });
+            setCallInfo({ isOpen: true, type, user: userToCall });
 
-            const call = peerRef.current.call(chatUser.id, stream, {
-                metadata: { type }
+            const call = peerRef.current.call(userToCall.id, stream, {
+                metadata: { type, callId: callDoc.id }
             });
 
             console.log("PeerJS: Call initiated. Type:", type);
 
-            call.on("stream", (remoteMediaStream: MediaStream) => {
+            call.on("stream", async (remoteMediaStream: MediaStream) => {
                 setRemoteStream(remoteMediaStream);
                 setCallStatus("connected");
+                if (currentCallDocId.current) {
+                    await updateDoc(doc(db, "calls", currentCallDocId.current), { status: "connected" });
+                }
             });
 
             call.on("close", () => handleEndCall());
@@ -400,12 +443,19 @@ const TeamChatScreen = () => {
 
     const handleAcceptCall = async () => {
         if (!currentCallRef.current) return;
+        const metadata = currentCallRef.current.metadata || currentCallRef.current.options?.metadata;
+        const callId = metadata?.callId;
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: callInfo.type === "video",
                 audio: true
             });
+
+            if (callId) {
+                currentCallDocId.current = callId;
+                await updateDoc(doc(db, "calls", callId), { status: "connected" });
+            }
 
             setLocalStream(stream);
             localStreamRef.current = stream;
@@ -423,15 +473,33 @@ const TeamChatScreen = () => {
         }
     };
 
-    const handleDeclineCall = () => {
+    const handleDeclineCall = async () => {
+        const metadata = currentCallRef.current?.metadata || currentCallRef.current?.options?.metadata;
+        const callId = metadata?.callId;
+
+        if (callId) {
+            await updateDoc(doc(db, "calls", callId), { status: "declined" });
+        }
+
         if (currentCallRef.current) {
             currentCallRef.current.close();
         }
         handleEndCall();
     };
 
-    const handleEndCall = () => {
+    const handleEndCall = async () => {
         console.log("PeerJS: Ending call and stopping tracks...");
+
+        if (currentCallDocId.current) {
+            const callRef = doc(db, "calls", currentCallDocId.current);
+            const callSnap = await getDoc(callRef);
+            if (callSnap.exists() && callSnap.data().status === "ringing") {
+                await updateDoc(callRef, { status: "missed" });
+            } else {
+                await updateDoc(callRef, { status: "completed" });
+            }
+            currentCallDocId.current = null;
+        }
 
         if (currentCallRef.current) {
             currentCallRef.current.close();
@@ -461,6 +529,7 @@ const TeamChatScreen = () => {
                 strategy="afterInteractive"
             />
             <ChatSidebar
+
                 users={combinedUsers}
                 currentUserId={currentUser?.id}
                 activeChatId={activeChatId}
@@ -469,7 +538,8 @@ const TeamChatScreen = () => {
                 setActiveTab={setActiveTab}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-            />
+                callHistory={callHistory}
+                onStartCall={handleStartCall} />
             <ChatWindow
                 activeChatId={activeChatId}
                 setActiveChatId={setActiveChatId}

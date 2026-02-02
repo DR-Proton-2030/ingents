@@ -6,7 +6,7 @@ export interface Message {
     senderId: string;
     timestamp: any;
     isRead: boolean;
-    type: "text" | "image";
+    type: "text" | "image" | "call";
 }
 
 export interface Group {
