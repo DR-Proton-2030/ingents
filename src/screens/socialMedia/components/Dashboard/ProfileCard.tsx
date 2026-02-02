@@ -1,9 +1,15 @@
 "use client";
 import React, { useState } from "react";
-import { MoreHorizontal, Youtube } from "lucide-react";
+import { Facebook, MoreHorizontal, Youtube } from "lucide-react";
 import { motion } from "framer-motion";
 
-const ProfileCard = ({ data, demographics }: { data: any, demographics: any }) => {
+interface ProfileCardProps {
+  data: any;
+  demographics: any;
+  platform?: "youtube" | "facebook";
+}
+
+const ProfileCard = ({ data, demographics, platform = "youtube" }: ProfileCardProps) => {
   const [activeTab, setActiveTab] = useState("Top Locations");
 
   const getTabData = () => {
@@ -21,23 +27,29 @@ const ProfileCard = ({ data, demographics }: { data: any, demographics: any }) =
 
   const displayData = getTabData();
 
+  const isYouTube = platform === "youtube";
+
   return (
     <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center gap-3">
           <div className="relative">
             <img
-              src={data?.thumbnails?.default?.url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam"}
+              src={data?.thumbnails?.default?.url || data?.picture || "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam"}
               alt="Avatar"
               className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
             />
-            <div className="absolute -bottom-1 -right-1 bg-red-600 rounded-full p-0.5 border-2 border-white">
-              <Youtube className="w-3 h-3 text-white" />
+            <div className={`absolute -bottom-1 -right-1 ${isYouTube ? "bg-red-600" : "bg-blue-600"} rounded-full p-0.5 border-2 border-white`}>
+              {isYouTube ? (
+                <Youtube className="w-3 h-3 text-white" />
+              ) : (
+                <Facebook className="w-3 h-3 text-white" />
+              )}
             </div>
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 leading-tight">{data?.title || data?.handle || "Channel Name"}</h3>
-            <span className="text-xs text-gray-400 font-medium">{data?.handle}</span>
+            <h3 className="font-bold text-gray-900 leading-tight">{data?.title || data?.handle || data?.name || "Channel Name"}</h3>
+            <span className="text-xs text-gray-400 font-medium">{data?.handle || data?.username || "Social Profile"}</span>
           </div>
         </div>
         <button className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -47,8 +59,12 @@ const ProfileCard = ({ data, demographics }: { data: any, demographics: any }) =
 
       <div className="mb-8">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-4xl font-bold text-gray-900 tracking-tight">{Number(data?.statistics?.subscriberCount || 0).toLocaleString()}</h2>
-          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">Subscribers</span>
+          <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
+            {Number(isYouTube ? data?.statistics?.subscriberCount : data?.fan_count || 0).toLocaleString()}
+          </h2>
+          <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">
+            {isYouTube ? "Subscribers" : "Followers"}
+          </span>
         </div>
       </div>
 
@@ -81,7 +97,7 @@ const ProfileCard = ({ data, demographics }: { data: any, demographics: any }) =
                   initial={{ width: 0 }}
                   animate={{ width: `${item.percentage || 0}%` }}
                   transition={{ duration: 1, delay: idx * 0.1 }}
-                  className={`${item.color || "bg-blue-500"} h-full rounded-full`}
+                  className={`${item.color || (isYouTube ? "bg-red-500" : "bg-blue-500")} h-full rounded-full`}
                 />
               </div>
             </div>

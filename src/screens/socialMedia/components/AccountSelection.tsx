@@ -285,6 +285,9 @@ export default function AccountSelection() {
             onView={(integration) => {
               if (integration.title === "YouTube") {
                 router.push(`${pathname}/youtube`);
+              } else if (integration.title === "Facebook") {
+                const pageId = (user as any)?.facebook?.page_id || (user as any)?.facebook?.id;
+                router.push(`${pathname}/facebook${pageId ? `?pageId=${pageId}` : ""}`);
               } else {
                 console.log("View connection details for:", integration.title);
               }
