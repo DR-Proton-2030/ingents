@@ -43,10 +43,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
 
     const title = chatUser?.full_name || activeGroup?.name || "Chat Room";
-    const subtitle = chatUser ? "Online" : `${activeGroup?.members.length || 0} members`;
+    const isOnline = chatUser?.status === "online";
+    const subtitle = chatUser
+        ? (isOnline ? "Online" : "Offline")
+        : `${activeGroup?.members.length || 0} members`;
 
     return (
-        <div className="flex-1 flex flex-col bg-white/10">
+        <div className="flex-1 flex flex-col bg-white/10 rounded-xl">
             {/* Chat Header */}
             <div className="h-20 px-6 flex items-center justify-between border-b border-white/20 bg-white/40">
                 <div className="flex items-center gap-4">
@@ -61,12 +64,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             chatUser.profile_picture ? (
                                 <Image src={chatUser.profile_picture} alt="" width={40} height={40} />
                             ) : (
-                                <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-500 font-bold">
+                                <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold">
                                     {chatUser.full_name?.charAt(0)}
                                 </div>
                             )
                         ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-indigo-600 text-white font-bold">
+                            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-purple-500 to-purple-600 text-white font-bold">
                                 {activeGroup?.name.charAt(0)}
                             </div>
                         )}
@@ -74,8 +77,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     <div>
                         <h4 className="font-bold text-gray-900">{title}</h4>
                         <div className="flex items-center gap-1.5">
-                            <div className={cn("h-1.5 w-1.5 rounded-full", chatUser ? "bg-green-500" : "bg-indigo-500")} />
-                            <span className={cn("text-[11px] font-bold uppercase tracking-wider", chatUser ? "text-green-500" : "text-indigo-500")}>
+                            <div className={cn(
+                                "h-1.5 w-1.5 rounded-full transition-colors duration-300",
+                                chatUser ? (isOnline ? "bg-green-500" : "bg-gray-400") : "bg-purple-500"
+                            )} />
+                            <span className={cn(
+                                "text-[11px] font-bold transition-colors duration-300",
+                                chatUser ? (isOnline ? "text-green-500" : "text-gray-400") : "text-purple-500"
+                            )}>
                                 {subtitle}
                             </span>
                         </div>

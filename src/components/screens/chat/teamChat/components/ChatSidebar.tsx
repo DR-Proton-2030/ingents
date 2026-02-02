@@ -268,12 +268,12 @@ const GroupChatItem = ({ group, activeChatId, setActiveChatId, currentUserId }: 
 
         const q = query(
             collection(db, "conversations", group.id, "messages"),
-            where("senderId", "!=", currentUserId),
             where("isRead", "==", false)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            setUnreadCount(snapshot.size);
+            const count = snapshot.docs.filter(doc => doc.data().senderId !== currentUserId).length;
+            setUnreadCount(count);
         });
 
         return () => unsubscribe();
@@ -362,12 +362,12 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
         const convoId = [currentUserId, user.id].sort().join('_');
         const q = query(
             collection(db, "conversations", convoId, "messages"),
-            where("senderId", "==", user.id),
             where("isRead", "==", false)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            setUnreadCount(snapshot.size);
+            const count = snapshot.docs.filter(doc => doc.data().senderId === user.id).length;
+            setUnreadCount(count);
         });
 
         return () => unsubscribe();
@@ -391,7 +391,10 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
                         </div>
                     )}
                 </div>
-                <div className="absolute bottom-0.5 right-0.5 h-3 w-3 bg-green-500 border-2 border-white rounded-full ring-1 ring-black/5" />
+                <div className={cn(
+                    "absolute bottom-0.5 right-0.5 h-3 w-3 border-2 border-white rounded-full ring-1 ring-black/5 transition-all duration-300",
+                    user.status === "online" ? "bg-green-500 scale-100" : "bg-gray-300 scale-90"
+                )} />
             </div>
 
             <div className="flex-1 text-left pr-3">

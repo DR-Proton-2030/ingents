@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useContext } from "react";
 import { useSearchParams } from "next/navigation";
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, writeBatch, getDocs, where } from "firebase/firestore";
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, writeBatch, getDocs, where, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AuthContext from "@/contexts/authContext/authContext";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
@@ -23,10 +23,34 @@ const TeamChatScreen = () => {
     const [activeGroup, setActiveGroup] = useState<Group | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [userStatuses, setUserStatuses] = useState<Record<string, any>>({});
+
+    // Fetch real-time user statuses
+    useEffect(() => {
+        const q = query(collection(db, "users"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const statuses: Record<string, any> = {};
+            snapshot.docs.forEach(doc => {
+                statuses[doc.id] = doc.data();
+            });
+            setUserStatuses(statuses);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    // Derived user list with statuses
+    const combinedUsers = React.useMemo(() => {
+        return users.map(u => ({
+            ...u,
+            status: userStatuses[u.id]?.status || "offline",
+            lastSeen: userStatuses[u.id]?.lastSeen
+        }));
+    }, [users, userStatuses]);
 
     useEffect(() => {
-        if (activeChatId && users) {
-            const user = users.find((u: IUser) => u.id === activeChatId);
+        if (activeChatId && combinedUsers.length > 0) {
+            const user = combinedUsers.find((u: IUser) => u.id === activeChatId);
             if (user) {
                 setChatUser(user);
                 setActiveGroup(null);
@@ -42,11 +66,11 @@ const TeamChatScreen = () => {
                 fetchGroup();
             }
         }
-    }, [activeChatId, users]);
+    }, [activeChatId, combinedUsers]);
 
     const getConversationId = (uid1: string, uid2: string) => {
         if (!uid1 || !uid2) return "";
-        const targetUser = users?.find(u => u.id === uid2);
+        const targetUser = combinedUsers?.find(u => u.id === uid2);
         if (!targetUser) return uid2; // It's a groupId
         return [uid1, uid2].sort().join('_');
     };
@@ -60,22 +84,24 @@ const TeamChatScreen = () => {
 
         const unreadQuery = query(
             collection(db, "conversations", convoId, "messages"),
-            where("senderId", "!=", currentUser.id),
             where("isRead", "==", false)
         );
 
         const unsubscribe = onSnapshot(unreadQuery, async (snapshot) => {
-            if (snapshot.empty) return;
+            const unreadDocs = snapshot.docs.filter(doc => doc.data().senderId !== currentUser.id);
+            if (unreadDocs.length === 0) return;
 
             try {
                 const batch = writeBatch(db);
-                snapshot.docs.forEach((msgDoc) => {
+                unreadDocs.forEach((msgDoc) => {
                     batch.update(msgDoc.ref, { isRead: true });
                 });
                 await batch.commit();
             } catch (error) {
                 console.error("Error marking messages as read:", error);
             }
+        }, (err) => {
+            console.error("Unread Messages Listener Error:", err);
         });
 
         return () => unsubscribe();
@@ -115,6 +141,51 @@ const TeamChatScreen = () => {
         return () => unsubscribe();
     }, [activeChatId, currentUser, users]);
 
+    // Manage Online Status
+    useEffect(() => {
+        if (!currentUser?.id) return;
+
+        const userRef = doc(db, "users", currentUser.id);
+
+        const setStatus = async (status: "online" | "offline") => {
+            console.log(`Setting status for ${currentUser.id} to ${status}`);
+            try {
+                await setDoc(userRef, {
+                    status,
+                    lastSeen: serverTimestamp(),
+                    full_name: currentUser.full_name,
+                    email: currentUser.email,
+                    id: currentUser.id
+                }, { merge: true });
+            } catch (error) {
+                console.error("Error updating status:", error);
+            }
+        };
+
+        // Set online initially
+        setStatus("online");
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                setStatus("online");
+            }
+            // Removed offline on hidden to allow multi-tab testing
+        };
+
+        const handleBeforeUnload = () => {
+            setStatus("offline");
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("beforeunload", handleBeforeUnload);
+
+        return () => {
+            setStatus("offline");
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("beforeunload", handleBeforeUnload);
+        };
+    }, [currentUser?.id]);
+
     const handleSendMessage = async () => {
         if (!messageText.trim() || !activeChatId || !currentUser?.id) return;
 
@@ -139,7 +210,7 @@ const TeamChatScreen = () => {
     return (
         <div className="h-[80vh] w-full flex overflow-hidden">
             <ChatSidebar
-                users={users}
+                users={combinedUsers}
                 currentUserId={currentUser?.id}
                 activeChatId={activeChatId}
                 setActiveChatId={setActiveChatId}

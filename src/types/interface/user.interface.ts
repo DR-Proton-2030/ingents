@@ -26,4 +26,6 @@ export interface IUser {
     refresh_token?: string;
     expiry_date?: number;
   };
+  status?: "online" | "offline" | "away";
+  lastSeen?: any;
 }
