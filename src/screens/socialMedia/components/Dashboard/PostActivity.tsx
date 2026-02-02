@@ -3,11 +3,22 @@ import React from "react";
 import { ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
-const PostActivity = ({ activity }: { activity: any }) => {
-  const stats = [
+interface PostActivityProps {
+  activity: any;
+  platform?: "youtube" | "facebook";
+}
+
+const PostActivity = ({ activity, platform = "youtube" }: PostActivityProps) => {
+  const isYouTube = platform === "youtube";
+
+  const stats = isYouTube ? [
     { label: "Shorts", value: activity?.shorts || "0" },
     { label: "Videos", value: activity?.videos || "0" },
     { label: "Lives", value: activity?.lives || "0" },
+  ] : [
+    { label: "Photos", value: activity?.photos || "0" },
+    { label: "Videos", value: activity?.videos || "0" },
+    { label: "Statuses", value: activity?.statuses || "0" },
   ];
 
   const days = ["S", "M", "T", "W", "T", "F", "S"];
@@ -16,10 +27,11 @@ const PostActivity = ({ activity }: { activity: any }) => {
   const gridData = activity?.growthTrend || [];
 
   const getCircleStyle = (intensity: number) => {
+    const colorClass = isYouTube ? "purple" : "blue";
     switch (intensity) {
-      case 3: return "bg-purple-600 text-white shadow-lg shadow-purple-200";
-      case 2: return "bg-purple-500 text-white";
-      case 1: return "bg-purple-200 text-purple-700 font-bold";
+      case 3: return `bg-${colorClass}-600 text-white shadow-lg shadow-${colorClass}-200`;
+      case 2: return `bg-${colorClass}-500 text-white`;
+      case 1: return `bg-${colorClass}-200 text-${colorClass}-700 font-bold`;
       default: return "bg-gray-100 text-gray-400";
     }
   };
@@ -31,7 +43,7 @@ const PostActivity = ({ activity }: { activity: any }) => {
           <h3 className="text-xl font-bold text-gray-900">Post Activity</h3>
           <p className="text-xs text-gray-400 font-medium mt-1">From 15 Feb - 15 May, 2024</p>
         </div>
-        <button className="text-blue-500 border border-blue-500 rounded-full px-4 py-1.5 text-xs font-bold hover:bg-blue-50 transition-colors">
+        <button className={`text-${isYouTube ? "purple" : "blue"}-500 border border-${isYouTube ? "purple" : "blue"}-500 rounded-full px-4 py-1.5 text-xs font-bold hover:bg-gray-50 transition-colors`}>
           Change Period
         </button>
       </div>

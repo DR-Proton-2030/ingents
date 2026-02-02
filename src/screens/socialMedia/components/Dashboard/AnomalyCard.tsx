@@ -4,8 +4,15 @@ import { Flag } from "lucide-react";
 import { BarChart, Bar, Cell, ResponsiveContainer } from 'recharts';
 import { motion } from "framer-motion";
 
-const AnomalyCard = ({ statistics }: { statistics: any }) => {
-  const subscriberCount = Number(statistics?.subscriberCount || 0);
+interface AnomalyCardProps {
+  statistics: any;
+  platform?: "youtube" | "facebook";
+}
+
+const AnomalyCard = ({ statistics, platform = "youtube" }: AnomalyCardProps) => {
+  const isYouTube = platform === "youtube";
+  const count = Number(isYouTube ? statistics?.subscriberCount : statistics?.fan_count || 0);
+  const label = isYouTube ? "Subscribers" : "Followers";
   
   // Neutral state if no significant data
   if (!statistics) {
@@ -14,7 +21,7 @@ const AnomalyCard = ({ statistics }: { statistics: any }) => {
         <Flag className="w-12 h-12 text-gray-200 mb-4" />
         <h3 className="text-lg font-bold text-gray-400">No anomalies detected</h3>
         <p className="text-xs text-gray-300 text-center mt-2 max-w-[200px]">
-          We'll notify you here if we detect unusual activity in your channel's growth.
+          We'll notify you here if we detect unusual activity in your {isYouTube ? "channel's" : "page's"} growth.
         </p>
       </div>
     );
@@ -30,13 +37,13 @@ const AnomalyCard = ({ statistics }: { statistics: any }) => {
       </div>
       
       <p className="text-xs text-gray-400 font-medium leading-relaxed mb-8 max-w-[280px]">
-        Your channel is maintaining a healthy growth rate. Keep creating content to see more insights!
+        Your {isYouTube ? "channel" : "page"} is maintaining a healthy growth rate. Keep creating content to see more insights!
       </p>
 
       <div className="h-[120px] w-full relative mb-8">
         <div className="absolute top-0 right-[25%] z-10">
             <div className="bg-black text-white px-2 py-1 rounded-lg text-[10px] font-bold">
-                {subscriberCount.toLocaleString()} Subscribers
+                {count.toLocaleString()} {label}
             </div>
             <div className="w-1 h-4 bg-black/10 mx-auto mt-1 border-r border-dotted border-black/50" />
         </div>
@@ -60,7 +67,7 @@ const AnomalyCard = ({ statistics }: { statistics: any }) => {
            <h2 className="text-4xl font-bold text-gray-900 leading-none">Healthy</h2>
            <p className="text-xs text-gray-400 font-medium mt-2">Status: Active</p>
         </div>
-        <button className="text-blue-500 border border-blue-500 rounded-full px-5 py-2 text-xs font-bold hover:bg-blue-50 transition-colors">
+        <button className={`text-${isYouTube ? "blue" : "blue"}-500 border border-blue-500 rounded-full px-5 py-2 text-xs font-bold hover:bg-blue-50 transition-colors`}>
           Explore
         </button>
       </div>
