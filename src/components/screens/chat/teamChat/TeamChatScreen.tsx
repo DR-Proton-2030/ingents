@@ -50,6 +50,8 @@ const TeamChatScreen = () => {
     const peerRef = useRef<any>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const currentCallRef = useRef<any>(null);
+    const incomingSoundRef = useRef<HTMLAudioElement | null>(null);
+    const endSoundRef = useRef<HTMLAudioElement | null>(null);
 
     // Derived user list with statuses
     const combinedUsers = React.useMemo(() => {
@@ -59,6 +61,65 @@ const TeamChatScreen = () => {
             lastSeen: userStatuses[u.id]?.lastSeen
         }));
     }, [users, userStatuses]);
+
+    // Audio Setup
+    useEffect(() => {
+        incomingSoundRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/1359/1359-preview.mp3");
+        endSoundRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
+
+        incomingSoundRef.current.loop = true;
+
+        return () => {
+            incomingSoundRef.current?.pause();
+            endSoundRef.current?.pause();
+        };
+    }, []);
+
+    // Handle Call Sounds & Cleanup
+    useEffect(() => {
+        const stopAllSounds = () => {
+            incomingSoundRef.current?.pause();
+            if (incomingSoundRef.current) incomingSoundRef.current.currentTime = 0;
+        };
+
+        if (callStatus === "calling" && callInfo.isOpen) {
+            stopAllSounds();
+        } else if (callStatus === "incoming" && callInfo.isOpen) {
+            stopAllSounds();
+            incomingSoundRef.current?.play().catch(e => console.log("Audio play failed:", e));
+        } else if (callStatus === "connected") {
+            stopAllSounds();
+        } else if (callStatus === "ended") {
+            stopAllSounds();
+            endSoundRef.current?.play().catch(e => console.log("Audio play failed:", e));
+
+            // Auto close after sound plays for a bit
+            const timer = setTimeout(() => {
+                setCallInfo(prev => ({ ...prev, isOpen: false }));
+            }, 1000);
+            return () => clearTimeout(timer);
+        } else if (!callInfo.isOpen) {
+            stopAllSounds();
+            // Force stop tracks when modal closes
+            if (localStreamRef.current) {
+                localStreamRef.current.getTracks().forEach(track => {
+                    track.stop();
+                    console.log("PeerJS: Emergency stopped track:", track.kind);
+                });
+                localStreamRef.current = null;
+                setLocalStream(null);
+            }
+        }
+    }, [callStatus, callInfo.isOpen]);
+
+    // Component Unmount Cleanup
+    useEffect(() => {
+        return () => {
+            if (localStreamRef.current) {
+                localStreamRef.current.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
 
     // Initialize PeerJS
     useEffect(() => {
@@ -370,15 +431,27 @@ const TeamChatScreen = () => {
     };
 
     const handleEndCall = () => {
-        if (currentCallRef.current) currentCallRef.current.close();
-        if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach((track: any) => track.stop());
+        console.log("PeerJS: Ending call and stopping tracks...");
+
+        if (currentCallRef.current) {
+            currentCallRef.current.close();
+            currentCallRef.current = null;
         }
-        setLocalStream(null);
-        localStreamRef.current = null;
+
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => {
+                track.stop();
+                console.log("PeerJS: Stopped local track:", track.kind);
+            });
+            localStreamRef.current = null;
+            setLocalStream(null);
+        }
+
         setRemoteStream(null);
-        setCallInfo(prev => ({ ...prev, isOpen: false }));
         setCallStatus("ended");
+        setIsMuted(false);
+        setIsVideoOff(false);
+        // Modal will be closed by the sound useEffect after 1s
     };
 
     return (
