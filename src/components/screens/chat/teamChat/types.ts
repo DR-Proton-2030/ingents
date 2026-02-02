@@ -8,3 +8,13 @@ export interface Message {
     isRead: boolean;
     type: "text" | "image";
 }
+
+export interface Group {
+    id: string;
+    name: string;
+    members: string[]; // array of user IDs
+    createdBy: string;
+    createdAt: any;
+    lastMessage?: string;
+    lastMessageTime?: any;
+}

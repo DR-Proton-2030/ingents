@@ -3,12 +3,13 @@ import { ChevronLeft, Phone, Video, MoreHorizontal, MessageSquare, Image as Imag
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { IUser } from "@/types/interface/user.interface";
-import { Message } from "../types";
+import { Message, Group } from "../types";
 
 interface ChatWindowProps {
     activeChatId: string | null;
     setActiveChatId: (id: string | null) => void;
     chatUser: IUser | null;
+    activeGroup: Group | null;
     messages: Message[];
     currentUserId?: string;
     messageText: string;
@@ -20,6 +21,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     activeChatId,
     setActiveChatId,
     chatUser,
+    activeGroup,
     messages,
     currentUserId,
     messageText,
@@ -40,6 +42,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         );
     }
 
+    const title = chatUser?.full_name || activeGroup?.name || "Chat Room";
+    const subtitle = chatUser ? "Online" : `${activeGroup?.members.length || 0} members`;
+
     return (
         <div className="flex-1 flex flex-col bg-white/10">
             {/* Chat Header */}
@@ -51,20 +56,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     >
                         <ChevronLeft className="h-6 w-6 text-gray-600" />
                     </button>
-                    <div className="h-10 w-10 rounded-full bg-white/20 overflow-hidden ring-2 ring-white/40">
-                        {chatUser?.profile_picture ? (
-                            <Image src={chatUser.profile_picture} alt="" width={40} height={40} />
+                    <div className="h-10 w-10 rounded-full overflow-hidden ring-2 ring-white/40">
+                        {chatUser ? (
+                            chatUser.profile_picture ? (
+                                <Image src={chatUser.profile_picture} alt="" width={40} height={40} />
+                            ) : (
+                                <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-500 font-bold">
+                                    {chatUser.full_name?.charAt(0)}
+                                </div>
+                            )
                         ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-gray-100 text-gray-500 font-bold">
-                                {chatUser?.full_name?.charAt(0) || "U"}
+                            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-indigo-600 text-white font-bold">
+                                {activeGroup?.name.charAt(0)}
                             </div>
                         )}
                     </div>
                     <div>
-                        <h4 className="font-bold text-gray-900">{chatUser?.full_name || "Chat User"}</h4>
+                        <h4 className="font-bold text-gray-900">{title}</h4>
                         <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-1.5 bg-green-500 rounded-full" />
-                            <span className="text-[11px] text-green-500 font-bold uppercase tracking-wider">Online</span>
+                            <div className={cn("h-1.5 w-1.5 rounded-full", chatUser ? "bg-green-500" : "bg-indigo-500")} />
+                            <span className={cn("text-[11px] font-bold uppercase tracking-wider", chatUser ? "text-green-500" : "text-indigo-500")}>
+                                {subtitle}
+                            </span>
                         </div>
                     </div>
                 </div>

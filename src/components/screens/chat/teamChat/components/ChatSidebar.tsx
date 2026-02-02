@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Search } from "lucide-react";
-import { motion } from "framer-motion";
+import { Search, Pin, Users, Phone, MessageSquare, Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { IUser } from "@/types/interface/user.interface";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, where } from "firebase/firestore";
+import { Group } from "../types";
+
+import CreateGroupModal from "./CreateGroupModal";
+import { CallChatRounded, ChatRoundLine, UsersGroupRounded, UsersGroupTwoRounded } from "@solar-icons/react";
 
 interface ChatSidebarProps {
     users: IUser[];
     currentUserId?: string;
     activeChatId: string | null;
     setActiveChatId: (id: string | null) => void;
-    activeTab: "chats" | "calls";
-    setActiveTab: (tab: "chats" | "calls") => void;
+    activeTab: "chats" | "calls" | "groups";
+    setActiveTab: (tab: "chats" | "calls" | "groups") => void;
     searchTerm: string;
     setSearchTerm: (term: string) => void;
 }
@@ -28,85 +32,232 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     searchTerm,
     setSearchTerm,
 }) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
+        if (typeof window !== "undefined") {
+            const saved = localStorage.getItem("pinned_chats");
+            return saved ? JSON.parse(saved) : [];
+        }
+        return [];
+    });
+
+    const [groups, setGroups] = useState<Group[]>([]);
+
+    useEffect(() => {
+        localStorage.setItem("pinned_chats", JSON.stringify(pinnedIds));
+    }, [pinnedIds]);
+
+    // Fetch groups where current user is a member
+    useEffect(() => {
+        if (!currentUserId) return;
+        const q = query(
+            collection(db, "groups"),
+            where("members", "array-contains", currentUserId)
+        );
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const grps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+            setGroups(grps);
+        });
+        return () => unsubscribe();
+    }, [currentUserId]);
+
+    const togglePin = (userId: string) => {
+        setPinnedIds(prev =>
+            prev.includes(userId)
+                ? prev.filter(id => id !== userId)
+                : [userId, ...prev]
+        );
+    };
+
     const filteredUsers = users?.filter(user =>
         user.id !== currentUserId &&
         (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email?.toLowerCase().includes(searchTerm.toLowerCase()))
     ) || [];
 
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+        const aPinned = pinnedIds.includes(a.id);
+        const bPinned = pinnedIds.includes(b.id);
+        if (aPinned && !bPinned) return -1;
+        if (!aPinned && bPinned) return 1;
+        return 0;
+    });
+
+    const tabs: { id: "chats" | "calls" | "groups"; label: string; icon: any }[] = [
+        { id: "chats", label: "Chats", icon: ChatRoundLine },
+        { id: "groups", label: "Spaces", icon: UsersGroupRounded },
+        { id: "calls", label: "Calls", icon: CallChatRounded },
+    ];
+
     return (
         <div className={cn(
-            "w-full lg:w-[385px] border-r border-white/20 rounded-2xl flex flex-col bg-white/80 mr-4",
+            "w-full lg:w-[380px] border-r border-white/20 rounded-2xl flex flex-col bg-white/90 backdrop-blur-md mr-4 shadow-xl overflow-hidden shadow-gray-200/50",
             activeChatId && "hidden lg:flex"
         )}>
-            {/* Tabs */}
-            <div className="flex px-6 pt-6 gap-8 border-b border-white/10">
-                <button
-                    onClick={() => setActiveTab("chats")}
-                    className={cn(
-                        "pb-4 text-lg font-bold transition-all relative",
-                        activeTab === "chats" ? "text-gray-900" : "text-gray-400"
-                    )}
-                >
-                    Chats
-                    {activeTab === "chats" && (
-                        <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-gray-900 rounded-t-full" />
-                    )}
-                </button>
-                <button
-                    onClick={() => setActiveTab("calls")}
-                    className={cn(
-                        "pb-4 text-lg font-bold transition-all relative",
-                        activeTab === "calls" ? "text-gray-900" : "text-gray-400"
-                    )}
-                >
-                    Call
-                    {activeTab === "calls" && (
-                        <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-gray-900 rounded-t-full" />
-                    )}
-                </button>
+            {/* Tabs Header */}
+            <div className="flex px-8 pt-8 gap-10 border-b border-gray-100 italic-none">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={cn(
+                            "pb-4 text-lg font-bold transition-all relative flex items-center gap-2",
+                            activeTab === tab.id ? "text-gray-900" : "text-gray-400 hover:text-gray-500"
+                        )}
+                    >
+                        <tab.icon className={cn(
+                            "h-5 w-5 transition-all",
+                            activeTab === tab.id ? "fill-current stroke-[2px]" : "stroke-2"
+                        )} />
+                        <span className="text-sm">{tab.label}</span>
+                        {activeTab === tab.id && (
+                            <motion.div
+                                layoutId="tab-underline"
+                                className="absolute bottom-0 left-[-2px] right-[-2px] h-[3px] bg-gray-900 rounded-t-full"
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                            />
+                        )}
+                    </button>
+                ))}
             </div>
 
-            {/* Search */}
-            <div className="p-2 my-3">
-                <div className="relative">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <input
-                        type="text"
-                        placeholder="Search messages or contact"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-gray-50 border-none rounded-2xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:outline-none focus:ring-white/20 transition-all font-medium placeholder:text-gray-400"
-                    />
+            {/* Search and Action */}
+            <div className="px-2 py-2 space-y-4 my-3">
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1 group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder={activeTab === 'groups' ? "Search groups..." : "Search messages or contact..."}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-gray-100/70 border-none rounded-2xl py-3.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-orange-500/20 focus:bg-white outline-none transition-all font-medium placeholder:text-gray-400"
+                        />
+                    </div>
+                    {activeTab === 'groups' && (
+                        <button
+                            onClick={() => setIsModalOpen(true)}
+                            className="h-12 w-12 flex items-center justify-center bg-gray-900 text-white rounded-2xl hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gray-200"
+                        >
+                            <Plus className="h-6 w-6" />
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {/* Chat Items */}
-            <div className="flex-1 overflow-y-auto px-2 space-y-1">
-                {filteredUsers.map((user) => (
-                    <UserChatItem
-                        key={user.id}
-                        user={user}
-                        currentUserId={currentUserId}
-                        activeChatId={activeChatId}
-                        setActiveChatId={setActiveChatId}
-                    />
-                ))}
-                {filteredUsers.length === 0 && (
-                    <div className="text-center py-10">
-                        <p className="text-gray-400 text-sm">No users found</p>
-                    </div>
-                )}
+            {/* Content Area */}
+            <div className="flex-1 overflow-y-auto px-2 space-y-1 pb-4">
+                <AnimatePresence mode="wait">
+                    {activeTab === "chats" && (
+                        <motion.div
+                            key="chats"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -10 }}
+                            className="space-y-1"
+                        >
+                            {sortedUsers.map((user) => (
+                                <UserChatItem
+                                    key={user.id}
+                                    user={user}
+                                    currentUserId={currentUserId}
+                                    activeChatId={activeChatId}
+                                    setActiveChatId={setActiveChatId}
+                                    isPinned={pinnedIds.includes(user.id)}
+                                    onTogglePin={() => togglePin(user.id)}
+                                />
+                            ))}
+                            {sortedUsers.length === 0 && (
+                                <div className="text-center py-20">
+                                    <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <MessageSquare className="h-8 w-8 text-gray-200" />
+                                    </div>
+                                    <p className="text-gray-400 text-sm font-medium">No conversations found</p>
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+
+                    {activeTab === "groups" && (
+                        <motion.div
+                            key="groups"
+                            initial={{ opacity: 0, x: 10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 10 }}
+                            className="space-y-1"
+                        >
+                            {groups.map(group => (
+                                <GroupChatItem
+                                    key={group.id}
+                                    group={group}
+                                    activeChatId={activeChatId}
+                                    setActiveChatId={setActiveChatId}
+                                />
+                            ))}
+                            {groups.length === 0 && (
+                                <div className="text-center py-20 px-10">
+                                    <div className="h-20 w-20 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <Users className="h-10 w-10 text-orange-200" />
+                                    </div>
+                                    <h3 className="text-gray-900 font-bold mb-2">No Groups Yet</h3>
+                                    <p className="text-gray-400 text-sm">Create a group to start collaborating with your team.</p>
+                                </div>
+                            )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
+
+            <CreateGroupModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                users={users}
+                currentUserId={currentUserId || ""}
+            />
         </div>
     );
 };
 
-const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId }: {
+// ... keep UserChatItem as is but maybe add some group hover effects ...
+// Add GroupChatItem component
+const GroupChatItem = ({ group, activeChatId, setActiveChatId }: {
+    group: Group;
+    activeChatId: string | null;
+    setActiveChatId: (id: string | null) => void;
+}) => {
+    return (
+        <button
+            onClick={() => setActiveChatId(group.id)}
+            className={cn(
+                "w-full flex items-center gap-4 p-4 rounded-3xl transition-all group relative",
+                activeChatId === group.id ? "bg-gray-100" : "hover:bg-gray-50/50"
+            )}
+        >
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-100">
+                {group.name.charAt(0)}
+            </div>
+            <div className="flex-1 text-left">
+                <div className="flex justify-between items-center mb-0.5">
+                    <span className="font-bold text-gray-900">{group.name}</span>
+                    <span className="text-xs text-gray-400 font-medium">
+                        {group.lastMessageTime ? "Today" : "New"}
+                    </span>
+                </div>
+                <p className="text-sm text-gray-500 truncate max-w-[200px]">
+                    {group.lastMessage || `${group.members.length} members`}
+                </p>
+            </div>
+        </button>
+    );
+};
+
+const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPinned, onTogglePin }: {
     user: IUser;
     currentUserId?: string;
     activeChatId: string | null;
     setActiveChatId: (id: string | null) => void;
+    isPinned: boolean;
+    onTogglePin: () => void;
 }) => {
     const [lastMessage, setLastMessage] = useState<{ text: string; time: string } | null>(null);
 
@@ -141,12 +292,12 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId }: {
         <button
             onClick={() => setActiveChatId(user.id)}
             className={cn(
-                "w-full flex items-center gap-4 p-4 rounded-3xl transition-all",
+                "w-full flex items-center gap-4 p-4 rounded-3xl transition-all group relative",
                 activeChatId === user.id ? "bg-gray-100" : "hover:bg-gray-50/50"
             )}
         >
             <div className="relative">
-                <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden">
+                <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden shadow-sm">
                     {user.profile_picture ? (
                         <Image src={user.profile_picture} alt="" width={48} height={48} />
                     ) : (
@@ -155,10 +306,10 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId }: {
                         </div>
                     )}
                 </div>
-                <div className="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full" />
+                <div className="absolute bottom-0.5 right-0.5 h-3 w-3 bg-green-500 border-2 border-white rounded-full ring-1 ring-black/5" />
             </div>
 
-            <div className="flex-1 text-left">
+            <div className="flex-1 text-left pr-6">
                 <div className="flex justify-between items-center mb-0.5">
                     <span className="font-bold text-gray-900">{user.full_name}</span>
                     <span className="text-xs text-gray-400 font-medium">{lastMessage?.time || "New"}</span>
@@ -172,6 +323,21 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId }: {
                     </span>
                 </div>
             </div>
+
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onTogglePin();
+                }}
+                className={cn(
+                    "absolute right-4 p-1.5 rounded-full transition-all duration-200",
+                    isPinned
+                        ? "text-orange-500 bg-orange-50 scale-100 opacity-100"
+                        : "text-gray-300 opacity-0 group-hover:opacity-100 hover:text-gray-600 hover:bg-gray-100"
+                )}
+            >
+                <Pin className={cn("h-3.5 w-3.5", isPinned && "fill-current")} />
+            </button>
         </button>
     );
 };
