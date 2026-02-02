@@ -129,14 +129,14 @@ const TeamChatScreen = () => {
     };
 
     return (
-        <div className="h-[calc(100vh-100px)] w-full bg-white flex overflow-hidden rounded-3xl border border-gray-100 shadow-sm">
+        <div className="h-[80vh] w-full flex overflow-hidden  ">
             {/* Left Side: Chat List */}
             <div className={cn(
-                "w-full lg:w-[380px] border-r border-gray-100 flex flex-col bg-white",
+                "w-full lg:w-[380px] border-r border-white/20 rounded-2xl flex flex-col bg-white/80 mr-4",
                 activeChatId && "hidden lg:flex"
             )}>
                 {/* Tabs */}
-                <div className="flex px-6 pt-6 gap-8 border-b border-gray-50">
+                <div className="flex px-6 pt-6 gap-8 border-b border-white/10">
                     <button
                         onClick={() => setActiveTab("chats")}
                         className={cn(
@@ -170,7 +170,7 @@ const TeamChatScreen = () => {
                         <input
                             type="text"
                             placeholder="Search messages or contact"
-                            className="w-full bg-gray-50 border-none rounded-2xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-gray-100 transition-all font-medium"
+                            className="w-full bg-white/40 border-none rounded-2xl py-3 pl-11 pr-4 text-sm focus:ring-2 focus:ring-white/20 transition-all font-medium placeholder:text-gray-400"
                         />
                     </div>
                 </div>
@@ -227,21 +227,21 @@ const TeamChatScreen = () => {
 
             {/* Right Side: Chat Window */}
             <div className={cn(
-                "flex-1 flex flex-col bg-gray-50/30",
-                !activeChatId && "hidden lg:flex items-center justify-center bg-white"
+                "flex-1 flex flex-col bg-white/10",
+                !activeChatId && "hidden lg:flex items-center justify-center bg-white/20"
             )}>
                 {activeChatId ? (
                     <>
                         {/* Chat Header */}
-                        <div className="h-20 px-6 flex items-center justify-between border-b border-gray-100 bg-white">
+                        <div className="h-20 px-6 flex items-center justify-between border-b border-white/20 bg-white/40">
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => setActiveChatId(null)}
                                     className="lg:hidden p-2 -ml-2 hover:bg-gray-50 rounded-full"
                                 >
-                                    <ChevronLeft className="h-6 w-6" />
+                                    <ChevronLeft className="h-6 w-6 text-gray-600" />
                                 </button>
-                                <div className="h-10 w-10 rounded-full bg-gray-200 overflow-hidden">
+                                <div className="h-10 w-10 rounded-full bg-white/20 overflow-hidden ring-2 ring-white/40">
                                     {chatUser?.profile_picture ? (
                                         <Image src={chatUser.profile_picture} alt="" width={40} height={40} />
                                     ) : (
@@ -284,10 +284,10 @@ const TeamChatScreen = () => {
                                     msg.senderId === "me" ? "ml-auto items-end" : "items-start"
                                 )}>
                                     <div className={cn(
-                                        "px-5 py-3.5 rounded-2xl text-sm font-medium shadow-sm",
+                                        "px-5 py-3.5 rounded-2xl text-sm font-medium shadow-sm backdrop-blur-sm transition-all",
                                         msg.senderId === "me"
-                                            ? "bg-gray-900 text-white rounded-tr-none"
-                                            : "bg-white text-gray-800 rounded-tl-none border border-gray-100"
+                                            ? "bg-gray-900 text-white rounded-tr-none shadow-gray-200/50"
+                                            : "bg-white/70 text-gray-800 rounded-tl-none border border-white/50 shadow-white/20"
                                     )}>
                                         {msg.text}
                                     </div>
@@ -315,8 +315,8 @@ const TeamChatScreen = () => {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-6 bg-white border-t border-gray-100">
-                            <div className="flex items-center gap-3 bg-gray-50 rounded-2xl p-2 pl-4">
+                        <div className="p-6 bg-white/20 backdrop-blur-lg border-t border-white/20 rounded-2xl">
+                            <div className="flex items-center gap-3 bg-white/40 backdrop-blur-sm rounded-2xl p-2 pl-4 border border-white/40 shadow-inner">
                                 <button className="p-2 text-gray-400 hover:text-gray-600">
                                     <ImageIcon className="h-5 w-5" />
                                 </button>

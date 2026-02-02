@@ -1,14 +1,17 @@
 "use client";
 import React, { Suspense } from "react";
 import TeamChatScreen from "@/components/screens/chat/teamChat/TeamChatScreen";
+import Layout from "@/screens/layout/Layout";
 
 const TeamChatPage = () => {
     return (
-        <div className="p-6 h-full">
-            <Suspense fallback={<div>Loading chat...</div>}>
-                <TeamChatScreen />
-            </Suspense>
-        </div>
+        <Layout showSidebar={true}>
+            <div className="h-full">
+                <Suspense fallback={<div>Loading chat...</div>}>
+                    <TeamChatScreen />
+                </Suspense>
+            </div>
+        </Layout>
     );
 };
 
