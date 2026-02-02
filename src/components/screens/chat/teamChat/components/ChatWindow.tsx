@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { ChevronLeft, Phone, Video, MoreHorizontal, MessageSquare, Image as ImageIcon, Paperclip, Send, Check, CheckCheck } from "lucide-react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setMessageText,
     handleSendMessage,
 }) => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTo({
+                top: scrollRef.current.scrollHeight,
+                behavior: "smooth"
+            });
+        }
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
     if (!activeChatId) {
         return (
             <div className="flex-1 hidden lg:flex flex-col items-center justify-center bg-white/20">
@@ -105,7 +120,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col">
+            <div
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto p-6 space-y-6 flex flex-col"
+            >
                 {messages.map((msg) => (
                     <div key={msg.id} className={cn(
                         "flex flex-col max-w-[80%]",
@@ -150,7 +168,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         onChange={(e) => setMessageText(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                         placeholder="Type a message..."
-                        className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-900 placeholder:text-gray-400"
+                        className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-sm font-medium text-gray-900 placeholder:text-gray-400"
                     />
                     <button
                         onClick={handleSendMessage}
