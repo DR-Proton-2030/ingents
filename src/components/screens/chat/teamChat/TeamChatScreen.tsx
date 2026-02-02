@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useContext } from "react";
 import { useSearchParams } from "next/navigation";
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, writeBatch, getDocs, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AuthContext from "@/contexts/authContext/authContext";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
@@ -45,17 +45,41 @@ const TeamChatScreen = () => {
     }, [activeChatId, users]);
 
     const getConversationId = (uid1: string, uid2: string) => {
-        // If uid1 or uid2 is null/empty, we can't form a DM ID
         if (!uid1 || !uid2) return "";
-
-        // This is a simple heuristic: if the 'uid2' (activeChatId) is NOT in the users list, 
-        // OR it was explicitly formatted as a group, we return it as is.
-        // For now, if we can't find the user in our local 'users' list, we assume it's a group ID.
         const targetUser = users?.find(u => u.id === uid2);
         if (!targetUser) return uid2; // It's a groupId
-
         return [uid1, uid2].sort().join('_');
     };
+
+    // Mark messages as read (Real-time)
+    useEffect(() => {
+        if (!activeChatId || !currentUser?.id) return;
+
+        const convoId = getConversationId(currentUser.id, activeChatId);
+        if (!convoId) return;
+
+        const unreadQuery = query(
+            collection(db, "conversations", convoId, "messages"),
+            where("senderId", "!=", currentUser.id),
+            where("isRead", "==", false)
+        );
+
+        const unsubscribe = onSnapshot(unreadQuery, async (snapshot) => {
+            if (snapshot.empty) return;
+
+            try {
+                const batch = writeBatch(db);
+                snapshot.docs.forEach((msgDoc) => {
+                    batch.update(msgDoc.ref, { isRead: true });
+                });
+                await batch.commit();
+            } catch (error) {
+                console.error("Error marking messages as read:", error);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [activeChatId, currentUser?.id, users]);
 
     // Real-time message listener
     useEffect(() => {
@@ -80,7 +104,7 @@ const TeamChatScreen = () => {
                     ...data,
                     timestamp: data.timestamp?.toDate()
                         ? data.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-                        : "Sending..."
+                        : "Just now"
                 } as Message;
             });
             setMessages(msgs);

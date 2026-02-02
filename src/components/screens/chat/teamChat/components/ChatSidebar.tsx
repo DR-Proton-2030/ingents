@@ -199,6 +199,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                     group={group}
                                     activeChatId={activeChatId}
                                     setActiveChatId={setActiveChatId}
+                                    currentUserId={currentUserId}
                                 />
                             ))}
                             {groups.length === 0 && (
@@ -227,12 +228,14 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
 // ... keep UserChatItem as is but maybe add some group hover effects ...
 // Add GroupChatItem component
-const GroupChatItem = ({ group, activeChatId, setActiveChatId }: {
+const GroupChatItem = ({ group, activeChatId, setActiveChatId, currentUserId }: {
     group: Group;
     activeChatId: string | null;
     setActiveChatId: (id: string | null) => void;
+    currentUserId?: string;
 }) => {
     const [lastMessage, setLastMessage] = useState<{ text: string; time: string } | null>(null);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
         if (!group.id) return;
@@ -260,6 +263,22 @@ const GroupChatItem = ({ group, activeChatId, setActiveChatId }: {
         return () => unsubscribe();
     }, [group.id]);
 
+    useEffect(() => {
+        if (!group.id || !currentUserId) return;
+
+        const q = query(
+            collection(db, "conversations", group.id, "messages"),
+            where("senderId", "!=", currentUserId),
+            where("isRead", "==", false)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setUnreadCount(snapshot.size);
+        });
+
+        return () => unsubscribe();
+    }, [group.id, currentUserId]);
+
     return (
         <button
             onClick={() => setActiveChatId(group.id)}
@@ -274,13 +293,26 @@ const GroupChatItem = ({ group, activeChatId, setActiveChatId }: {
             <div className="flex-1 text-left">
                 <div className="flex justify-between items-center mb-0.5">
                     <span className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors uppercase tracking-tight text-sm">{group.name}</span>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                    <span className={cn(
+                        "text-[10px] font-bold uppercase tracking-wider",
+                        unreadCount > 0 ? "text-purple-600" : "text-gray-400"
+                    )}>
                         {lastMessage?.time || (group.lastMessageTime ? "Today" : "New")}
                     </span>
                 </div>
-                <p className="text-sm text-gray-500 truncate max-w-[200px] font-medium italic-none">
-                    {lastMessage?.text || group.lastMessage || `${group.members.length} members`}
-                </p>
+                <div className="flex justify-between items-center">
+                    <p className={cn(
+                        "text-sm truncate max-w-[200px] font-medium italic-none",
+                        unreadCount > 0 ? "text-gray-900 font-bold" : "text-gray-500"
+                    )}>
+                        {lastMessage?.text || group.lastMessage || `${group.members.length} members`}
+                    </p>
+                    {unreadCount > 0 && (
+                        <span className="bg-purple-600 text-white text-[10px] font-black h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                            {unreadCount}
+                        </span>
+                    )}
+                </div>
             </div>
         </button>
     );
@@ -295,6 +327,7 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
     onTogglePin: () => void;
 }) => {
     const [lastMessage, setLastMessage] = useState<{ text: string; time: string } | null>(null);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
         if (!currentUserId || !user.id) return;
@@ -323,6 +356,23 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
         return () => unsubscribe();
     }, [currentUserId, user.id]);
 
+    useEffect(() => {
+        if (!currentUserId || !user.id) return;
+
+        const convoId = [currentUserId, user.id].sort().join('_');
+        const q = query(
+            collection(db, "conversations", convoId, "messages"),
+            where("senderId", "==", user.id),
+            where("isRead", "==", false)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setUnreadCount(snapshot.size);
+        });
+
+        return () => unsubscribe();
+    }, [currentUserId, user.id]);
+
     return (
         <button
             onClick={() => setActiveChatId(user.id)}
@@ -346,16 +396,27 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
 
             <div className="flex-1 text-left pr-3">
                 <div className="flex justify-between items-center mb-0.5">
-                    <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors  text-sm">{user.full_name}</span>
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{lastMessage?.time || "New"}</span>
+                    <span className={cn(
+                        "font-bold text-sm transition-colors",
+                        activeChatId === user.id ? "text-blue-600" : "text-gray-900 group-hover:text-blue-600"
+                    )}>{user.full_name}</span>
+                    <span className={cn(
+                        "text-[10px] font-bold uppercase tracking-wider",
+                        unreadCount > 0 ? "text-blue-600" : "text-gray-400"
+                    )}>{lastMessage?.time || "New"}</span>
                 </div>
                 <div className="flex justify-between items-center">
                     <span className={cn(
-                        "text-sm truncate max-w-[180px] font-medium italic-none",
-                        "text-gray-500"
+                        "text-sm truncate max-w-[170px] font-medium italic-none transition-all",
+                        unreadCount > 0 ? "text-gray-900 font-bold" : "text-gray-500"
                     )}>
                         {lastMessage?.text || "Click to start chatting"}
                     </span>
+                    {unreadCount > 0 && (
+                        <span className="bg-blue-600 text-white text-[10px] font-black h-5 min-w-[20px] px-1.5 rounded-full flex items-center justify-center animate-in zoom-in duration-300">
+                            {unreadCount}
+                        </span>
+                    )}
                 </div>
             </div>
 
