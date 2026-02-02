@@ -1,18 +1,27 @@
 "use client";
-import React, { useState, useEffect, useContext } from "react";
-import { useSearchParams } from "next/navigation";
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, writeBatch, getDocs, where, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import AuthContext from "@/contexts/authContext/authContext";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
 import { Message, Group } from "./types";
+import Script from "next/script";
 import ChatSidebar from "./components/ChatSidebar";
 import ChatWindow from "./components/ChatWindow";
+import CallOverlay from "./components/CallOverlay";
+
+declare global {
+    interface Window {
+        Peer: any;
+    }
+}
 
 const TeamChatScreen = () => {
     const { user: currentUser } = useContext(AuthContext);
     const searchParams = useSearchParams();
+    const router = useRouter();
     const userId = searchParams.get("userId");
     const { users } = useGetUsers();
 
@@ -24,6 +33,102 @@ const TeamChatScreen = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [userStatuses, setUserStatuses] = useState<Record<string, any>>({});
+
+    // Calling State
+    const [callInfo, setCallInfo] = useState<{
+        isOpen: boolean;
+        type: "audio" | "video";
+        user: IUser | null;
+    }>({ isOpen: false, type: "audio", user: null });
+    const [callStatus, setCallStatus] = useState<"calling" | "incoming" | "connected" | "ended">("calling");
+    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+    const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+    const [isMuted, setIsMuted] = useState(false);
+    const [isVideoOff, setIsVideoOff] = useState(false);
+
+    // Refs
+    const peerRef = useRef<any>(null);
+    const localStreamRef = useRef<MediaStream | null>(null);
+    const currentCallRef = useRef<any>(null);
+
+    // Derived user list with statuses
+    const combinedUsers = React.useMemo(() => {
+        return users.map(u => ({
+            ...u,
+            status: userStatuses[u.id]?.status || "offline",
+            lastSeen: userStatuses[u.id]?.lastSeen
+        }));
+    }, [users, userStatuses]);
+
+    // Initialize PeerJS
+    useEffect(() => {
+        if (!currentUser?.id || typeof window === "undefined") return;
+
+        const initPeer = () => {
+            if (!window.Peer) return;
+
+            const peer = new window.Peer(currentUser.id, {
+                debug: 1,
+                config: {
+                    iceServers: [
+                        { urls: "stun:stun.l.google.com:19302" },
+                        { urls: "stun:global.stun.twilio.com:3478" },
+                    ],
+                },
+            });
+
+            peer.on("open", (id: string) => {
+                console.log("PeerJS: Connection opened with ID:", id);
+            });
+
+            peer.on("call", (call: any) => {
+                const caller = combinedUsers.find(u => u.id === call.peer);
+                // Robust metadata extraction
+                const metadata = call.metadata || call.options?.metadata;
+
+                console.log("PeerJS: Incoming call from:", call.peer, "Metadata captured:", metadata);
+
+                setCallStatus("incoming");
+                setCallInfo({
+                    isOpen: true,
+                    type: metadata?.type || "audio",
+                    user: caller || { id: call.peer, full_name: "Unknown Caller" } as IUser
+                });
+                currentCallRef.current = call;
+            });
+
+            peer.on("error", (err: any) => {
+                console.error("PeerJS Error:", err);
+            });
+
+            peerRef.current = peer;
+        };
+
+        if (window.Peer) {
+            initPeer();
+        }
+
+        return () => {
+            if (peerRef.current) peerRef.current.destroy();
+        };
+    }, [currentUser?.id, combinedUsers]);
+
+    // Handle Media Tracks (Mute/Video Off)
+    useEffect(() => {
+        if (localStreamRef.current) {
+            localStreamRef.current.getVideoTracks().forEach(track => {
+                track.enabled = !isVideoOff;
+            });
+        }
+    }, [isVideoOff]);
+
+    useEffect(() => {
+        if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach(track => {
+                track.enabled = !isMuted;
+            });
+        }
+    }, [isMuted]);
 
     // Fetch real-time user statuses
     useEffect(() => {
@@ -38,15 +143,6 @@ const TeamChatScreen = () => {
 
         return () => unsubscribe();
     }, []);
-
-    // Derived user list with statuses
-    const combinedUsers = React.useMemo(() => {
-        return users.map(u => ({
-            ...u,
-            status: userStatuses[u.id]?.status || "offline",
-            lastSeen: userStatuses[u.id]?.lastSeen
-        }));
-    }, [users, userStatuses]);
 
     useEffect(() => {
         if (activeChatId && combinedUsers.length > 0) {
@@ -207,8 +303,90 @@ const TeamChatScreen = () => {
         }
     };
 
+    const handleStartCall = async (type: "audio" | "video") => {
+        if (!chatUser || !peerRef.current || !currentUser?.id) return;
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: type === "video",
+                audio: true
+            });
+
+            setLocalStream(stream);
+            localStreamRef.current = stream;
+            setCallStatus("calling");
+            setCallInfo({ isOpen: true, type, user: chatUser });
+
+            const call = peerRef.current.call(chatUser.id, stream, {
+                metadata: { type }
+            });
+
+            console.log("PeerJS: Call initiated. Type:", type);
+
+            call.on("stream", (remoteMediaStream: MediaStream) => {
+                setRemoteStream(remoteMediaStream);
+                setCallStatus("connected");
+            });
+
+            call.on("close", () => handleEndCall());
+            currentCallRef.current = call;
+
+        } catch (error) {
+            console.error("Error starting call:", error);
+            alert("Could not access camera or microphone");
+        }
+    };
+
+    const handleAcceptCall = async () => {
+        if (!currentCallRef.current) return;
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: callInfo.type === "video",
+                audio: true
+            });
+
+            setLocalStream(stream);
+            localStreamRef.current = stream;
+            currentCallRef.current.answer(stream);
+
+            currentCallRef.current.on("stream", (remoteMediaStream: MediaStream) => {
+                setRemoteStream(remoteMediaStream);
+                setCallStatus("connected");
+            });
+
+            currentCallRef.current.on("close", () => handleEndCall());
+        } catch (error) {
+            console.error("Error accepting call:", error);
+            handleEndCall();
+        }
+    };
+
+    const handleDeclineCall = () => {
+        if (currentCallRef.current) {
+            currentCallRef.current.close();
+        }
+        handleEndCall();
+    };
+
+    const handleEndCall = () => {
+        if (currentCallRef.current) currentCallRef.current.close();
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach((track: any) => track.stop());
+        }
+        setLocalStream(null);
+        localStreamRef.current = null;
+        setRemoteStream(null);
+        setCallInfo(prev => ({ ...prev, isOpen: false }));
+        setCallStatus("ended");
+    };
+
     return (
         <div className="h-[80vh] w-full flex overflow-hidden">
+            <Script
+                src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"
+                strategy="afterInteractive"
+            />
             <ChatSidebar
                 users={combinedUsers}
                 currentUserId={currentUser?.id}
@@ -229,6 +407,23 @@ const TeamChatScreen = () => {
                 messageText={messageText}
                 setMessageText={setMessageText}
                 handleSendMessage={handleSendMessage}
+                onStartCall={handleStartCall}
+            />
+
+            <CallOverlay
+                isOpen={callInfo.isOpen}
+                type={callInfo.type}
+                status={callStatus}
+                user={callInfo.user}
+                localStream={localStream}
+                remoteStream={remoteStream}
+                onAccept={handleAcceptCall}
+                onDecline={handleDeclineCall}
+                onEnd={handleEndCall}
+                isMuted={isMuted}
+                setIsMuted={setIsMuted}
+                isVideoOff={isVideoOff}
+                setIsVideoOff={setIsVideoOff}
             />
         </div>
     );
