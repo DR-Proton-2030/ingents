@@ -134,7 +134,7 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
                     <div className="pt-10 pb-12 flex flex-col items-center relative">
                         {/* Avatar / Remote Video */}
                         <div className="relative mb-6">
-                            <div className="h-28 w-28 rounded-full overflow-hidden border-2 border-white/10 ring-8 ring-white/5 relative bg-[#1A1D24]">
+                            <div className="h-56 w-[400px] rounded-lg overflow-hidden border-2 border-white/10 ring-8 ring-white/5 relative bg-[#1A1D24]">
                                 {user?.profile_picture ? (
                                     <img src={user.profile_picture} alt="" className="w-full h-full object-cover" />
                                 ) : (
