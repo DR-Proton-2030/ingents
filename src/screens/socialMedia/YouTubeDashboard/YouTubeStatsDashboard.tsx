@@ -57,7 +57,7 @@ if (loading) {
 
             {/* Right Column */}
             <div className="lg:col-span-4 space-y-6">
-              <PostSchedule />
+              <PostSchedule schedule={data?.postSchedule} />
               <PostInsights posts={data?.recentVideos} />
             </div>
 
