@@ -83,11 +83,18 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         return 0;
     });
 
-    const tabs: { id: "chats" | "calls" | "groups"; label: string; icon: any }[] = [
-        { id: "chats", label: "Chats", icon: ChatRoundLine },
-        { id: "groups", label: "Spaces", icon: UsersGroupRounded },
-        { id: "calls", label: "Calls", icon: CallChatRounded },
+    const tabs: { id: "chats" | "calls" | "groups"; label: string; icon: any; color: string }[] = [
+        { id: "chats", label: "Chats", icon: ChatRoundLine, color: "text-blue-600" },
+        { id: "groups", label: "Spaces", icon: UsersGroupRounded, color: "text-purple-600" },
+        { id: "calls", label: "Calls", icon: CallChatRounded, color: "text-green-600" },
     ];
+
+    const getUnderlineColor = () => {
+        if (activeTab === "chats") return "bg-blue-600";
+        if (activeTab === "groups") return "bg-purple-600";
+        if (activeTab === "calls") return "bg-green-600";
+        return "bg-gray-900";
+    };
 
     return (
         <div className={cn(
@@ -102,7 +109,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         onClick={() => setActiveTab(tab.id)}
                         className={cn(
                             "pb-4 text-lg font-bold transition-all relative flex items-center gap-2",
-                            activeTab === tab.id ? "text-gray-900" : "text-gray-400 hover:text-gray-500"
+                            activeTab === tab.id ? tab.color : "text-gray-400 hover:text-gray-500"
                         )}
                     >
                         <tab.icon className={cn(
@@ -113,7 +120,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         {activeTab === tab.id && (
                             <motion.div
                                 layoutId="tab-underline"
-                                className="absolute bottom-0 left-[-2px] right-[-2px] h-[3px] bg-gray-900 rounded-t-full"
+                                className={cn("absolute bottom-0 left-[-2px] right-[-2px] h-[3px] rounded-t-full", getUnderlineColor())}
                                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                             />
                         )}
@@ -137,9 +144,9 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     {activeTab === 'groups' && (
                         <button
                             onClick={() => setIsModalOpen(true)}
-                            className="h-12 w-12 flex items-center justify-center bg-gray-900 text-white rounded-2xl hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gray-200"
+                            className="h-10 w-10 flex items-center justify-center bg-gray-900/80 text-white rounded-xl hover:bg-gray-800 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-gray-200"
                         >
-                            <Plus className="h-6 w-6" />
+                            <Plus className="h-5 w-5" />
                         </button>
                     )}
                 </div>
@@ -225,6 +232,34 @@ const GroupChatItem = ({ group, activeChatId, setActiveChatId }: {
     activeChatId: string | null;
     setActiveChatId: (id: string | null) => void;
 }) => {
+    const [lastMessage, setLastMessage] = useState<{ text: string; time: string } | null>(null);
+
+    useEffect(() => {
+        if (!group.id) return;
+
+        const q = query(
+            collection(db, "conversations", group.id, "messages"),
+            orderBy("timestamp", "desc"),
+            limit(1)
+        );
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            if (!snapshot.empty) {
+                const data = snapshot.docs[0].data();
+                setLastMessage({
+                    text: data.text,
+                    time: data.timestamp?.toDate()
+                        ? data.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                        : "Just now"
+                });
+            } else {
+                setLastMessage(null);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [group.id]);
+
     return (
         <button
             onClick={() => setActiveChatId(group.id)}
@@ -233,18 +268,18 @@ const GroupChatItem = ({ group, activeChatId, setActiveChatId }: {
                 activeChatId === group.id ? "bg-gray-100" : "hover:bg-gray-50/50"
             )}
         >
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-100">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-100 transition-transform group-hover:scale-105">
                 {group.name.charAt(0)}
             </div>
             <div className="flex-1 text-left">
                 <div className="flex justify-between items-center mb-0.5">
-                    <span className="font-bold text-gray-900">{group.name}</span>
-                    <span className="text-xs text-gray-400 font-medium">
-                        {group.lastMessageTime ? "Today" : "New"}
+                    <span className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors uppercase tracking-tight text-sm">{group.name}</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                        {lastMessage?.time || (group.lastMessageTime ? "Today" : "New")}
                     </span>
                 </div>
-                <p className="text-sm text-gray-500 truncate max-w-[200px]">
-                    {group.lastMessage || `${group.members.length} members`}
+                <p className="text-sm text-gray-500 truncate max-w-[200px] font-medium italic-none">
+                    {lastMessage?.text || group.lastMessage || `${group.members.length} members`}
                 </p>
             </div>
         </button>
@@ -292,16 +327,16 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
         <button
             onClick={() => setActiveChatId(user.id)}
             className={cn(
-                "w-full flex items-center gap-4 p-4 rounded-3xl transition-all group relative",
+                "w-full flex items-center gap-4 p-2.5 rounded-2xl transition-all group relative",
                 activeChatId === user.id ? "bg-gray-100" : "hover:bg-gray-50/50"
             )}
         >
             <div className="relative">
-                <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden shadow-sm">
+                <div className="h-11 w-11 rounded-full bg-gray-200 overflow-hidden shadow-sm ring-2 ring-white group-hover:scale-105 transition-transform">
                     {user.profile_picture ? (
                         <Image src={user.profile_picture} alt="" width={48} height={48} />
                     ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-orange-400 to-orange-500 text-white font-bold">
+                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold">
                             {user.full_name?.charAt(0)}
                         </div>
                     )}
@@ -309,14 +344,14 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
                 <div className="absolute bottom-0.5 right-0.5 h-3 w-3 bg-green-500 border-2 border-white rounded-full ring-1 ring-black/5" />
             </div>
 
-            <div className="flex-1 text-left pr-6">
+            <div className="flex-1 text-left pr-3">
                 <div className="flex justify-between items-center mb-0.5">
-                    <span className="font-bold text-gray-900">{user.full_name}</span>
-                    <span className="text-xs text-gray-400 font-medium">{lastMessage?.time || "New"}</span>
+                    <span className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors  text-sm">{user.full_name}</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{lastMessage?.time || "New"}</span>
                 </div>
                 <div className="flex justify-between items-center">
                     <span className={cn(
-                        "text-sm truncate max-w-[180px]",
+                        "text-sm truncate max-w-[180px] font-medium italic-none",
                         "text-gray-500"
                     )}>
                         {lastMessage?.text || "Click to start chatting"}
@@ -330,9 +365,9 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
                     onTogglePin();
                 }}
                 className={cn(
-                    "absolute right-4 p-1.5 rounded-full transition-all duration-200",
+                    "absolute right-4 p-1.5 top-2/3 -translate-y-1/2 rounded-full transition-all duration-200",
                     isPinned
-                        ? "text-orange-500 bg-orange-50 scale-100 opacity-100"
+                        ? "text-blue-500 bg-blue-50 scale-100 opacity-100"
                         : "text-gray-300 opacity-0 group-hover:opacity-100 hover:text-gray-600 hover:bg-gray-100"
                 )}
             >
