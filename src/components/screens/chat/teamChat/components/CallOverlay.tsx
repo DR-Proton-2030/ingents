@@ -107,13 +107,16 @@ const CallOverlay: React.FC<CallOverlayProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100]  flex items-center justify-center p-4"
+                className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none"
             >
                 <motion.div
+                    drag
+                    dragMomentum={false}
+                    dragElastic={0.1}
                     initial={{ scale: 0.9, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.9, y: 20 }}
-                    className="w-[420px] bg-[#111318] rounded-[24px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] border border-white/5 flex flex-col"
+                    className="w-[420px] bg-[#111318] rounded-[24px] overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] border border-white/5 flex flex-col pointer-events-auto cursor-grab active:cursor-grabbing"
                 >
                     {/* Header */}
                     <div className="px-6 h-14 flex items-center justify-between border-b border-white/[0.04]">
