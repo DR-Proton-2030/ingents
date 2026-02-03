@@ -141,6 +141,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
             isMuted: isMuted,
             reaction: localReaction,
             isHandRaised: isHandRaised,
+            isScreenSharing: isScreenSharing,
             videoFilter: videoFilter,
             videoBackground: videoBackground
         },
@@ -159,6 +160,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 isMuted: !!p.isMuted,
                 reaction: p.reaction || null,
                 isHandRaised: !!p.isHandRaised,
+                isScreenSharing: !!p.isScreenSharing,
                 videoFilter: p.videoFilter || "none",
                 videoBackground: p.videoBackground || "none"
             };
@@ -200,7 +202,6 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                         allParticipants={getLayoutParticipants()}
                         pinnedPeerId={pinnedPeerId}
                         togglePin={togglePin}
-                        isScreenSharing={isScreenSharing}
                     />
                 </div>
 

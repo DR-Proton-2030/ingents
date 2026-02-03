@@ -153,6 +153,7 @@ export default function MeetingPage() {
     const isMutedRef = useRef(false);
     const isVideoOffRef = useRef(false);
     const isHandRaisedRef = useRef(false);
+    const isScreenSharingRef = useRef(false);
     const peerIdRef = useRef("");
     const isHostRef = useRef(false);
     const blockedPeersRef = useRef<Map<string, number>>(new Map());
@@ -269,6 +270,13 @@ export default function MeetingPage() {
 
             // 3. Update existing peers or connect to new ones
             others.forEach(participant => {
+                // Update remote stream with screen sharing info if needed
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === participant.peerId
+                        ? { ...p, isScreenSharing: !!participant.isScreenSharing }
+                        : p
+                ));
+
                 // If we don't have a connection to this participant yet, and they joined BEFORE us
                 // we should initiate a connection.
                 const shouldInitiate = participant.peerId < peerIdRef.current;
@@ -589,6 +597,7 @@ export default function MeetingPage() {
                             isMuted: data.payload.isMuted,
                             isVideoOff: data.payload.isVideoOff,
                             isHandRaised: data.payload.isHandRaised,
+                            isScreenSharing: data.payload.isScreenSharing,
                             videoFilter: data.payload.videoFilter || "none",
                             videoBackground: data.payload.videoBackground || "none"
                         }
@@ -895,6 +904,7 @@ export default function MeetingPage() {
                 userName: currentUser.name,
                 isVideoOff: isVideoOffRef.current,
                 isMuted: isMutedRef.current,
+                isScreenSharing: false,
                 isHandRaised: false,
                 lastSeen: null,
                 joinedAt: null
@@ -982,6 +992,10 @@ export default function MeetingPage() {
                 localStreamRef.current?.addTrack(videoTrack);
                 setLocalStream(localStreamRef.current);
                 setIsScreenSharing(false);
+                isScreenSharingRef.current = false;
+                if (meetingCode) {
+                    await updateParticipantMedia(meetingCode, peerIdRef.current, { isScreenSharing: false });
+                }
             } catch (e) {
                 console.error("Error reverting to camera", e);
             }
@@ -990,6 +1004,11 @@ export default function MeetingPage() {
                 const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 const screenTrack = displayStream.getVideoTracks()[0];
                 screenTrack.onended = () => toggleScreenShare();
+
+                isScreenSharingRef.current = true;
+                if (meetingCode) {
+                    await updateParticipantMedia(meetingCode, peerIdRef.current, { isScreenSharing: true });
+                }
 
                 callsRef.current.forEach((call) => {
                     const sender = call.peerConnection?.getSenders().find((s: any) => s.track?.kind === "video");

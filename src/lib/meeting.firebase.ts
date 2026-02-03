@@ -19,6 +19,7 @@ export interface FirebaseParticipant {
     userName: string;
     isVideoOff: boolean;
     isMuted: boolean;
+    isScreenSharing: boolean;
     isHandRaised: boolean;
     lastSeen: any;
     joinedAt: any;
@@ -45,7 +46,7 @@ export const updateParticipantPresence = async (meetingCode: string, peerId: str
 export const updateParticipantMedia = async (
     meetingCode: string, 
     peerId: string, 
-    updates: Partial<Pick<FirebaseParticipant, "isVideoOff" | "isMuted" | "isHandRaised">>
+    updates: Partial<Pick<FirebaseParticipant, "isVideoOff" | "isMuted" | "isHandRaised" | "isScreenSharing">>
 ) => {
     const participantDoc = doc(db, ROOMS_COLLECTION, meetingCode, "participants", peerId);
     await updateDoc(participantDoc, updates);

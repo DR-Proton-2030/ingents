@@ -206,7 +206,7 @@ const VideoTile: React.FC<VideoTileProps> = ({
                 style={{
                     filter: filterMap[videoFilter] || "",
                 }}
-                className={`absolute inset-0 w-full h-full object-cover ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} ${isVideoOff ? "opacity-0" : (videoBackground !== "none" ? "opacity-0 pointer-events-none" : "opacity-100")}`}
+                className={`absolute inset-0 w-full h-full ${isScreenSharing ? "object-contain bg-black" : "object-cover"} ${isLocal && !isScreenSharing ? "scale-x-[-1]" : ""} ${isVideoOff ? "opacity-0" : (videoBackground !== "none" ? "opacity-0 pointer-events-none" : "opacity-100")}`}
             />
 
             {backgroundConfigs[videoBackground]?.type === 'simulation' && !isVideoOff && (

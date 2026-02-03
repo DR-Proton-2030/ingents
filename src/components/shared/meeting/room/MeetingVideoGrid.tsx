@@ -8,7 +8,6 @@ interface MeetingVideoGridProps {
     allParticipants: ParticipantState[];
     pinnedPeerId: string | null;
     togglePin: (id: string) => void;
-    isScreenSharing: boolean;
 }
 
 const avatarColors = [
@@ -29,7 +28,6 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
     allParticipants,
     pinnedPeerId,
     togglePin,
-    isScreenSharing,
 }) => {
     if (allParticipants.length === 0) return null;
 
@@ -43,7 +41,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                     isLocal={allParticipants[0].isLocal}
                     isVideoOff={allParticipants[0].isVideoOff}
                     isMuted={allParticipants[0].isMuted}
-                    isScreenSharing={isScreenSharing}
+                    isScreenSharing={allParticipants[0].isScreenSharing}
                     avatarColor={avatarColors[0]}
                     isPinned={pinnedPeerId === allParticipants[0].id}
                     onTogglePin={() => togglePin(allParticipants[0].id)}
@@ -78,7 +76,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                 isLocal={p.isLocal}
                                 isVideoOff={p.isVideoOff}
                                 isMuted={p.isMuted}
-                                isScreenSharing={p.isLocal && isScreenSharing}
+                                isScreenSharing={p.isScreenSharing}
                                 avatarColor={avatarColors[i % avatarColors.length]}
                                 isPinned={pinnedPeerId === p.id}
                                 onTogglePin={() => togglePin(p.id)}
@@ -103,7 +101,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                         isLocal={mainPeer.isLocal}
                         isVideoOff={mainPeer.isVideoOff}
                         isMuted={mainPeer.isMuted}
-                        isScreenSharing={mainPeer.isLocal && isScreenSharing}
+                        isScreenSharing={mainPeer.isScreenSharing}
                         avatarColor={avatarColors[allParticipants.indexOf(mainPeer) % avatarColors.length]}
                         isPinned={pinnedPeerId === mainPeer.id}
                         onTogglePin={() => togglePin(mainPeer.id)}
@@ -128,7 +126,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                             isLocal={featuredPeer.isLocal}
                             isVideoOff={featuredPeer.isVideoOff}
                             isMuted={featuredPeer.isMuted}
-                            isScreenSharing={featuredPeer.isLocal && isScreenSharing}
+                            isScreenSharing={featuredPeer.isScreenSharing}
                             avatarColor={avatarColors[allParticipants.indexOf(featuredPeer) % avatarColors.length]}
                             isPinned={pinnedPeerId === featuredPeer.id}
                             onTogglePin={() => togglePin(featuredPeer.id)}
@@ -148,7 +146,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                     isLocal={p.isLocal}
                                     isVideoOff={p.isVideoOff}
                                     isMuted={p.isMuted}
-                                    isScreenSharing={p.isLocal && isScreenSharing}
+                                    isScreenSharing={p.isScreenSharing}
                                     avatarColor={avatarColors[allParticipants.indexOf(p) % avatarColors.length]}
                                     isPinned={pinnedPeerId === p.id}
                                     onTogglePin={() => togglePin(p.id)}
@@ -176,7 +174,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                     isLocal={p.isLocal}
                                     isVideoOff={p.isVideoOff}
                                     isMuted={p.isMuted}
-                                    isScreenSharing={p.isLocal && isScreenSharing}
+                                    isScreenSharing={p.isScreenSharing}
                                     avatarColor={avatarColors[i % avatarColors.length]}
                                     isPinned={pinnedPeerId === p.id}
                                     onTogglePin={() => togglePin(p.id)}
@@ -203,7 +201,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                             isLocal={activePeer.isLocal}
                             isVideoOff={activePeer.isVideoOff}
                             isMuted={activePeer.isMuted}
-                            isScreenSharing={activePeer.isLocal && isScreenSharing}
+                            isScreenSharing={activePeer.isScreenSharing}
                             avatarColor={avatarColors[allParticipants.indexOf(activePeer) % avatarColors.length]}
                             isPinned={pinnedPeerId === activePeer.id}
                             onTogglePin={() => togglePin(activePeer.id)}
@@ -223,7 +221,7 @@ const MeetingVideoGrid: React.FC<MeetingVideoGridProps> = ({
                                     isLocal={p.isLocal}
                                     isVideoOff={p.isVideoOff}
                                     isMuted={p.isMuted}
-                                    isScreenSharing={p.isLocal && isScreenSharing}
+                                    isScreenSharing={p.isScreenSharing}
                                     avatarColor={avatarColors[allParticipants.indexOf(p) % avatarColors.length]}
                                     isPinned={pinnedPeerId === p.id}
                                     onTogglePin={() => togglePin(p.id)}
