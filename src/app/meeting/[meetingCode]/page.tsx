@@ -300,10 +300,16 @@ export default function MeetingPage() {
                 ));
 
                 // If we don't have a connection to this participant yet, and they joined BEFORE us
-                // we should initiate a connection.
                 const shouldInitiate = participant.peerId < peerIdRef.current;
 
-                if (shouldInitiate && !connectedPeersRef.current.has(participant.peerId)) {
+                // Check if blocked, but only if they are NOT in the active list (Firebase is source of truth)
+                const blockedAt = blockedPeersRef.current.get(participant.peerId);
+                const isRecentlyBlocked = blockedAt && (Date.now() - blockedAt < 5000);
+
+                // If we don't have a connection, OR if we have a placeholder without a real stream
+                const isConnected = connectedPeersRef.current.has(participant.peerId);
+
+                if (shouldInitiate && !isRecentlyBlocked && !isConnected) {
                     console.log("New participant found in Firebase, initiating connection:", participant.peerId);
                     connectToPeer(participant.peerId);
                 }
@@ -395,7 +401,7 @@ export default function MeetingPage() {
     function handleRemoteStream(peerId: string, stream: MediaStream, userName?: string) {
         // Guard 1: Ignore blocked peers (recently removed)
         const blockedAt = blockedPeersRef.current.get(peerId);
-        if (blockedAt && (Date.now() - blockedAt < 30000)) {
+        if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
             console.log("Blocking ghost stream from peer:", peerId);
             return;
         }
@@ -590,7 +596,7 @@ export default function MeetingPage() {
 
             // Guard 2: Ignore messages from blocked peers
             const blockedAt = blockedPeersRef.current.get(senderId);
-            if (blockedAt && (Date.now() - blockedAt < 30000)) {
+            if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
                 return;
             }
 
@@ -607,7 +613,7 @@ export default function MeetingPage() {
 
                     // Guard: Only create placeholder if NOT blocked and NOT already in list
                     const blockedAt = blockedPeersRef.current.get(data.payload.peerId);
-                    if (blockedAt && (Date.now() - blockedAt < 30000)) return prev;
+                    if (blockedAt && (Date.now() - blockedAt < 5000)) return prev; // reduced to 5s
 
                     // If stream not yet added, create placeholder
                     return [...prev, {
@@ -735,7 +741,7 @@ export default function MeetingPage() {
     function setupCommonPeerEvents(peer: any) {
         peer.on("call", (call: any) => {
             const blockedAt = blockedPeersRef.current.get(call.peer);
-            if (blockedAt && (Date.now() - blockedAt < 30000)) {
+            if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
                 console.warn("Ignoring call from blocked peer:", call.peer);
                 call.close();
                 return;
@@ -747,7 +753,7 @@ export default function MeetingPage() {
 
         peer.on("connection", (conn: any) => {
             const blockedAt = blockedPeersRef.current.get(conn.peer);
-            if (blockedAt && (Date.now() - blockedAt < 30000)) {
+            if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
                 console.warn("Ignoring connection from blocked peer:", conn.peer);
                 conn.close();
                 return;
@@ -1033,7 +1039,16 @@ export default function MeetingPage() {
         peer.on("error", (err: any) => {
             console.error("P2P Error:", err);
             setIsLoading(false);
-            if (err.type === "unavailable-id") {
+
+            if (err.type === "peer-unavailable") {
+                // Parse peerId from message: "Could not connect to peer XXX"
+                const match = err.message.match(/peer\s+([^\s]+)/);
+                const failedId = match ? match[1] : null;
+                if (failedId) {
+                    console.warn(`Target peer ${failedId} is unavailable. Cleaning up for retry.`);
+                    removePeer(failedId);
+                }
+            } else if (err.type === "unavailable-id") {
                 toast.error("Meeting ID taken. Please try again in 30 seconds.");
             } else {
                 toast.error(`Connection Error: ${err.type}`);

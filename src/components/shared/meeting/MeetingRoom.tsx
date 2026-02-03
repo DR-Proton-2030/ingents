@@ -105,6 +105,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
 
     // Refs
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const admissionAudioRef = useRef<HTMLAudioElement | null>(null);
+    const prevWaitingCountRef = useRef(0);
 
     // Close all panels
     const closeAllPanels = () => {
@@ -197,11 +199,19 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         setPinnedPeerId(pinnedPeerId === id ? null : id);
     };
 
-    // --- Admission Popups ---
     useEffect(() => {
-        if (!isHost || waitingQueue.length === 0) return;
+        if (!isHost || waitingQueue.length === 0) {
+            prevWaitingCountRef.current = waitingQueue.length;
+            return;
+        }
 
         console.log("MeetingRoom: Host detected waiting participants:", waitingQueue.length);
+
+        // Play sound if a new person joined the queue
+        if (waitingQueue.length > prevWaitingCountRef.current) {
+            admissionAudioRef.current?.play().catch(e => console.error("Sound play failed:", e));
+        }
+        prevWaitingCountRef.current = waitingQueue.length;
 
         // Show toast for the latest waiting participant
         const latest = waitingQueue[waitingQueue.length - 1];
@@ -255,6 +265,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     return (
         <div className="h-screen flex flex-col bg-gray-200 overflow-hidden">
             <audio ref={audioRef} src="/sounds/hand-raise.mp3" />
+            <audio ref={admissionAudioRef} src="/sounds/hand-raise.mp3" /> {/* Placeholder for knock.mp3 */}
 
             {/* Layout Modal */}
             {showLayoutModal && (
