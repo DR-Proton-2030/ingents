@@ -119,7 +119,7 @@ const TagPicker: React.FC<TagPickerProps> = ({
                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Fetching tags...</p>
                         </div>
                     ) : (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-x-2 gap-y-3">
                             {filteredTags.map((tag) => {
                                 const isSelected = selectedTagIds.includes(tag._id);
                                 return (
@@ -128,23 +128,25 @@ const TagPicker: React.FC<TagPickerProps> = ({
                                         type="button"
                                         onClick={() => isSelected ? onRemoveTag(tag._id) : onAddTag(tag)}
                                         className={cn(
-                                            "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2",
+                                            "h-9 px-3 rounded-xl text-[11px] font-black transition-all flex items-center gap-2 border uppercase tracking-tight",
                                             isSelected 
-                                                ? "ring-2 ring-offset-1 ring-orange-500" 
-                                                : "hover:bg-gray-100 border border-transparent"
+                                                ? "border-2 border-gray-400/20" 
+                                                : "hover:bg-opacity-20 bg-opacity-10 border-transparent"
                                         )}
                                         style={{ 
                                             backgroundColor: `${tag.color}15`, 
                                             color: tag.color,
-                                            border: isSelected ? undefined : `1px solid ${tag.color}30`
+                                            borderColor: isSelected ? tag.color : `${tag.color}30`
                                         }}
                                     >
-                                        <Tag className="w-3 h-3" />
-                                        {tag.name}
+                                        <Tag className="w-3 h-3 shrink-0" />
+                                        <span className="truncate max-w-[120px] block transform translate-y-[0.5px]">
+                                            {tag.name}
+                                        </span>
                                         {isSelected ? (
-                                            <MinusCircle className="w-3.5 h-3.5 opacity-60" />
+                                            <MinusCircle className="w-3.5 h-3.5 shrink-0 opacity-60" />
                                         ) : (
-                                            <AddCircle className="w-3.5 h-3.5 opacity-60" />
+                                            <AddCircle className="w-3.5 h-3.5 shrink-0 opacity-40 hover:opacity-80 transition-opacity" />
                                         )}
                                     </button>
                                 );

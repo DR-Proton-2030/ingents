@@ -22,6 +22,7 @@ interface MeetingLobbyProps {
     localStream: MediaStream | null;
     meetingInfo: MeetingDetails | null;
     participants: Participant[];
+    activeParticipants: any[];
     currentUser: { id: string; name: string; email: string };
     isFetchingInfo: boolean;
     isMuted: boolean;
@@ -48,6 +49,7 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
     localStream,
     meetingInfo,
     participants,
+    activeParticipants,
     currentUser,
     isFetchingInfo,
     isMuted,
@@ -223,52 +225,72 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                                     <div className="p-4 bg-gray-50 border border-transparent rounded-2xl flex flex-col gap-1 hover:border-orange-200 hover:bg-orange-50/10 transition-all duration-300">
                                         <Users className="w-3.5 h-3.5 text-gray-400 mb-1" />
                                         <span className="text-xs font-bold text-gray-900">
-                                            {participants.length} Invited
+                                            {activeParticipants.length} Active
                                         </span>
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Active Roster</span>
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">In Meeting</span>
                                     </div>
                                 </div>
 
                                 {/* Participants Section */}
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Invited Participants</span>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                                            {activeParticipants.length > 0 ? "Already in the meeting" : "Invited Participants"}
+                                        </span>
                                         <div className="h-px flex-1 mx-4 bg-gray-100" />
                                     </div>
 
                                     <div className="space-y-3">
-                                        {meetingInfo?.host_details && (
-                                            <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] rounded-2xl group transition-all hover:border-orange-200 hover:bg-orange-50/10">
-                                                <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center text-xs font-bold text-white shadow-lg overflow-hidden relative">
-                                                    {meetingInfo.host_details.full_name.charAt(0)}
-                                                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-[13px] font-bold text-gray-900 truncate">{meetingInfo.host_details.full_name}</p>
-                                                    <p className="text-[9px] text-orange-600 font-black uppercase tracking-widest">Meeting Host</p>
-                                                </div>
-                                                <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-                                            </div>
-                                        )}
-
-                                        <div className="flex items-center gap-2 px-2 pt-1">
-                                            <div className="flex -space-x-3">
-                                                {participants.slice(0, 5).map((p, i) => (
-                                                    <div
-                                                        key={p._id}
-                                                        className={`w-9 h-9 rounded-full border-2 border-white flex items-center justify-center text-white text-[10px] font-black shadow-md ${avatarColors[i % avatarColors.length]}`}
-                                                    >
-                                                        {(p.user_details?.full_name || p.external_name || "?").charAt(0)}
+                                        {activeParticipants.length > 0 ? (
+                                            activeParticipants.map((p, i) => (
+                                                <div key={p.peerId} className="flex items-center gap-3 p-3 bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] rounded-2xl group transition-all hover:border-orange-200 hover:bg-orange-50/10">
+                                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold text-white shadow-lg overflow-hidden relative ${avatarColors[i % avatarColors.length]}`}>
+                                                        {p.userName.charAt(0).toUpperCase()}
+                                                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
                                                     </div>
-                                                ))}
-                                                {participants.length > 5 && (
-                                                    <div className="w-9 h-9 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-gray-500 text-[9px] font-black shadow-sm">
-                                                        +{participants.length - 5}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[13px] font-bold text-gray-900 truncate">{p.userName}</p>
+                                                        <p className="text-[9px] text-green-600 font-black uppercase tracking-widest">Active Now</p>
+                                                    </div>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <>
+                                                {meetingInfo?.host_details && (
+                                                    <div className="flex items-center gap-3 p-3 bg-white border border-gray-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] rounded-2xl group transition-all hover:border-orange-200 hover:bg-orange-50/10">
+                                                        <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center text-xs font-bold text-white shadow-lg overflow-hidden relative">
+                                                            {meetingInfo.host_details.full_name.charAt(0)}
+                                                            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent" />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-[13px] font-bold text-gray-900 truncate">{meetingInfo.host_details.full_name}</p>
+                                                            <p className="text-[9px] text-orange-600 font-black uppercase tracking-widest">Meeting Host</p>
+                                                        </div>
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
                                                     </div>
                                                 )}
-                                            </div>
-                                            <ChevronRight className="w-3 h-3 text-gray-300 ml-auto" />
-                                        </div>
+
+                                                <div className="flex items-center gap-2 px-2 pt-1">
+                                                    <div className="flex -space-x-3">
+                                                        {participants.slice(0, 5).map((p, i) => (
+                                                            <div
+                                                                key={p._id}
+                                                                className={`w-9 h-9 rounded-full border-2 border-white flex items-center justify-center text-white text-[10px] font-black shadow-md ${avatarColors[i % avatarColors.length]}`}
+                                                            >
+                                                                {(p.user_details?.full_name || p.external_name || "?").charAt(0)}
+                                                            </div>
+                                                        ))}
+                                                        {participants.length > 5 && (
+                                                            <div className="w-9 h-9 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-gray-500 text-[9px] font-black shadow-sm">
+                                                                +{participants.length - 5}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <ChevronRight className="w-3 h-3 text-gray-300 ml-auto" />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

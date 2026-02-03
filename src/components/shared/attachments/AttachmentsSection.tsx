@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // Modular Components
 import AttachmentCard from "./components/AttachmentCard";
 import UploadDropzone from "./components/UploadDropzone";
-import PreviewLightbox from "./components/PreviewLightbox";
+import AttachmentPreviewer from "../AttachmentsModal/AttachmentPreviewer";
 
 interface AttachmentsSectionProps {
     attachments: AttachmentInput[];
@@ -32,7 +32,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -63,25 +63,6 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         };
     }, []);
 
-    const handlePreview = useCallback((file: File | string) => {
-        if (typeof file === "string") {
-            const ext = file.split("?")[0].split(".").pop()?.toLowerCase();
-            if (["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "")) {
-                setPreviewUrl(file);
-            } else {
-                window.open(file, "_blank");
-            }
-        } else {
-            if (file.type.startsWith("image/")) {
-                const url = URL.createObjectURL(file);
-                setPreviewUrl(url);
-            } else if (file.type === "application/pdf") {
-                const url = URL.createObjectURL(file);
-                window.open(url, "_blank");
-            }
-        }
-    }, []);
-
     const getFileName = (file: File | string) => {
         if (typeof file === "string") {
             return file.split("?")[0].split("/").pop() || "Attachment";
@@ -95,6 +76,41 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
         if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
         return `${(size / (1024 * 1024)).toFixed(1)} MB`;
     };
+
+    const handleDownload = async (url: string, filename: string) => {
+        try {
+            const response = await fetch(url, { mode: 'cors' });
+            if (!response.ok) throw new Error('Network response was not ok');
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename || 'attachment';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error("Download failed, using fallback:", error);
+            const separator = url.includes('?') ? '&' : '?';
+            const forcedUrl = `${url}${separator}response-content-disposition=attachment&download=1`;
+            const link = document.createElement('a');
+            link.href = forcedUrl;
+            link.download = filename || 'attachment';
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
+    const combinedForPreview: TaskAttachment[] = [
+        ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
+        ...attachments.map(att => ({ 
+            url: att.file ? URL.createObjectURL(att.file) : (att.url || ""), 
+            description: att.description 
+        }))
+    ];
 
     const totalFiles = attachments.length + existingAttachments.length;
     const canAddMore = totalFiles < 10;
@@ -154,31 +170,34 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         <AttachmentCard
                             key={`existing-${index}`}
                             name={getFileName(att.url)}
+                            url={att.url}
                             isExisting={true}
                             theme={getFileTheme(att.url)}
                             description={att.description || ""}
                             onRemove={() => onRemoveExisting?.(index)}
-                            onPreview={() => handlePreview(att.url)}
+                            onPreview={() => setPreviewIndex(index)}
                             onUpdateDescription={(desc) => onUpdateExistingDescription?.(index, desc)}
                         />
                     ))}
 
                     {/* New Files */}
-                    {attachments.map((att, index) => (
-                        att.file && (
+                    {attachments.map((att, index) => {
+                        const blobUrl = att.file ? URL.createObjectURL(att.file) : undefined;
+                        return att.file && (
                             <AttachmentCard
                                 key={`new-${index}`}
                                 name={att.file.name}
+                                url={blobUrl}
                                 size={getFileSize(att.file)}
                                 isExisting={false}
                                 theme={getFileTheme(att.file)}
                                 description={att.description || ""}
                                 onRemove={() => onRemoveAttachment(index)}
-                                onPreview={() => att.file && handlePreview(att.file)}
+                                onPreview={() => setPreviewIndex(existingAttachments.length + index)}
                                 onUpdateDescription={(desc) => onUpdateDescription(index, desc)}
                             />
-                        )
-                    ))}
+                        );
+                    })}
                 </AnimatePresence>
 
                 {/* Small "Add More" box if files exist */}
@@ -195,9 +214,14 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                 )}
             </div>
 
-            <PreviewLightbox
-                url={previewUrl}
-                onClose={() => setPreviewUrl(null)}
+            <AttachmentPreviewer
+                isOpen={previewIndex !== null}
+                attachments={combinedForPreview}
+                currentIndex={previewIndex ?? 0}
+                onClose={() => setPreviewIndex(null)}
+                onNext={() => setPreviewIndex((previewIndex! + 1) % combinedForPreview.length)}
+                onPrev={() => setPreviewIndex((previewIndex! - 1 + combinedForPreview.length) % combinedForPreview.length)}
+                onDownload={handleDownload}
             />
         </section>
     );

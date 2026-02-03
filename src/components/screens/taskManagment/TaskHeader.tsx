@@ -14,18 +14,13 @@ import {
 } from "@solar-icons/react";
 import { ViewMode } from "@/types/interface/task.interface";
 import { motion } from "framer-motion";
-import { Table } from "lucide-react";
+import { Download, Table } from "lucide-react";
 import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import { ProjectSelector, CreateProjectDrawer } from "./components";
 import { IProject } from "@/types/interface/project.interface";
 import useProjects from "@/hooks/useProjects";
+import { TaskHeaderProps, ViewTab } from "@/types/interface/props/taskHeader.props";
 
-
-interface ViewTab {
-  id: ViewMode;
-  label: string;
-  icon: React.ElementType;
-}
 
 const viewTabs: ViewTab[] = [
   { id: "spreadsheet", label: "Spreadsheet", icon: Table },
@@ -33,21 +28,6 @@ const viewTabs: ViewTab[] = [
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "board", label: "Board", icon: Widget },
 ];
-
-interface TaskHeaderProps {
-  activeView: ViewMode;
-  onViewChange: (view: ViewMode) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onFilter?: () => void;
-  onCreateProject?: () => void;
-  onCreateTask?: () => void;
-  filters: ITaskFilters;
-  onFilterChange: (filters: ITaskFilters) => void;
-  phases: any[];
-  selectedProjectId?: string;
-  onProjectSelect: (project: IProject | null) => void;
-}
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
   activeView,
@@ -62,6 +42,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   phases,
   selectedProjectId,
   onProjectSelect,
+  onDownloadReport,
 }) => {
   const [isProjectDrawerOpen, setIsProjectDrawerOpen] = React.useState(false);
   const { handleCreateProject } = useProjects();
@@ -74,167 +55,120 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   return (
     <>
       <div className="space-y-6">
-        {/* Top Row - View Tabs and Search */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* View Tabs */}
-          <div className="flex items-center gap-1.5 ">
+        {/* Row 1: View Tabs */}
+        <div className="flex items-center gap-1 p-1 bg-gray-100/40 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] w-fit">
+          {viewTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeView === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onViewChange(tab.id)}
+                className={cn(
+                  "relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
+                  isActive ? "text-gray-900" : "text-gray-500 hover:text-gray-900 hover:bg-white/40"
+                )}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-tab-bg"
+                    className="absolute inset-0 bg-white shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08)] rounded-xl border border-gray-100/50"
+                    transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
+                  />
+                )}
+                {/* @ts-ignore */}
+                <Icon className={cn("relative z-10 w-5 h-5 transition-colors", isActive ? "text-orange-500" : "text-gray-400")} />
+                <span className={cn("relative z-10 hidden sm:inline-block transition-opacity duration-300", isActive ? "opacity-100" : "opacity-60")}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-
-            <div className="flex items-center gap-1.5 bg-gray-100/80 backdrop-blur-sm p-1.5 rounded-2xl w-fit">
-              {viewTabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeView === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => onViewChange(tab.id)}
-                    className={cn(
-                      "relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300",
-                      isActive ? "text-gray-900" : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                    )}
-                  >
-                    {isActive && (
-                      <motion.div
-                        layoutId="active-tab-bg"
-                        className="absolute inset-0 bg-white shadow-sm rounded-xl"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
-                    )}
-                    {/* @ts-ignore */}
-                    <Icon className={cn("relative z-10 w-5 h-5 transition-colors", isActive ? "text-orange-500" : "text-gray-400")} />
-                    {/* <span className="relative z-10">{tab.label}</span> */}
-                  </button>
-                );
-              })}
-
-            </div>
-
+        {/* Row 2: Project Selector and Actions */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
             <ProjectSelector
               onOpenCreateDrawer={() => setIsProjectDrawerOpen(true)}
               onSelectProject={onProjectSelect}
               selectedProjectId={selectedProjectId}
             />
           </div>
-          {/* Right Actions */}
-          <div className="flex items-center gap-3">
+
+          <div className="flex flex-wrap items-center gap-3">
             {/* Search */}
-            <div className="relative group">
-              <Magnifer className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+            <div className="relative group flex-1 lg:flex-none min-w-[240px]">
+              <Magnifer className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-11 pr-4 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm w-full md:w-72 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500 shadow-sm transition-all placeholder:text-gray-400 placeholder:font-medium"
+                className="pl-11 pr-4 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm w-full lg:w-64 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500/40 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] transition-all placeholder:text-gray-400 font-semibold"
               />
             </div>
 
-            {/* Filter Button */}
-            <button
-              onClick={onFilter}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 bg-white border rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-sm",
-                activeFilterCount > 0
-                  ? "border-orange-200 text-orange-600 bg-orange-50/50"
-                  : "border-gray-100 text-gray-700 hover:bg-gray-50 hover:border-gray-200"
-              )}
-            >
-              <div className="relative">
-                <Filter className={cn("w-4 h-4", activeFilterCount > 0 ? "text-orange-500" : "text-gray-400")} />
-                {activeFilterCount > 0 && (
-                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white">
-                    {activeFilterCount}
-                  </span>
+            <div className="flex items-center gap-2">
+              {/* Filter */}
+              <button
+                onClick={onFilter}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2.5 border rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-sm",
+                  activeFilterCount > 0
+                    ? "border-orange-200 text-orange-600 bg-orange-50"
+                    : "bg-white border-gray-100 text-gray-700 hover:bg-gray-50 hover:border-gray-200"
                 )}
-              </div>
-              <span>Filter</span>
-            </button>
+              >
+                <div className="relative">
+                  <Filter className={cn("w-4 h-4", activeFilterCount > 0 ? "text-orange-500" : "text-gray-400")} />
+                  {activeFilterCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white font-black"
+                    >
+                      {activeFilterCount}
+                    </motion.span>
+                  )}
+                </div>
+                <span className="hidden sm:inline">Filter</span>
+              </button>
 
-            <QuickActionCard
-              icon={Notes}
-              iconColor="text-orange-500"
-              bgColor="bg-orange-50"
-              hoverBorder="hover:border-orange-200"
-              label="Create Task"
-              description="Add a new item to your list"
-              onClick={onCreateTask}
-            />
+              {/* Download */}
+              <button
+                onClick={onDownloadReport}
+                className="group p-2.5 bg-blue-50 border border-blue-100 text-blue-600 rounded-2xl hover:bg-blue-100 hover:border-blue-200 transition-all active:scale-95 shadow-sm"
+                title="Download Report"
+              >
+                <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
+              </button>
+
+              <div className="h-6 w-px bg-gray-200 mx-1" />
+
+              {/* Create Task */}
+              <button
+                onClick={onCreateTask}
+                className="group flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white border border-gray-800 rounded-2xl text-sm font-bold shadow-[0_10px_20px_-10px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_25px_-10px_rgba(0,0,0,0.4)] hover:bg-black transition-all active:scale-95 whitespace-nowrap"
+              >
+                <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
+                  <AddCircle className="w-4 h-4 text-white" />
+                </div>
+                <span>Create Task</span>
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Quick Action Cards */}
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <QuickActionCard
-          icon={Document}
-          iconColor="text-blue-500"
-          bgColor="bg-blue-50"
-          hoverBorder="hover:border-blue-200"
-          label="Create Project"
-          description="Build a new team workspace"
-          onClick={onCreateProject}
-        />
-        <QuickActionCard
-          icon={Notes}
-          iconColor="text-orange-500"
-          bgColor="bg-orange-50"
-          hoverBorder="hover:border-orange-200"
-          label="Create Task"
-          description="Add a new item to your list"
-          onClick={onCreateTask}
-        />
-    </div> */}
-      </div >
       <CreateProjectDrawer
         isOpen={isProjectDrawerOpen}
         onClose={() => setIsProjectDrawerOpen(false)}
         onSubmit={async (data) => {
           await handleCreateProject(data);
-          // projects will auto-refresh via hook
         }}
       />
     </>
-  );
-};
-
-// Quick Action Card Sub-component
-interface QuickActionCardProps {
-  icon: React.ElementType;
-  iconColor: string;
-  bgColor: string;
-  hoverBorder: string;
-  label: string;
-  description: string;
-  onClick?: () => void;
-}
-
-const QuickActionCard: React.FC<QuickActionCardProps> = ({
-  icon: Icon,
-  iconColor,
-  bgColor,
-  hoverBorder,
-  label,
-  description,
-  onClick,
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "group flex  items-center gap-1 py-2 px-4 bg-white/70 border shadow-sm border-gray-100 rounded-full relative overflow-hidden",
-
-      )}
-    >
-      {/* Decorative Gradient Overlay */}
-
-      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-500 group-hover:rotate-6", bgColor)}>
-        {/* @ts-ignore */}
-        <Icon className={cn("w-5 h-5", iconColor)} />
-      </div>
-      <div className="flex flex-col ">
-        <p className="font-sm text-sm">{label}</p>
-      </div>
-
-    </button>
   );
 };
 

@@ -6,6 +6,44 @@ import MeetingLobby from "@/components/shared/meeting/MeetingLobby";
 import { getMeetingByCode, MeetingDetails, Participant } from "@/utils/api/meeting/meeting.api";
 import { MeetingRoom } from "@/components/shared/meeting";
 import AuthContext from "@/contexts/authContext/authContext";
+import { db, storage } from "@/lib/firebase";
+import {
+    joinMeetingRoom,
+    leaveMeetingRoom,
+    listenToParticipants,
+    updateParticipantPresence,
+    updateParticipantMedia,
+    updateRoomSettings,
+    listenToRoomSettings,
+    requestToJoin,
+    listenToWaitlist,
+    listenToAdmissionStatus,
+    FirebaseParticipant,
+    RoomSettings
+} from "@/lib/meeting.firebase";
+import { toast } from "react-toastify";
+import {
+    Mic,
+    MicOff,
+    Video,
+    VideoOff,
+    Phone,
+    MessageSquare,
+    Users,
+    Copy,
+    Check,
+    Share2,
+    Monitor,
+    Smile,
+    Hand,
+    Plus,
+    X as XIcon,
+    LayoutGrid,
+    MoreVertical,
+    Sparkles,
+    Settings,
+    Shield
+} from "lucide-react";
 
 declare global {
     interface Window {
@@ -14,7 +52,6 @@ declare global {
 }
 
 import { PeerStream, ChatMessage, TranscriptEntry } from "@/components/shared/meeting/room/types";
-import { toast } from "react-toastify";
 
 export default function MeetingPage() {
     const params = useParams();
@@ -28,6 +65,12 @@ export default function MeetingPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [statusMsg, setStatusMsg] = useState("");
     const [isPeerJsLoaded, setIsPeerJsLoaded] = useState(false);
+    const [stableGuestId, setStableGuestId] = useState<string>("");
+
+    // Initialize stable guest ID once
+    useEffect(() => {
+        setStableGuestId(`guest-${Math.random().toString(36).substr(2, 5)}`);
+    }, []);
 
     // Meeting Info State (declare early for use in currentUser)
     const [meetingInfo, setMeetingInfo] = useState<MeetingDetails | null>(null);
@@ -78,8 +121,13 @@ export default function MeetingPage() {
             };
         }
 
-        return { id: userId, name: userName || "Guest", email: userEmail };
-    }, [user, meetingInfo, participants, isInCall, peerId, meetingCode]);
+        // Default to stable Guest ID if not logged in
+        return {
+            id: userId || stableGuestId || "guest-init",
+            name: "Guest",
+            email: userEmail || ""
+        };
+    }, [user, meetingInfo, participants, isInCall, peerId, meetingCode, stableGuestId]);
 
     // Media State
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -96,6 +144,14 @@ export default function MeetingPage() {
     const [showChat, setShowChat] = useState(false);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [hasUnreadMsg, setHasUnreadMsg] = useState(false);
+    const [activeParticipants, setActiveParticipants] = useState<FirebaseParticipant[]>([]);
+    const [waitingQueue, setWaitingQueue] = useState<FirebaseParticipant[]>([]);
+    const [admissionStatus, setAdmissionStatus] = useState<"active" | "waiting" | "denied" | null>(null);
+    const [roomSettings, setRoomSettings] = useState<RoomSettings>({
+        muteAll: false,
+        cameraLock: false,
+        guestAccess: "direct"
+    });
 
     // Transcription & AI State
     const [isTranscriptionActive, setIsTranscriptionActive] = useState(false);
@@ -113,7 +169,10 @@ export default function MeetingPage() {
     const isMutedRef = useRef(false);
     const isVideoOffRef = useRef(false);
     const isHandRaisedRef = useRef(false);
+    const isScreenSharingRef = useRef(false);
     const peerIdRef = useRef("");
+    const isHostRef = useRef(false);
+    const blockedPeersRef = useRef<Map<string, number>>(new Map());
     const currentUserRef = useRef(currentUser);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const recognitionRef = useRef<any>(null);
@@ -197,24 +256,197 @@ export default function MeetingPage() {
         });
     }
 
+    // --- Firebase Sync Effect ---
+    useEffect(() => {
+        if (!meetingCode) return;
+
+        const unsubscribe = listenToParticipants(meetingCode, (fbParticipants) => {
+            console.log("Firebase Participants Update:", fbParticipants);
+            setActiveParticipants(fbParticipants);
+
+            if (!isInCall) return; // Only do P2P connection logic if actually in call
+
+            // 1. Filter out self
+            const others = fbParticipants.filter(p => p.peerId !== peerIdRef.current);
+
+            // ... rest of the existing logic ...
+
+            // 4. Handle Global MuteAll
+            if (roomSettings.muteAll && !isMutedRef.current && !isHostRef.current) {
+                toggleMute();
+                toast.info("Host muted everyone.");
+            }
+
+            // 2. Remove peers that are no longer in Firebase
+            setRemoteStreams(prev => {
+                const currentPeerIds = others.map(p => p.peerId);
+                const removedPeers = prev.filter(p => !currentPeerIds.includes(p.peerId) && p.peerId !== meetingCode);
+
+                removedPeers.forEach(p => {
+                    console.log("Peer removed from Firebase, cleaning up:", p.peerId);
+                    removePeer(p.peerId);
+                });
+
+                return prev.filter(p => currentPeerIds.includes(p.peerId) || p.peerId === meetingCode);
+            });
+
+            // 3. Update existing peers or connect to new ones
+            others.forEach(participant => {
+                // Update remote stream with screen sharing info if needed
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === participant.peerId
+                        ? { ...p, isScreenSharing: !!participant.isScreenSharing }
+                        : p
+                ));
+
+                // If we don't have a connection to this participant yet, and they joined BEFORE us
+                const shouldInitiate = participant.peerId < peerIdRef.current;
+
+                // Check if blocked, but only if they are NOT in the active list (Firebase is source of truth)
+                const blockedAt = blockedPeersRef.current.get(participant.peerId);
+                const isRecentlyBlocked = blockedAt && (Date.now() - blockedAt < 5000);
+
+                // If we don't have a connection, OR if we have a placeholder without a real stream
+                const isConnected = connectedPeersRef.current.has(participant.peerId);
+
+                if (shouldInitiate && !isRecentlyBlocked && !isConnected) {
+                    console.log("New participant found in Firebase, initiating connection:", participant.peerId);
+                    connectToPeer(participant.peerId);
+                }
+            });
+        });
+
+        return () => unsubscribe();
+    }, [isInCall, meetingCode, roomSettings.muteAll]);
+
+    // --- Room Settings & Waitlist Listeners ---
+    useEffect(() => {
+        if (!meetingCode) return;
+
+        const unsubSettings = listenToRoomSettings(meetingCode, (settings) => {
+            setRoomSettings(settings);
+        });
+
+        let unsubWaitlist: (() => void) | undefined;
+        if (isInCall && (peerIdRef.current === meetingCode)) { // Only host listens to waitlist
+            console.log("HOST DETECTED: STARTING WAITLIST LISTENER");
+            unsubWaitlist = listenToWaitlist(meetingCode, (queue) => {
+                console.log("WAITLIST UPDATED:", queue.length, "participants waiting");
+                setWaitingQueue(queue);
+            });
+        }
+
+        return () => {
+            unsubSettings();
+            if (unsubWaitlist) unsubWaitlist();
+        };
+    }, [meetingCode, isInCall]);
+
+
+    // --- Firebase Presence Heartbeat ---
+    useEffect(() => {
+        if (!isInCall || !meetingCode) return;
+
+        const interval = setInterval(() => {
+            updateParticipantPresence(meetingCode, peerIdRef.current);
+        }, 10000); // Heartbeat every 10s
+
+        return () => clearInterval(interval);
+    }, [isInCall, meetingCode]);
+
     function removePeer(id: string) {
+        if (!id) return;
+        console.log("Removing peer from UI:", id);
+
+        // 1. Update UI state
         setRemoteStreams((prev) => prev.filter((p) => p.peerId !== id));
+
+        // 2. Cleanup connection refs
         callsRef.current = callsRef.current.filter((c) => c.peer !== id);
         dataConnsRef.current = dataConnsRef.current.filter((c) => c.peer !== id);
         connectedPeersRef.current.delete(id);
+
+        // 3. Block this ID from re-joining for a short window to prevent signal echoing
+        blockedPeersRef.current.set(id, Date.now());
+    }
+
+    function connectToPeer(targetPeerId: string) {
+        if (!peerRef.current || !localStreamRef.current || targetPeerId === peerIdRef.current) return;
+        if (connectedPeersRef.current.has(targetPeerId)) {
+            console.log("Already connected to peer or connecting:", targetPeerId);
+            return;
+        }
+
+        console.log("🚀 Initiating connection to peer:", targetPeerId);
+        connectedPeersRef.current.add(targetPeerId);
+
+        // 1. Data Connection
+        const conn = peerRef.current.connect(targetPeerId);
+        setupDataConnection(conn);
+
+        // 2. Video Call
+        const call = peerRef.current.call(targetPeerId, localStreamRef.current, {
+            metadata: {
+                userName: currentUserRef.current.name,
+                peerId: peerIdRef.current
+            }
+        });
+
+        if (call) {
+            callsRef.current.push(call);
+            subscribeToCallEvents(call);
+        }
     }
 
     function handleRemoteStream(peerId: string, stream: MediaStream, userName?: string) {
+        // Guard 1: Ignore blocked peers (recently removed)
+        const blockedAt = blockedPeersRef.current.get(peerId);
+        if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
+            console.log("Blocking ghost stream from peer:", peerId);
+            return;
+        }
+
+        // Guard 2: Don't add a stream for a peer that isn't connected
+        if (!connectedPeersRef.current.has(peerId) && peerId !== meetingCode) {
+            // If we are host, we track everyone. If we are participant, we only track those we connected to.
+            // But we should at least check if we have a connection
+            const hasDataConn = dataConnsRef.current.some(c => c.peer === peerId);
+            if (!hasDataConn && peerId !== meetingCode) return;
+        }
+
         setRemoteStreams((prev) => {
-            const existing = prev.find((p) => p.peerId === peerId);
-            if (existing) {
-                // Update existing with stream and optionally userName
-                return prev.map(p => p.peerId === peerId
-                    ? { ...p, stream, userName: userName || p.userName }
-                    : p
-                );
+            // Strict check for existing peer entry to prevent duplicates
+            const existingIndex = prev.findIndex((p) => p.peerId === peerId);
+
+            if (existingIndex !== -1) {
+                // Return same state if nothing meaningful changed to prevent re-renders
+                const existing = prev[existingIndex];
+                if (existing.stream === stream && existing.userName === (userName || existing.userName)) {
+                    return prev;
+                }
+
+                // Update specific entry
+                const newState = [...prev];
+                newState[existingIndex] = {
+                    ...existing,
+                    stream,
+                    userName: userName || existing.userName,
+                    lastSeen: Date.now()
+                };
+                return newState;
             }
-            return [...prev, { peerId, stream, userName, isVideoOff: false, isMuted: false, isHandRaised: false, reaction: null }];
+
+            // Only add if not strictly blocked
+            return [...prev, {
+                peerId,
+                stream,
+                userName,
+                isVideoOff: false,
+                isMuted: false,
+                isHandRaised: false,
+                reaction: null,
+                lastSeen: Date.now()
+            }];
         });
     }
 
@@ -325,6 +557,7 @@ export default function MeetingPage() {
     function setupDataConnection(conn: any) {
         if (dataConnsRef.current.find(c => c.peer === conn.peer)) return;
         dataConnsRef.current.push(conn);
+        connectedPeersRef.current.add(conn.peer); // Ensure consistency
         conn.on("open", () => {
             // Send user info immediately
             conn.send({
@@ -356,8 +589,14 @@ export default function MeetingPage() {
         });
 
         conn.on("data", (data: any) => {
-            // Ignore messages from self to prevent duplication loops
-            if (data.payload?.senderId === peerIdRef.current || data.payload?.peerId === peerIdRef.current) {
+            const senderId = data.payload?.senderId || data.payload?.peerId || conn.peer;
+
+            // Guard 1: Ignore messages from self
+            if (senderId === peerIdRef.current) return;
+
+            // Guard 2: Ignore messages from blocked peers
+            const blockedAt = blockedPeersRef.current.get(senderId);
+            if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
                 return;
             }
 
@@ -371,6 +610,11 @@ export default function MeetingPage() {
                             : p
                         );
                     }
+
+                    // Guard: Only create placeholder if NOT blocked and NOT already in list
+                    const blockedAt = blockedPeersRef.current.get(data.payload.peerId);
+                    if (blockedAt && (Date.now() - blockedAt < 5000)) return prev; // reduced to 5s
+
                     // If stream not yet added, create placeholder
                     return [...prev, {
                         peerId: data.payload.peerId,
@@ -379,7 +623,8 @@ export default function MeetingPage() {
                         isVideoOff: false,
                         isMuted: false,
                         isHandRaised: false,
-                        reaction: null
+                        reaction: null,
+                        lastSeen: Date.now()
                     }];
                 });
             }
@@ -403,6 +648,7 @@ export default function MeetingPage() {
                             isMuted: data.payload.isMuted,
                             isVideoOff: data.payload.isVideoOff,
                             isHandRaised: data.payload.isHandRaised,
+                            isScreenSharing: data.payload.isScreenSharing,
                             videoFilter: data.payload.videoFilter || "none",
                             videoBackground: data.payload.videoBackground || "none"
                         }
@@ -459,6 +705,16 @@ export default function MeetingPage() {
                         : p
                 ));
             }
+            if (data.type === "heartbeat") {
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === data.payload.peerId
+                        ? { ...p, lastSeen: Date.now() }
+                        : p
+                ));
+            }
+            if (data.type === "leave") {
+                removePeer(data.payload.peerId);
+            }
         });
         conn.on("close", () => removePeer(conn.peer));
     }
@@ -484,12 +740,24 @@ export default function MeetingPage() {
 
     function setupCommonPeerEvents(peer: any) {
         peer.on("call", (call: any) => {
+            const blockedAt = blockedPeersRef.current.get(call.peer);
+            if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
+                console.warn("Ignoring call from blocked peer:", call.peer);
+                call.close();
+                return;
+            }
             call.answer(localStreamRef.current);
             callsRef.current.push(call);
             subscribeToCallEvents(call);
         });
 
         peer.on("connection", (conn: any) => {
+            const blockedAt = blockedPeersRef.current.get(conn.peer);
+            if (blockedAt && (Date.now() - blockedAt < 5000)) { // reduced to 5s
+                console.warn("Ignoring connection from blocked peer:", conn.peer);
+                conn.close();
+                return;
+            }
             setupDataConnection(conn);
         });
     }
@@ -507,7 +775,7 @@ export default function MeetingPage() {
     }
 
     // --- State-based Action Callbacks ---
-    const toggleMute = useCallback(() => {
+    const toggleMute = useCallback(async () => {
         if (localStreamRef.current) {
             const newState = !isMuted;
             localStreamRef.current.getAudioTracks().forEach((track) => {
@@ -537,8 +805,12 @@ export default function MeetingPage() {
                     isHandRaised: isHandRaisedRef.current
                 }
             });
+
+            if (isInCall && meetingCode) {
+                await updateParticipantMedia(meetingCode, peerIdRef.current, { isMuted: newState });
+            }
         }
-    }, [isMuted, startTranscription]);
+    }, [isMuted, startTranscription, isInCall, meetingCode]);
 
     const toggleVideo = useCallback(async () => {
         if (localStreamRef.current) {
@@ -623,77 +895,168 @@ export default function MeetingPage() {
                 videoBackground: type === "background" ? effectId : videoBackground
             }
         });
-    }, [videoFilter, videoBackground, broadcastData]);
+    }, [videoFilter, videoBackground]);
 
-    const initGuestMode = useCallback(() => {
-        if (!window.Peer) return;
-        const peer = new window.Peer(undefined, {
-            debug: 1,
-            config: {
-                iceServers: [
-                    { urls: "stun:stun.l.google.com:19302" },
-                    { urls: "stun:global.stun.twilio.com:3478" },
-                ],
-            },
-        });
+    // Heartbeat Effect: Broadcast presence and prune stale peers
+    useEffect(() => {
+        if (!isInCall) return;
 
-        peer.on("open", (id: string) => {
-            setPeerId(id);
-            peerIdRef.current = id;
-            setIsInCall(true);
-            setIsLoading(false);
-            setStatusMsg("");
-            const conn = peer.connect(meetingCode);
-            setupDataConnection(conn);
-        });
+        const interval = setInterval(() => {
+            // 1. Broadcast our heartbeat
+            broadcastData({
+                type: "heartbeat",
+                payload: { peerId: peerIdRef.current }
+            });
 
-        peer.on("error", (err: any) => {
-            console.error("Guest Peer Error:", err);
-            setStatusMsg("Failed to join meeting.");
-            setIsLoading(false);
-        });
+            // 2. Prune peers not seen for > 15 seconds
+            setRemoteStreams(prev => {
+                const now = Date.now();
+                const stalePeers = prev.filter(p => p.lastSeen && (now - p.lastSeen > 15000));
+                if (stalePeers.length > 0) {
+                    stalePeers.forEach(p => {
+                        console.log("Pruning stale peer:", p.peerId);
+                        callsRef.current = callsRef.current.filter(c => c.peer !== p.peerId);
+                        dataConnsRef.current = dataConnsRef.current.filter(c => c.peer !== p.peerId);
+                        connectedPeersRef.current.delete(p.peerId);
+                    });
+                    return prev.filter(p => !p.lastSeen || (now - p.lastSeen <= 15000));
+                }
+                return prev;
+            });
+        }, 5000);
 
-        setupCommonPeerEvents(peer);
-        peerRef.current = peer;
-    }, [meetingCode]);
+        return () => clearInterval(interval);
+    }, [isInCall]);
 
-    const joinRoom = useCallback(() => {
-        if (!meetingCode || !localStreamRef.current || !window.Peer) return;
+    // Unified Join Function: Handles both Host and Participant entry via Firebase
+    const joinRoom = useCallback(async () => {
+        if (!window.Peer || !meetingCode || !currentUser.id) {
+            console.warn("PeerJS or Meeting Info missing. Cannot join.");
+            return;
+        }
+
         setIsLoading(true);
-        setStatusMsg("Connecting to meeting...");
+        setStatusMsg("Initializing...");
 
-        const peer = new window.Peer(meetingCode, {
-            debug: 1,
+        // 1. Determine local Peer ID
+        const myPeerId = currentUser.id === (meetingInfo?.host_user_object_id || meetingInfo?.host_details?._id)
+            ? meetingCode
+            : `${meetingCode}-p-${currentUser.id}`;
+
+        setPeerId(myPeerId);
+        peerIdRef.current = myPeerId;
+        const isHost = myPeerId === meetingCode;
+        isHostRef.current = isHost;
+
+        // 2. Admission Logic
+        const isInvited = participants.some(p =>
+            p.user_object_id === currentUser.id ||
+            p.user_details?._id === currentUser.id
+        );
+
+        if (!isHost && !isInvited && roomSettings.guestAccess === "ask") {
+            console.log("JOIN: User is GUEST. Requesting admission...");
+            setAdmissionStatus("waiting");
+            setStatusMsg("Requesting entry...");
+
+            await requestToJoin(meetingCode, {
+                peerId: myPeerId,
+                userId: currentUser.id,
+                userName: currentUser.name,
+                isVideoOff: isVideoOffRef.current,
+                isMuted: isMutedRef.current,
+                isScreenSharing: false,
+                isHandRaised: false,
+                status: "waiting",
+                lastSeen: null,
+                joinedAt: null
+            });
+
+            // Listen for admission
+            const unsub = listenToAdmissionStatus(meetingCode, myPeerId, (status) => {
+                if (status === "active") {
+                    setAdmissionStatus("active");
+                    unsub();
+                    proceedToJoin(myPeerId);
+                } else if (status === "denied") {
+                    setAdmissionStatus("denied");
+                    setIsLoading(false);
+                    setStatusMsg("Entry denied by host.");
+                    unsub();
+                }
+            });
+            return;
+        }
+
+        proceedToJoin(myPeerId);
+    }, [meetingCode, currentUser, meetingInfo, roomSettings.guestAccess]);
+
+    const proceedToJoin = async (myPeerId: string) => {
+        setStatusMsg("Joining room...");
+        // Existing join logic...
+        // 3. Register Presence in Firestore
+        try {
+            await joinMeetingRoom(meetingCode, {
+                peerId: myPeerId,
+                userId: currentUser.id,
+                userName: currentUser.name,
+                isVideoOff: isVideoOffRef.current,
+                isMuted: isMutedRef.current,
+                isScreenSharing: false,
+                isHandRaised: false,
+                status: "active",
+                lastSeen: null,
+                joinedAt: null
+            });
+        } catch (err) {
+            console.error("Firebase join failed:", err);
+            toast.error("Failed to connect to signal server.");
+            setIsLoading(false);
+            return;
+        }
+
+        // 4. Initialize WebRTC Peer
+        const peer = new window.Peer(myPeerId, {
+            host: "0.peerjs.com",
+            port: 443,
+            secure: true,
             config: {
                 iceServers: [
                     { urls: "stun:stun.l.google.com:19302" },
-                    { urls: "stun:global.stun.twilio.com:3478" },
+                    { urls: "stun:stun1.l.google.com:19302" }
                 ],
             },
         });
 
         peer.on("open", (id: string) => {
-            setPeerId(id);
-            peerIdRef.current = id;
+            console.log("P2P Signaling Active:", id);
+            peerRef.current = peer;
             setIsInCall(true);
             setIsLoading(false);
             setStatusMsg("");
-            setupHostLogic(peer);
         });
 
         peer.on("error", (err: any) => {
-            if (err.type === "unavailable-id") {
-                peer.destroy();
-                initGuestMode();
+            console.error("P2P Error:", err);
+            setIsLoading(false);
+
+            if (err.type === "peer-unavailable") {
+                // Parse peerId from message: "Could not connect to peer XXX"
+                const match = err.message.match(/peer\s+([^\s]+)/);
+                const failedId = match ? match[1] : null;
+                if (failedId) {
+                    console.warn(`Target peer ${failedId} is unavailable. Cleaning up for retry.`);
+                    removePeer(failedId);
+                }
+            } else if (err.type === "unavailable-id") {
+                toast.error("Meeting ID taken. Please try again in 30 seconds.");
             } else {
-                console.error("Peer Error:", err);
-                setStatusMsg(`Connection Error: ${err.type}`);
-                setIsLoading(false);
+                toast.error(`Connection Error: ${err.type}`);
             }
         });
 
-        peerRef.current = peer;
-    }, [meetingCode, initGuestMode]);
+        setupCommonPeerEvents(peer);
+    };
 
     const sendChatMessage = useCallback((text: string) => {
         if (!text.trim()) return;
@@ -708,11 +1071,15 @@ export default function MeetingPage() {
         broadcastData({ type: "chat", payload: msg });
     }, []);
 
-    const leaveMeeting = useCallback(() => {
+    const leaveMeeting = useCallback(async () => {
+        if (meetingCode) {
+            await leaveMeetingRoom(meetingCode, peerIdRef.current);
+        }
+        broadcastData({ type: "leave", payload: { peerId: peerIdRef.current } });
         if (peerRef.current) peerRef.current.destroy();
         if (localStreamRef.current) localStreamRef.current.getTracks().forEach((track) => track.stop());
         router.push("/");
-    }, [router]);
+    }, [router, meetingCode]);
 
     const toggleScreenShare = useCallback(async () => {
         if (!localStreamRef.current) return;
@@ -733,6 +1100,10 @@ export default function MeetingPage() {
                 localStreamRef.current?.addTrack(videoTrack);
                 setLocalStream(localStreamRef.current);
                 setIsScreenSharing(false);
+                isScreenSharingRef.current = false;
+                if (meetingCode) {
+                    await updateParticipantMedia(meetingCode, peerIdRef.current, { isScreenSharing: false });
+                }
             } catch (e) {
                 console.error("Error reverting to camera", e);
             }
@@ -741,6 +1112,11 @@ export default function MeetingPage() {
                 const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                 const screenTrack = displayStream.getVideoTracks()[0];
                 screenTrack.onended = () => toggleScreenShare();
+
+                isScreenSharingRef.current = true;
+                if (meetingCode) {
+                    await updateParticipantMedia(meetingCode, peerIdRef.current, { isScreenSharing: true });
+                }
 
                 callsRef.current.forEach((call) => {
                     const sender = call.peerConnection?.getSenders().find((s: any) => s.track?.kind === "video");
@@ -775,6 +1151,7 @@ export default function MeetingPage() {
                         localStream={localStream}
                         meetingInfo={meetingInfo}
                         participants={participants}
+                        activeParticipants={activeParticipants}
                         currentUser={currentUser}
                         isFetchingInfo={isFetchingInfo}
                         isMuted={isMuted}
@@ -786,6 +1163,42 @@ export default function MeetingPage() {
                         onToggleVideo={toggleVideo}
                         onJoin={joinRoom}
                     />
+                ) : admissionStatus === "waiting" ? (
+                    <div className="h-screen flex flex-col items-center justify-center p-8 text-center space-y-8 bg-gray-50">
+                        <div className="w-24 h-24 rounded-full bg-orange-100 flex items-center justify-center animate-pulse">
+                            <Users className="w-12 h-12 text-orange-500" />
+                        </div>
+                        <div className="space-y-3">
+                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Asking to join...</h1>
+                            <p className="max-w-md text-gray-500 font-medium">
+                                You'll join the meeting as soon as someone lets you in.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                ) : admissionStatus === "denied" ? (
+                    <div className="h-screen flex flex-col items-center justify-center p-8 text-center space-y-8 bg-gray-50">
+                        <div className="w-24 h-24 rounded-full bg-red-100 flex items-center justify-center">
+                            <XIcon className="w-12 h-12 text-red-500" />
+                        </div>
+                        <div className="space-y-3">
+                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Entry Denied</h1>
+                            <p className="max-w-md text-gray-500 font-medium">
+                                The host has denied your request to join this meeting.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => router.push("/")}
+                            className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg"
+                        >
+                            Return Home
+                        </button>
+                    </div>
                 ) : (
                     <MeetingRoom
                         meetingCode={meetingCode}
@@ -815,11 +1228,20 @@ export default function MeetingPage() {
                         onSendMessage={sendChatMessage}
                         onLeave={leaveMeeting}
                         isTranscriptionActive={isTranscriptionActive}
-                        onToggleTranscription={toggleTranscription}
-                        transcripts={transcripts}
+                        onToggleTranscription={() => setIsTranscriptionActive(!isTranscriptionActive)}
+                        transcripts={[]}
                         videoFilter={videoFilter}
                         videoBackground={videoBackground}
                         onApplyVisualEffect={applyVisualEffect}
+                        isHost={isHostRef.current}
+                        roomSettings={roomSettings}
+                        onUpdateRoomSettings={(s) => updateRoomSettings(meetingCode, s)}
+                        onMuteAll={() => {
+                            updateRoomSettings(meetingCode, { muteAll: true });
+                            // Reset muteAll flag after 1 second so it can be triggered again
+                            setTimeout(() => updateRoomSettings(meetingCode, { muteAll: false }), 1000);
+                        }}
+                        waitingQueue={waitingQueue}
                     />
                 )}
             </div>

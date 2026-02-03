@@ -11,8 +11,10 @@ import {
   ScheduleModal,
   DeleteConfirmationModal,
   EditableText,
-  TaskActionDropdown
+  TaskActionDropdown,
 } from ".";
+import { CloseCircle } from "@solar-icons/react";
+
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
 import StatusDropdown from "../statusDropdown/StatusDropdown";
@@ -56,6 +58,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const descTriggerRef = useRef<HTMLDivElement>(null);
   const calendarRef = useRef<HTMLTableCellElement>(null);
   const [descPosition, setDescPosition] = useState({ top: 0, left: 0 });
+
+
   const hasChildren = task.subtask && task.subtask.length > 0;
   const paddingLeft = depth * 24;
 
@@ -76,6 +80,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showDescription]);
+
 
   useEffect(() => {
     if (showDescription && descTriggerRef.current) {
@@ -103,6 +108,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       };
     }
   }, [showDescription]);
+
 
   return (
     <>
@@ -189,7 +195,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <div
             ref={descTriggerRef}
             className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-orange-600 transition-all group/desc w-fit"
-            onClick={() => setShowDescription(!showDescription)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDescription(!showDescription);
+            }}
           >
             <Notes className={cn("w-4 h-4 shrink-0 transition-transform duration-300", showDescription ? "scale-110 text-orange-500" : "group-hover/desc:scale-110")} />
             <span className={cn("font-medium transition-colors", showDescription && "text-orange-600")}>View</span>
@@ -276,9 +285,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </td>
 
         {/* Priority Cell */}
-        <td className="py-4 px-4">
+        <td className="py-4 px-4 font-bold text-gray-700">
           <PriorityBadge priority={task.priority} />
         </td>
+
 
         {/* Actions Cell */}
         <td className="py-4 px-4">

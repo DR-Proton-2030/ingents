@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import axios from "axios";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,65 +8,46 @@ export async function POST(req: NextRequest) {
     const token = authHeader?.replace("Bearer ", "") || req.cookies.get("token")?.value;
 
     if (!token) {
+      console.log("Verify Token Error: No token provided");
       return NextResponse.json(
         { message: "No token provided" },
         { status: 401 }
       );
     }
 
-    // Call backend API
-    const backendUrls = [`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/verify-token`];
+    // Try both BACKEND_URL and NEXT_PUBLIC_BACKEND_URL
+    const baseUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
+    const url = `${baseUrl}/api/v1/auth/verify-token`;
 
-    let response: Response | null = null;
-    const errors: Array<{ url: string; error: string }> = [];
+    console.log(`Attempting to verify token at: ${url}`);
 
-    for (const url of backendUrls) {
-      try {
-        console.log(`Attempting to verify token at: ${url}`);
-
-        response = await fetch(url, {
-          method: "POST",
+    try {
+      const response = await axios.post(
+        url,
+        {},
+        {
           headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`,
           },
-          body: JSON.stringify({}),
-        });
-
-        if (response.ok) {
-          console.log(`Successfully verified token at: ${url}`);
-          break;
-        } else {
-          const errorText = await response.text();
-          errors.push({ url, error: `HTTP ${response.status}: ${errorText}` });
-          response = null;
+          timeout: 5000,
         }
-      } catch (error: unknown) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Connection failed";
-        console.error(`Failed to connect to ${url}:`, error);
-        errors.push({
-          url,
-          error: errorMessage,
-        });
-        response = null;
-      }
-    }
+      );
 
-    if (!response) {
-      console.error("All backend attempts failed:", errors);
+      console.log(`✅ Successfully verified token at: ${url}`);
+      return NextResponse.json(response.data, { status: 200 });
+    } catch (err: any) {
+      console.error(`❌ Failed to connect to backend at ${url}:`, err.response?.data || err.message);
+      
       return NextResponse.json(
         {
           message: "Unable to connect to backend service",
-          details: "Please ensure the backend server is running",
-          errors,
+          details: err.response?.data?.message || err.message,
+          url_attempted: url
         },
-        { status: 503 }
+        { status: err.response?.status || 503 }
       );
     }
-
-    const data = await response.json();
-    return NextResponse.json(data, { status: response.status });
 
   } catch (error: unknown) {
     const errorMessage =
@@ -74,8 +56,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         message: "Internal server error",
-        error:
-          process.env.NODE_ENV === "development" ? errorMessage : undefined,
+        error: errorMessage,
       },
       { status: 500 }
     );

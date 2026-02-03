@@ -24,9 +24,8 @@ export async function POST(req: NextRequest) {
           console.log(`Successfully logged out at: ${url}`);
           break;
         } else {
-          const errorText = await response.text();
-          errors.push({ url, error: `HTTP ${response.status}: ${errorText}` });
-          response = null;
+          console.warn(`Logout backend at ${url} returned status ${response.status}`);
+          break;
         }
       } catch (error: unknown) {
         const errorMessage =
@@ -40,22 +39,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!response) {
-      console.error("All backend attempts failed:", errors);
-      return NextResponse.json(
-        {
-          message: "Unable to connect to backend service",
-          details: "Please ensure the backend server is running",
-          errors,
-        },
-        { status: 503 }
-      );
+    let data = { message: "Logged out" };
+    if (response) {
+      try {
+        data = await response.json();
+      } catch (e) {
+        // Fallback if not JSON
+      }
     }
 
-    const data = await response.json();
-
     // Clear any cookies
-    const nextResponse = NextResponse.json(data, { status: response.status });
+    const nextResponse = NextResponse.json(data, { 
+      status: response ? response.status : 200 
+    });
     nextResponse.cookies.delete("token");
 
     return nextResponse;

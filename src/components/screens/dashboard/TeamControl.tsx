@@ -12,13 +12,21 @@ import {
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
 import TeamMembersTable from "@/components/screens/dashboard/TeamMembersTable";
+import { useRouter, useParams } from "next/navigation";
 
 export const TeamControl = () => {
   const { users } = useGetUsers();
+  const router = useRouter();
+  const params = useParams();
+  const site = params?.site as string;
   const safeUsers = Array.isArray(users) ? users : [];
   const [open, setOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
+
+  const handleOpenChat = (user: IUser) => {
+    router.push(`/${site}/team-chat?userId=${user.id}`);
+  };
 
   // Map users for the TeamMembersTable
   const mappedUsers = safeUsers.map((user: any, index: number) => ({
@@ -42,81 +50,71 @@ export const TeamControl = () => {
 
   return (
     <>
-      <div className="rounded-[18px] bg-white/30 backdrop-blur-[10px] shadow-[1px_1px_10px_4px_rgba(0,0,0,0.04)] p-4 overflow-x-auto">
-        <div className="mb-3 flex items-center justify-between relative">
-          <h3 className="text-base font-semibold text-gray-900">Team Control</h3>
-          <div className="relative">
-            <button
-              type="button"
-              className="rounded-lg p-2 hover:bg-gray-50"
-              onClick={() => setOpen((v) => !v)}
-            >
-              <MoreHorizontal className="h-5 w-5 text-gray-500" />
-            </button>
-            {open && (
-              <div className="absolute right-0 mt-2 w-40 rounded-lg border border-gray-200 bg-white shadow-lg z-10">
-                <button
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  onClick={() => {
-                    setOpen(false);
-                    setModalOpen(true);
-                  }}
-                >
-                  View all
-                </button>
-              </div>
-            )}
-          </div>
+      <div className="rounded-[22px] bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-3">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="text-lg font-bold text-gray-900 tracking-tight">Team Control</h3>
+          <button
+            type="button"
+            className="rounded-full p-2 hover:bg-gray-50 text-gray-400 transition-colors"
+            onClick={() => setOpen((v) => !v)}
+          >
+            <MoreHorizontal className="h-6 w-6" />
+          </button>
         </div>
-        <div className="relative mb-3">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+
+        <div className="relative mb-6">
+          <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 font-bold" />
           <input
-            className="w-full bg-gray-100 rounded-full border border-gray-200  pl-9 pr-3 py-3  text-sm 
-          placeholder:text-gray-400 focus:outline-none"
+            className="w-full bg-[#f8f9fb] rounded-2xl border border-gray-100 pl-11 pr-4 py-3.5 text-sm font-medium
+          placeholder:text-gray-400 focus:outline-none focus:ring-4 focus:ring-gray-500/5 transition-all"
             placeholder="Search Team"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="space-y-3">
+
+        <div className="space-y-4">
           {filteredUsers.map((user: IUser, i) => (
-            <div key={i} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {user?.profile_picture ? (
-                  <Image
-                    src={user.profile_picture}
-                    alt={user.full_name}
-                    width={36}
-                    height={36}
-                    className="h-9 w-9 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-9 w-9 rounded-full bg-gradient-to-r from-orange-500 to-orange-400 shadow-lg flex items-center
-                 justify-center text-sm font-semibold text-orange-100">
-                    {user?.full_name ? user.full_name.charAt(0).toUpperCase() : (user?.email ? user.email.charAt(0).toUpperCase() : "U")}
-                  </div>
-                )}
+            <div key={i} className="flex items-center justify-between group">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  {user?.profile_picture ? (
+                    <Image
+                      src={user.profile_picture}
+                      alt={user.full_name}
+                      width={48}
+                      height={48}
+                      className="h-10 w-10 rounded-full object-cover ring-2 ring-white shadow-sm"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-400 shadow-md flex items-center
+                   justify-center text-base font-bold text-white uppercase">
+                      {user?.full_name ? user.full_name.charAt(0) : (user?.email ? user.email.charAt(0) : "U")}
+                    </div>
+                  )}
+                </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-[14px] font-bold text-gray-900 leading-tight">
                     {user?.full_name}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {/* {m.tasks} Task handled */}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <button className="rounded-lg p-2 bg-blue-500/20 hover:bg-blue-500/30">
-                  <MessageSquare className="h-4 w-4 text-blue-500" />
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleOpenChat(user)}
+                  className="h-7 w-7 rounded-md bg-[#eef2ff] flex items-center justify-center hover:bg-[#e0e7ff] transition-all active:scale-90"
+                >
+                  <MessageSquare className="h-4 w-4 text-[#3b82f6]" strokeWidth={2.5} />
                 </button>
-                <button className="rounded-lg p-2 bg-green-500/20 hover:bg-green-500/30">
-                  <Video className="h-4 w-4 text-green-500" />
+                <button className="h-7 w-7 rounded-md bg-[#ecfdf5] flex items-center justify-center hover:bg-[#d1fae5] transition-all active:scale-90">
+                  <Video className="h-4 w-4 text-[#10b981]" strokeWidth={2.5} />
                 </button>
               </div>
             </div>
           ))}
         </div>
       </div>
+
 
       {/* Team Members Drawer - Slides from right */}
       {createPortal(

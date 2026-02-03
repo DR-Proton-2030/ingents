@@ -20,6 +20,9 @@ import { Loading } from "@/components/shared/loadingScreen/Loading";
 import { BoardView, CalendarView, TimelineView } from "./views";
 import Pagination from "@/components/shared/Pagination/Pagination";
 import { TaskDetailDrawer } from "@/components/shared/TaskDetailDrawer";
+import { useReactToPrint } from "react-to-print";
+import { TaskReport } from "./TaskReport";
+import { useRef } from "react";
 
 const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,6 +62,12 @@ const TaskManagement: React.FC = () => {
   const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] =
     useState(false);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
+
+  const reportRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    contentRef: reportRef,
+    documentTitle: "Task Management Report",
+  });
 
 
   const handleAddSubtask = useCallback((taskId: string) => {
@@ -288,6 +297,7 @@ const TaskManagement: React.FC = () => {
               project_object_id: project ? project._id : null,
             }));
           }}
+          onDownloadReport={() => handlePrint()}
         />
 
         {/* Task Views */}
@@ -415,6 +425,15 @@ const TaskManagement: React.FC = () => {
           onAssignTask={handleAssignTaskToUser}
           onUnassignTask={handleUnassignTaskFromUser}
         />
+
+        {/* Hidden Report for Printing */}
+        <div style={{ display: "none" }}>
+          <TaskReport
+            ref={reportRef}
+            tasks={tasks}
+            title={filters.project_object_id ? "Project Task Report" : "General Task Report"}
+          />
+        </div>
       </div>
     </Layout>
   );

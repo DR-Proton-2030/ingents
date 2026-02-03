@@ -14,6 +14,8 @@ import {
 import AuthContext from "@/contexts/authContext/authContext";
 import { toast } from "react-toastify";
 import { uploadYoutubeVideo } from "@/service/youtube/youtube.service";
+import { postFacebookContent } from "@/service/facebook/facebook.service";
+import { postXContent } from "@/service/x/x.service";
 
 import PlatformSelector from "./PlatformSelector";
 import HashtagInput from "./HashtagInput";
@@ -160,9 +162,51 @@ export default function PostComposer() {
                 toast.success("YouTube video upload started!");
             }
 
-            // Simulate other platforms
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            toast.success("Post published successfully!");
+            // Handle Facebook
+            if (selectedPlatforms.includes("facebook")) {
+                const fbFormData = new FormData();
+                fbFormData.append("userId", user?.id || (user as any)?._id || "");
+                fbFormData.append("pageId", (user as any).facebook?.page_id || "");
+                fbFormData.append("message", postContent);
+                
+                if (images.length > 0) {
+                    fbFormData.append("image", images[0].file!);
+                }
+                if (video?.file) {
+                    fbFormData.append("video", video.file);
+                } else if (video?.url) {
+                    fbFormData.append("videoURL", video.url);
+                }
+
+                await postFacebookContent(fbFormData);
+                toast.success("Posted to Facebook!");
+            }
+
+            // Handle X (Twitter)
+            if (selectedPlatforms.includes("X")) {
+                const xFormData = new FormData();
+                xFormData.append("userId", user?.id || (user as any)?._id || "");
+                xFormData.append("message", postContent);
+                
+                // Add hashtags
+                if (hashtags.length > 0) {
+                    xFormData.append("hashtags", hashtags.join(","));
+                }
+
+                if (images.length > 0) {
+                    xFormData.append("image", images[0].file!);
+                }
+                if (video?.file) {
+                    xFormData.append("video", video.file);
+                } else if (video?.url) {
+                    xFormData.append("videoURL", video.url);
+                }
+
+                await postXContent(xFormData);
+                toast.success("Posted to X!");
+            }
+
+            toast.success("All posts published successfully!");
 
             setPostContent("");
             setImages([]);

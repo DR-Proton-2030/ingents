@@ -16,6 +16,7 @@ export interface Assignee {
 }
 
 export interface TaskAttachment {
+  _id?: string;
   url: string;
   description?: string;
 }
