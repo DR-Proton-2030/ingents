@@ -19,3 +19,16 @@ export const getFacebookPageDetails = async (userId: string, pageId: string) => 
     throw error;
   }
 };
+export const postFacebookContent = async (formData: FormData) => {
+  try {
+    const response = await axios.post("/api/facebook/post", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error("Frontend Facebook Posting Error:", error.response?.data || error.message);
+    throw error;
+  }
+};

@@ -9,3 +9,16 @@ export const getXDetails = async (userId: string) => {
     throw error;
   }
 };
+export const postXContent = async (formData: FormData) => {
+  try {
+    const response = await axios.post("/api/x/post", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error("Frontend X Posting Error:", error.response?.data || error.message);
+    throw error;
+  }
+};

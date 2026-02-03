@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     
     const response = await axios.post(
-      `${BACKEND_URL}/api/v1/facebook/post`,
+      `${BACKEND_URL}/api/v1/x/post`,
       formData,
       {
         headers: {
@@ -19,11 +19,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json(response.data);
   } catch (error: any) {
-    console.error("Facebook Post Proxy Error:", error.response?.data || error.message);
+    console.error("X Post Proxy Error:", error.response?.data || error.message);
     return NextResponse.json(
       { 
         success: false, 
-        message: error.response?.data?.error || "Facebook post failed",
+        message: error.response?.data?.message || "X post failed",
         details: error.response?.data
       },
       { status: error.response?.status || 500 }

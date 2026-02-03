@@ -51,7 +51,7 @@ export const useAccountSelection = ({
       const payload = {
         userId: (user as { id?: string })?.id,
         [platform]: {
-          project_id: selected.id,
+          [platform === "facebook" ? "page_id" : "project_id"]: selected.id,
           name: selected.name,
         },
       };
