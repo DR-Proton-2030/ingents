@@ -223,11 +223,11 @@ export default function MeetingPage() {
             if (existing) {
                 // Update existing with stream and optionally userName
                 return prev.map(p => p.peerId === peerId
-                    ? { ...p, stream, userName: userName || p.userName }
+                    ? { ...p, stream, userName: userName || p.userName, lastSeen: Date.now() }
                     : p
                 );
             }
-            return [...prev, { peerId, stream, userName, isVideoOff: false, isMuted: false, isHandRaised: false, reaction: null }];
+            return [...prev, { peerId, stream, userName, isVideoOff: false, isMuted: false, isHandRaised: false, reaction: null, lastSeen: Date.now() }];
         });
     }
 
@@ -472,6 +472,16 @@ export default function MeetingPage() {
                         : p
                 ));
             }
+            if (data.type === "heartbeat") {
+                setRemoteStreams(prev => prev.map(p =>
+                    p.peerId === data.payload.peerId
+                        ? { ...p, lastSeen: Date.now() }
+                        : p
+                ));
+            }
+            if (data.type === "leave") {
+                removePeer(data.payload.peerId);
+            }
         });
         conn.on("close", () => removePeer(conn.peer));
     }
@@ -636,7 +646,38 @@ export default function MeetingPage() {
                 videoBackground: type === "background" ? effectId : videoBackground
             }
         });
-    }, [videoFilter, videoBackground, broadcastData]);
+    }, [videoFilter, videoBackground]);
+
+    // Heartbeat Effect: Broadcast presence and prune stale peers
+    useEffect(() => {
+        if (!isInCall) return;
+
+        const interval = setInterval(() => {
+            // 1. Broadcast our heartbeat
+            broadcastData({
+                type: "heartbeat",
+                payload: { peerId: peerIdRef.current }
+            });
+
+            // 2. Prune peers not seen for > 15 seconds
+            const now = Date.now();
+            setRemoteStreams(prev => {
+                const stalePeers = prev.filter(p => p.lastSeen && (now - p.lastSeen > 15000));
+                if (stalePeers.length > 0) {
+                    stalePeers.forEach(p => {
+                        console.log("Pruning stale peer:", p.peerId);
+                        callsRef.current = callsRef.current.filter(c => c.peer !== p.peerId);
+                        dataConnsRef.current = dataConnsRef.current.filter(c => c.peer !== p.peerId);
+                        connectedPeersRef.current.delete(p.peerId);
+                    });
+                    return prev.filter(p => !p.lastSeen || (now - p.lastSeen <= 15000));
+                }
+                return prev;
+            });
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [isInCall]);
 
     const initGuestMode = useCallback(() => {
         if (!window.Peer) return;
@@ -749,6 +790,7 @@ export default function MeetingPage() {
     }, []);
 
     const leaveMeeting = useCallback(() => {
+        broadcastData({ type: "leave", payload: { peerId: peerIdRef.current } });
         if (peerRef.current) peerRef.current.destroy();
         if (localStreamRef.current) localStreamRef.current.getTracks().forEach((track) => track.stop());
         router.push("/");

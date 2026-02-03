@@ -10,6 +10,7 @@ export interface PeerStream {
     isHandRaised?: boolean;
     videoFilter?: string;
     videoBackground?: string;
+    lastSeen?: number;
 }
 
 export interface ChatMessage {
