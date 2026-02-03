@@ -25,7 +25,13 @@ export default function Navbar() {
         {/* Assistant label with mic */}
         <div className="hidden md:flex items-center gap-2 pr-2 mr-2 border-r border-gray-200">
           <div className="text-xl  font-semibold  text-gray-900 flex items-center gap-3">
-            <img src={user?.company_details?.logo || ""} alt="" className="h-12" />
+            {user?.company_details?.logo && (
+              <img
+                src={user.company_details.logo}
+                alt="Company Logo"
+                className="h-12"
+              />
+            )}
             {/* {user?.company_details?.company_name || "Ingents"} */}
           </div>
           {/* <button
