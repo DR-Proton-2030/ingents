@@ -135,6 +135,7 @@ export default function MeetingPage() {
     const [showChat, setShowChat] = useState(false);
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [hasUnreadMsg, setHasUnreadMsg] = useState(false);
+    const [activeParticipants, setActiveParticipants] = useState<FirebaseParticipant[]>([]);
 
     // Transcription & AI State
     const [isTranscriptionActive, setIsTranscriptionActive] = useState(false);
@@ -240,13 +241,18 @@ export default function MeetingPage() {
 
     // --- Firebase Sync Effect ---
     useEffect(() => {
-        if (!isInCall || !meetingCode) return;
+        if (!meetingCode) return;
 
         const unsubscribe = listenToParticipants(meetingCode, (fbParticipants) => {
             console.log("Firebase Participants Update:", fbParticipants);
+            setActiveParticipants(fbParticipants);
+
+            if (!isInCall) return; // Only do P2P connection logic if actually in call
 
             // 1. Filter out self
             const others = fbParticipants.filter(p => p.peerId !== peerIdRef.current);
+
+            // ... rest of the existing logic ...
 
             // 2. Remove peers that are no longer in Firebase
             setRemoteStreams(prev => {
@@ -1018,6 +1024,7 @@ export default function MeetingPage() {
                         localStream={localStream}
                         meetingInfo={meetingInfo}
                         participants={participants}
+                        activeParticipants={activeParticipants}
                         currentUser={currentUser}
                         isFetchingInfo={isFetchingInfo}
                         isMuted={isMuted}

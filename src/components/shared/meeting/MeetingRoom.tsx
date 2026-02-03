@@ -80,7 +80,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     onApplyVisualEffect,
 }) => {
     // State
-    const [layout, setLayout] = useState<LayoutType>("auto");
+    const [layout, setLayout] = useState<LayoutType>("sidebar");
     const [showPeople, setShowPeople] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
     const [showVisualEffects, setShowVisualEffects] = useState(false);
