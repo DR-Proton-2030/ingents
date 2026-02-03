@@ -78,7 +78,8 @@ export default function MeetingPage() {
             };
         }
 
-        return { id: userId, name: userName || "Guest", email: userEmail };
+        // Default to Guest if not logged in
+        return { id: userId || `guest-${Math.random().toString(36).substr(2, 5)}`, name: "Guest", email: userEmail || "" };
     }, [user, meetingInfo, participants, isInCall, peerId, meetingCode]);
 
     // Media State
@@ -114,6 +115,7 @@ export default function MeetingPage() {
     const isVideoOffRef = useRef(false);
     const isHandRaisedRef = useRef(false);
     const peerIdRef = useRef("");
+    const isHostRef = useRef(false);
     const currentUserRef = useRef(currentUser);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const recognitionRef = useRef<any>(null);
@@ -202,6 +204,17 @@ export default function MeetingPage() {
         callsRef.current = callsRef.current.filter((c) => c.peer !== id);
         dataConnsRef.current = dataConnsRef.current.filter((c) => c.peer !== id);
         connectedPeersRef.current.delete(id);
+
+        // If the peer we lost was the meeting host (ID matches meetingCode)
+        // AND we are not the host ourselves, we should try to become the host
+        if (id === meetingCode && !isHostRef.current) {
+            console.log("Host left. Attempting promotion to host for room:", meetingCode);
+            // Delay slightly to avoid race conditions
+            setTimeout(() => {
+                if (peerRef.current) peerRef.current.destroy();
+                joinRoom();
+            }, 1000 + Math.random() * 2000); // Random jitter to prevent thunderous herd
+        }
     }
 
     function handleRemoteStream(peerId: string, stream: MediaStream, userName?: string) {
@@ -627,7 +640,8 @@ export default function MeetingPage() {
 
     const initGuestMode = useCallback(() => {
         if (!window.Peer) return;
-        const peer = new window.Peer(undefined, {
+        const randomId = `${meetingCode}-p-${Math.random().toString(36).substr(2, 6)}`;
+        const peer = new window.Peer(randomId, {
             debug: 1,
             config: {
                 iceServers: [
@@ -638,24 +652,46 @@ export default function MeetingPage() {
         });
 
         peer.on("open", (id: string) => {
+            console.log("Joined as Participant:", id);
             setPeerId(id);
             peerIdRef.current = id;
+            isHostRef.current = false;
             setIsInCall(true);
             setIsLoading(false);
             setStatusMsg("");
+
+            // Connect to the known anchor ID
             const conn = peer.connect(meetingCode);
             setupDataConnection(conn);
         });
 
         peer.on("error", (err: any) => {
-            console.error("Guest Peer Error:", err);
-            setStatusMsg("Failed to join meeting.");
-            setIsLoading(false);
+            console.error("Participant Peer Error:", err);
+            if (err.type === "unavailable-id") {
+                // Should not happen with random ID, but retry just in case
+                peer.destroy();
+                setTimeout(initGuestMode, 1000);
+            } else if (err.type === "peer-unavailable") {
+                // Host not active yet, we are alone but Listening
+                setIsInCall(true);
+                setIsLoading(false);
+                setStatusMsg("");
+                // Periodic check if host appeared or become the host yourself
+                setTimeout(() => {
+                    if (remoteStreams.length === 0) {
+                        peer.destroy();
+                        joinRoom(); // Try to become host instead
+                    }
+                }, 3000);
+            } else {
+                setStatusMsg(`Connection Error: ${err.type}`);
+                setIsLoading(false);
+            }
         });
 
         setupCommonPeerEvents(peer);
         peerRef.current = peer;
-    }, [meetingCode]);
+    }, [meetingCode, remoteStreams.length]);
 
     const joinRoom = useCallback(() => {
         if (!meetingCode || !localStreamRef.current || !window.Peer) return;
@@ -673,8 +709,10 @@ export default function MeetingPage() {
         });
 
         peer.on("open", (id: string) => {
+            console.log("Joined as Host:", id);
             setPeerId(id);
             peerIdRef.current = id;
+            isHostRef.current = true;
             setIsInCall(true);
             setIsLoading(false);
             setStatusMsg("");
@@ -682,13 +720,15 @@ export default function MeetingPage() {
         });
 
         peer.on("error", (err: any) => {
+            console.warn("Lobby ID taken or error, joining as participant. Type:", err.type);
             if (err.type === "unavailable-id") {
                 peer.destroy();
                 initGuestMode();
             } else {
                 console.error("Peer Error:", err);
-                setStatusMsg(`Connection Error: ${err.type}`);
-                setIsLoading(false);
+                // Fallback to guest mode for other errors too, to ensure user gets in
+                peer.destroy();
+                initGuestMode();
             }
         });
 

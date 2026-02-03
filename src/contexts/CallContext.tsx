@@ -219,7 +219,7 @@ export const CallProvider = ({ children }: { children: React.ReactNode }) => {
 
         } catch (error) {
             console.error("Error starting call:", error);
-            alert("Could not access camera or microphone");
+            handleEndCall();
         }
     };
 
