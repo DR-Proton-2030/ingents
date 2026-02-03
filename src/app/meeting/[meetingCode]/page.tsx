@@ -200,28 +200,63 @@ export default function MeetingPage() {
     }
 
     function removePeer(id: string) {
+        if (!id) return;
+        console.log("Removing peer:", id);
+
+        // 1. Update UI state
         setRemoteStreams((prev) => prev.filter((p) => p.peerId !== id));
+
+        // 2. Explicitly close and clean up WebRTC calls
+        const activeCalls = callsRef.current.filter((c) => c.peer === id);
+        activeCalls.forEach(call => {
+            try {
+                if (call.peerConnection) call.peerConnection.close();
+                call.close();
+            } catch (e) {
+                console.warn("Error closing call for peer:", id, e);
+            }
+        });
+
+        // 3. Explicitly close and clean up Data connections
+        const activeConns = dataConnsRef.current.filter((c) => c.peer === id);
+        activeConns.forEach(conn => {
+            try {
+                conn.close();
+            } catch (e) {
+                console.warn("Error closing connection for peer:", id, e);
+            }
+        });
+
+        // 4. Update refs
         callsRef.current = callsRef.current.filter((c) => c.peer !== id);
         dataConnsRef.current = dataConnsRef.current.filter((c) => c.peer !== id);
         connectedPeersRef.current.delete(id);
 
-        // If the peer we lost was the meeting host (ID matches meetingCode)
-        // AND we are not the host ourselves, we should try to become the host
+        // 5. Promotion logic
         if (id === meetingCode && !isHostRef.current) {
             console.log("Host left. Attempting promotion to host for room:", meetingCode);
-            // Delay slightly to avoid race conditions
             setTimeout(() => {
-                if (peerRef.current) peerRef.current.destroy();
-                joinRoom();
-            }, 1000 + Math.random() * 2000); // Random jitter to prevent thunderous herd
+                // Double check we haven't found another host in the meantime
+                if (!callsRef.current.find(c => c.peer === meetingCode)) {
+                    if (peerRef.current) peerRef.current.destroy();
+                    joinRoom();
+                }
+            }, 1500 + Math.random() * 2000);
         }
     }
 
     function handleRemoteStream(peerId: string, stream: MediaStream, userName?: string) {
+        // Guard: Don't add a stream for a peer that just left
+        if (!connectedPeersRef.current.has(peerId) && peerId !== meetingCode) {
+            // If we are host, we track everyone. If we are participant, we only track those we connected to.
+            // But we should at least check if we have a connection
+            const hasDataConn = dataConnsRef.current.some(c => c.peer === peerId);
+            if (!hasDataConn && peerId !== meetingCode) return;
+        }
+
         setRemoteStreams((prev) => {
             const existing = prev.find((p) => p.peerId === peerId);
             if (existing) {
-                // Update existing with stream and optionally userName
                 return prev.map(p => p.peerId === peerId
                     ? { ...p, stream, userName: userName || p.userName, lastSeen: Date.now() }
                     : p
@@ -338,6 +373,7 @@ export default function MeetingPage() {
     function setupDataConnection(conn: any) {
         if (dataConnsRef.current.find(c => c.peer === conn.peer)) return;
         dataConnsRef.current.push(conn);
+        connectedPeersRef.current.add(conn.peer); // Ensure consistency
         conn.on("open", () => {
             // Send user info immediately
             conn.send({
