@@ -29,7 +29,9 @@ export const AccountDropdown: React.FC<AccountDropdownProps> = ({
   platformGradient,
   placeholder = "Select an account...",
 }) => {
-  const selectedData = accounts.find((acc) => acc.id === selectedAccount);
+  const selectedData = Array.isArray(accounts) 
+    ? accounts.find((acc) => acc?.id === selectedAccount)
+    : null;
 
   return (
     <div className="relative">
@@ -49,9 +51,11 @@ export const AccountDropdown: React.FC<AccountDropdownProps> = ({
               </div>
               <div className="text-left">
                 <p className="text-base font-semibold text-gray-900">
-                  {selectedData.name}
+                  {selectedData?.name || "Selected Account"}
                 </p>
-                <p className="text-sm text-gray-500">{selectedData.id}</p>
+                <p className="text-sm text-gray-500">
+                  @{selectedData?.username || selectedData?.id || ""}
+                </p>
               </div>
             </>
           ) : (
@@ -83,13 +87,13 @@ export const AccountDropdown: React.FC<AccountDropdownProps> = ({
           }}
         >
           <div className="max-h-72 overflow-y-auto scrollable-dropdown">
-            {accounts.map((account) => {
-              const isSelected = account.id === selectedAccount;
+            {Array.isArray(accounts) && accounts.filter(Boolean).map((account) => {
+              const isSelected = account?.id === selectedAccount;
 
               return (
                 <button
-                  key={account.id}
-                  onClick={() => onSelectAccount(account.id)}
+                  key={account?.id}
+                  onClick={() => onSelectAccount(account?.id)}
                   className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-all duration-200 group border-b border-gray-100 last:border-b-0 hover:shadow-sm"
                 >
                   {/* Avatar */}
@@ -103,9 +107,11 @@ export const AccountDropdown: React.FC<AccountDropdownProps> = ({
                   {/* Account Info */}
                   <div className="flex-1 text-left">
                     <p className="text-base font-semibold text-gray-900">
-                      {account.name}
+                      {account?.name || "Unknown Account"}
                     </p>
-                    <p className="text-sm text-gray-500">{account.id} • </p>
+                    <p className="text-sm text-gray-500">
+                      @{account?.username || account?.id || "unknown"}
+                    </p>
                   </div>
 
                   {/* Check Icon */}

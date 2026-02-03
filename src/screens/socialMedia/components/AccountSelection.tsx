@@ -23,7 +23,7 @@ const socials = [
     description: "Reach billions of users with targeted content",
   },
   {
-    id: "X",
+    id: "x",
     src: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/X_logo.jpg/250px-X_logo.jpg",
     href: "https://x.com",
     alt: "X",
@@ -91,6 +91,10 @@ export default function AccountSelection() {
         break;
       case "youtube":
         authURL = `${baseURL}/api/v1/youtube/auth?user_id=${user?.id}`;
+        break;
+      case "x":
+        authURL = `${baseURL}/api/v1/x/login?user_id=${user?.id}`;
+        break;
       default:
         console.log("Unsupported integration title:", socialId);
         break;
@@ -115,7 +119,9 @@ export default function AccountSelection() {
       console.log(data);
 
       if (!res.ok) throw new Error(data.error || "Failed to fetch");
-      setProfile(data.result);
+      if (data.result) {
+        setProfile(Array.isArray(data.result) ? data.result : [data.result]);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(msg);
@@ -138,7 +144,9 @@ export default function AccountSelection() {
       console.log(data.result);
 
       if (!res.ok) throw new Error(data.error || "Failed to fetch");
-      setProfile([data.result]);
+      if (data.result) {
+        setProfile([data.result]);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(msg);
@@ -161,11 +169,39 @@ export default function AccountSelection() {
       console.log(data.result);
 
       if (!res.ok) throw new Error(data.error || "Failed to fetch");
-      setProfile([data.result]);
+      if (data.result) {
+        setProfile([data.result]);
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error(msg);
       // setError(err.message);
+    }
+  };
+
+  const fetchXProfile = async (
+    access_token: string,
+    user_id?: string
+  ) => {
+    console.log("Token", access_token);
+    try {
+      const uid = user_id ?? "";
+      const res = await fetch(
+        `/api/x/profile?access_token=${access_token}&userId=${uid}`
+      );
+      const data = await res.json();
+
+      console.log("X RAW Data:", data);
+
+      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+      
+      if (data.result) {
+        setProfile(Array.isArray(data.result) ? data.result : [data.result]);
+      }
+     
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("fetchXProfile Error:", msg);
     }
   };
 
@@ -186,15 +222,18 @@ export default function AccountSelection() {
   }, [searchParams]);
 
   useEffect(() => {
-    if (!token || !user?.id) return;
-    if (platform === "facebook") {
+    if (!token || !user?.id || !platform) return;
+    const normalizedPlatform = platform.toLowerCase();
+    if (normalizedPlatform === "facebook") {
       fetchProfile(token, user.id);
-    } else if (platform === "instagram") {
+    } else if (normalizedPlatform === "instagram") {
       fetchInstagramProfile(token, user.id);
-    } else if (platform === "youtube") {
+    } else if (normalizedPlatform === "youtube") {
       fetchYoutubeChannel(token, user.id);
+    } else if (normalizedPlatform === "x") {
+      fetchXProfile(token, user.id);
     }
-  }, [token, user?.id]);
+  }, [token, user?.id, platform]);
 
   const clearAuthQuery = () => {
     try {
@@ -250,7 +289,8 @@ export default function AccountSelection() {
 
   const toPlatformKey = (id: string | null): PlatformKey | undefined => {
     if (!id) return undefined;
-    if (id === "twitter") return "x";
+    const normalized = id.toLowerCase();
+    if (normalized === "twitter") return "x";
     const allowed: PlatformKey[] = [
       "instagram",
       "facebook",
@@ -259,8 +299,8 @@ export default function AccountSelection() {
       "youtube",
       "telegram",
     ];
-    return allowed.includes(id as PlatformKey)
-      ? (id as PlatformKey)
+    return allowed.includes(normalized as PlatformKey)
+      ? (normalized as PlatformKey)
       : undefined;
   };
   const platformKey = toPlatformKey(platform);
