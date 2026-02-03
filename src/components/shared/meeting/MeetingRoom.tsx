@@ -12,6 +12,10 @@ import MeetingVisualEffects from "./room/MeetingVisualEffects";
 import MeetingControls from "./room/MeetingControls";
 import MeetingVideoGrid from "./room/MeetingVideoGrid";
 import MeetingLayoutModal from "./room/MeetingLayoutModal";
+import MeetingSettingsModal from "./room/MeetingSettingsModal";
+import { RoomSettings, handleAdmission } from "@/lib/meeting.firebase";
+import { toast } from "react-toastify";
+import { Check, X as XIcon, Users } from "lucide-react";
 
 // Types
 import { PeerStream, ChatMessage, LayoutType, ParticipantState, TranscriptEntry } from "./room/types";
@@ -46,6 +50,12 @@ export interface MeetingRoomProps {
     videoFilter: string;
     videoBackground: string;
     onApplyVisualEffect: (type: "filter" | "background", effectId: string) => void;
+    // Host Controls
+    isHost: boolean;
+    roomSettings: RoomSettings;
+    onUpdateRoomSettings: (settings: Partial<RoomSettings>) => void;
+    onMuteAll: () => void;
+    waitingQueue: any[];
 }
 
 export const MeetingRoom: React.FC<MeetingRoomProps> = ({
@@ -78,6 +88,11 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     videoFilter,
     videoBackground,
     onApplyVisualEffect,
+    isHost,
+    roomSettings,
+    onUpdateRoomSettings,
+    onMuteAll,
+    waitingQueue
 }) => {
     // State
     const [layout, setLayout] = useState<LayoutType>("sidebar");
@@ -86,6 +101,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
     const [showVisualEffects, setShowVisualEffects] = useState(false);
     const [pinnedPeerId, setPinnedPeerId] = useState<string | null>(null);
     const [showLayoutModal, setShowLayoutModal] = useState(false);
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
 
     // Refs
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -96,6 +112,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         setShowPeople(false);
         setShowSummary(false);
         setShowVisualEffects(false);
+        setShowSettingsModal(false);
     };
 
     // Toggle people panel
@@ -180,6 +197,61 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
         setPinnedPeerId(pinnedPeerId === id ? null : id);
     };
 
+    // --- Admission Popups ---
+    useEffect(() => {
+        if (!isHost || waitingQueue.length === 0) return;
+
+        console.log("MeetingRoom: Host detected waiting participants:", waitingQueue.length);
+
+        // Show toast for the latest waiting participant
+        const latest = waitingQueue[waitingQueue.length - 1];
+        const toastId = `admit-${latest.peerId}`;
+
+        toast.info(
+            <div className="flex flex-col gap-3 p-4 bg-white">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold text-gray-900 leading-tight">Entry Request</p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                            <span className="font-bold text-orange-600">{latest.userName}</span> wants to join.
+                        </p>
+                    </div>
+                </div>
+                <div className="flex gap-2 pt-1">
+                    <button
+                        onClick={() => {
+                            handleAdmission(meetingCode, latest.peerId, "active");
+                            toast.dismiss(toastId);
+                        }}
+                        className="flex-1 py-2 bg-gray-900 text-white text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 hover:bg-gray-800 transition-all shadow-sm"
+                    >
+                        <Check className="w-3.5 h-3.5" /> Admit
+                    </button>
+                    <button
+                        onClick={() => {
+                            handleAdmission(meetingCode, latest.peerId, "denied");
+                            toast.dismiss(toastId);
+                        }}
+                        className="flex-1 py-2 bg-gray-100 text-gray-700 text-[11px] font-bold rounded-xl flex items-center justify-center gap-1.5 hover:bg-gray-200 transition-all"
+                    >
+                        <XIcon className="w-3.5 h-3.5" /> Deny
+                    </button>
+                </div>
+            </div>,
+            {
+                toastId: toastId,
+                autoClose: false,
+                closeButton: false,
+                position: "bottom-left",
+                className: "p-0 overflow-hidden rounded-2xl border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] bg-transparent",
+                icon: false
+            }
+        );
+    }, [waitingQueue, isHost, meetingCode]);
+
     return (
         <div className="h-screen flex flex-col bg-gray-200 overflow-hidden">
             <audio ref={audioRef} src="/sounds/hand-raise.mp3" />
@@ -190,6 +262,16 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                     layout={layout}
                     setLayout={setLayout}
                     onClose={() => setShowLayoutModal(false)}
+                />
+            )}
+
+            {/* Settings Modal */}
+            {showSettingsModal && isHost && (
+                <MeetingSettingsModal
+                    settings={roomSettings}
+                    onUpdateSettings={onUpdateRoomSettings}
+                    onMuteAll={onMuteAll}
+                    onClose={() => setShowSettingsModal(false)}
                 />
             )}
 
@@ -285,6 +367,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({
                 onToggleTranscription={onToggleTranscription}
                 onToggleVisualEffects={toggleVisualEffects}
                 showVisualEffects={showVisualEffects}
+                toggleSettings={() => setShowSettingsModal(true)}
             />
         </div>
     );

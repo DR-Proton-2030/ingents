@@ -23,6 +23,13 @@ export interface FirebaseParticipant {
     isHandRaised: boolean;
     lastSeen: any;
     joinedAt: any;
+    status: "active" | "waiting" | "denied";
+}
+
+export interface RoomSettings {
+    muteAll: boolean;
+    cameraLock: boolean;
+    guestAccess: "direct" | "ask";
 }
 
 const ROOMS_COLLECTION = "meeting_rooms";
@@ -89,4 +96,70 @@ export const pruneStaleParticipants = async (meetingCode: string) => {
     if (hasStale) {
         await batch.commit();
     }
+};
+
+// --- Room Settings ---
+export const updateRoomSettings = async (meetingCode: string, settings: Partial<RoomSettings>) => {
+    const roomDoc = doc(db, ROOMS_COLLECTION, meetingCode);
+    await setDoc(roomDoc, { settings }, { merge: true });
+};
+
+export const listenToRoomSettings = (
+    meetingCode: string,
+    callback: (settings: RoomSettings) => void
+) => {
+    const roomDoc = doc(db, ROOMS_COLLECTION, meetingCode);
+    return onSnapshot(roomDoc, (doc) => {
+        const data = doc.data();
+        if (data?.settings) {
+            callback(data.settings as RoomSettings);
+        }
+    });
+};
+
+// --- Guest Admission ---
+export const requestToJoin = async (meetingCode: string, participant: FirebaseParticipant) => {
+    const queueDoc = doc(db, ROOMS_COLLECTION, meetingCode, "waiting_queue", participant.peerId);
+    await setDoc(queueDoc, {
+        ...participant,
+        status: "waiting",
+        requestedAt: serverTimestamp()
+    });
+};
+
+export const handleAdmission = async (meetingCode: string, peerId: string, status: "active" | "denied") => {
+    const queueDoc = doc(db, ROOMS_COLLECTION, meetingCode, "waiting_queue", peerId);
+    if (status === "denied") {
+        await updateDoc(queueDoc, { status: "denied" });
+    } else {
+        // If admitted, we move them to participants and remove from queue
+        // (Wait, we can just update status in queue and the client will move themselves)
+        await updateDoc(queueDoc, { status: "active" });
+    }
+};
+
+export const listenToWaitlist = (
+    meetingCode: string,
+    callback: (participants: FirebaseParticipant[]) => void
+) => {
+    const queueCol = collection(db, ROOMS_COLLECTION, meetingCode, "waiting_queue");
+    const q = query(queueCol, where("status", "==", "waiting"));
+    return onSnapshot(q, (snapshot) => {
+        const participants = snapshot.docs.map(doc => doc.data() as FirebaseParticipant);
+        callback(participants);
+    });
+};
+
+export const listenToAdmissionStatus = (
+    meetingCode: string,
+    peerId: string,
+    callback: (status: "waiting" | "active" | "denied") => void
+) => {
+    const queueDoc = doc(db, ROOMS_COLLECTION, meetingCode, "waiting_queue", peerId);
+    return onSnapshot(queueDoc, (doc) => {
+        const data = doc.data();
+        if (data?.status) {
+            callback(data.status);
+        }
+    });
 };

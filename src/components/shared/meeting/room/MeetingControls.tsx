@@ -50,6 +50,7 @@ interface MeetingControlsProps {
     onToggleTranscription: () => void;
     onToggleVisualEffects: () => void;
     showVisualEffects: boolean;
+    toggleSettings: () => void;
 }
 
 const avatarColors = [
@@ -91,6 +92,7 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
     onToggleTranscription,
     onToggleVisualEffects,
     showVisualEffects,
+    toggleSettings,
 }) => {
     const [showReactionPicker, setShowReactionPicker] = useState(false);
     const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -215,7 +217,13 @@ const MeetingControls: React.FC<MeetingControlsProps> = ({
                                 <span className="text-sm font-medium">Adjust View</span>
                             </button>
                             <div className="h-px bg-gray-100 my-1 mx-4" />
-                            <button className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-gray-700 transition-colors group">
+                            <button
+                                onClick={() => {
+                                    toggleSettings();
+                                    setShowMoreMenu(false);
+                                }}
+                                className="w-full px-4 py-2.5 hover:bg-gray-50 flex items-center gap-3 text-gray-700 transition-colors group"
+                            >
                                 <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-100 transition-colors">
                                     <Settings className="w-5 h-5 text-gray-600" />
                                 </div>

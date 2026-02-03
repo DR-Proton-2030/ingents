@@ -13,7 +13,13 @@ import {
     listenToParticipants,
     updateParticipantPresence,
     updateParticipantMedia,
-    FirebaseParticipant
+    updateRoomSettings,
+    listenToRoomSettings,
+    requestToJoin,
+    listenToWaitlist,
+    listenToAdmissionStatus,
+    FirebaseParticipant,
+    RoomSettings
 } from "@/lib/meeting.firebase";
 import { toast } from "react-toastify";
 import {
@@ -28,12 +34,15 @@ import {
     Check,
     Share2,
     Monitor,
-    HandIcon,
     Smile,
+    Hand,
+    Plus,
+    X as XIcon,
     LayoutGrid,
     MoreVertical,
     Sparkles,
-    Settings
+    Settings,
+    Shield
 } from "lucide-react";
 
 declare global {
@@ -136,6 +145,13 @@ export default function MeetingPage() {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [hasUnreadMsg, setHasUnreadMsg] = useState(false);
     const [activeParticipants, setActiveParticipants] = useState<FirebaseParticipant[]>([]);
+    const [waitingQueue, setWaitingQueue] = useState<FirebaseParticipant[]>([]);
+    const [admissionStatus, setAdmissionStatus] = useState<"active" | "waiting" | "denied" | null>(null);
+    const [roomSettings, setRoomSettings] = useState<RoomSettings>({
+        muteAll: false,
+        cameraLock: false,
+        guestAccess: "direct"
+    });
 
     // Transcription & AI State
     const [isTranscriptionActive, setIsTranscriptionActive] = useState(false);
@@ -255,6 +271,12 @@ export default function MeetingPage() {
 
             // ... rest of the existing logic ...
 
+            // 4. Handle Global MuteAll
+            if (roomSettings.muteAll && !isMutedRef.current && !isHostRef.current) {
+                toggleMute();
+                toast.info("Host muted everyone.");
+            }
+
             // 2. Remove peers that are no longer in Firebase
             setRemoteStreams(prev => {
                 const currentPeerIds = others.map(p => p.peerId);
@@ -289,7 +311,30 @@ export default function MeetingPage() {
         });
 
         return () => unsubscribe();
-    }, [isInCall, meetingCode]);
+    }, [isInCall, meetingCode, roomSettings.muteAll]);
+
+    // --- Room Settings & Waitlist Listeners ---
+    useEffect(() => {
+        if (!meetingCode) return;
+
+        const unsubSettings = listenToRoomSettings(meetingCode, (settings) => {
+            setRoomSettings(settings);
+        });
+
+        let unsubWaitlist: (() => void) | undefined;
+        if (isInCall && (peerIdRef.current === meetingCode)) { // Only host listens to waitlist
+            console.log("HOST DETECTED: STARTING WAITLIST LISTENER");
+            unsubWaitlist = listenToWaitlist(meetingCode, (queue) => {
+                console.log("WAITLIST UPDATED:", queue.length, "participants waiting");
+                setWaitingQueue(queue);
+            });
+        }
+
+        return () => {
+            unsubSettings();
+            if (unsubWaitlist) unsubWaitlist();
+        };
+    }, [meetingCode, isInCall]);
 
 
     // --- Firebase Presence Heartbeat ---
@@ -858,8 +903,8 @@ export default function MeetingPage() {
             });
 
             // 2. Prune peers not seen for > 15 seconds
-            const now = Date.now();
             setRemoteStreams(prev => {
+                const now = Date.now();
                 const stalePeers = prev.filter(p => p.lastSeen && (now - p.lastSeen > 15000));
                 if (stalePeers.length > 0) {
                     stalePeers.forEach(p => {
@@ -885,18 +930,65 @@ export default function MeetingPage() {
         }
 
         setIsLoading(true);
-        setStatusMsg("Joining room...");
+        setStatusMsg("Initializing...");
 
-        // 1. Determine local Peer ID (Host gets the meeting code, others get a participant ID)
+        // 1. Determine local Peer ID
         const myPeerId = currentUser.id === (meetingInfo?.host_user_object_id || meetingInfo?.host_details?._id)
             ? meetingCode
             : `${meetingCode}-p-${currentUser.id}`;
 
         setPeerId(myPeerId);
         peerIdRef.current = myPeerId;
-        isHostRef.current = myPeerId === meetingCode;
+        const isHost = myPeerId === meetingCode;
+        isHostRef.current = isHost;
 
-        // 2. Register Presence in Firestore (The Source of Truth)
+        // 2. Admission Logic
+        const isInvited = participants.some(p =>
+            p.user_object_id === currentUser.id ||
+            p.user_details?._id === currentUser.id
+        );
+
+        if (!isHost && !isInvited && roomSettings.guestAccess === "ask") {
+            console.log("JOIN: User is GUEST. Requesting admission...");
+            setAdmissionStatus("waiting");
+            setStatusMsg("Requesting entry...");
+
+            await requestToJoin(meetingCode, {
+                peerId: myPeerId,
+                userId: currentUser.id,
+                userName: currentUser.name,
+                isVideoOff: isVideoOffRef.current,
+                isMuted: isMutedRef.current,
+                isScreenSharing: false,
+                isHandRaised: false,
+                status: "waiting",
+                lastSeen: null,
+                joinedAt: null
+            });
+
+            // Listen for admission
+            const unsub = listenToAdmissionStatus(meetingCode, myPeerId, (status) => {
+                if (status === "active") {
+                    setAdmissionStatus("active");
+                    unsub();
+                    proceedToJoin(myPeerId);
+                } else if (status === "denied") {
+                    setAdmissionStatus("denied");
+                    setIsLoading(false);
+                    setStatusMsg("Entry denied by host.");
+                    unsub();
+                }
+            });
+            return;
+        }
+
+        proceedToJoin(myPeerId);
+    }, [meetingCode, currentUser, meetingInfo, roomSettings.guestAccess]);
+
+    const proceedToJoin = async (myPeerId: string) => {
+        setStatusMsg("Joining room...");
+        // Existing join logic...
+        // 3. Register Presence in Firestore
         try {
             await joinMeetingRoom(meetingCode, {
                 peerId: myPeerId,
@@ -906,6 +998,7 @@ export default function MeetingPage() {
                 isMuted: isMutedRef.current,
                 isScreenSharing: false,
                 isHandRaised: false,
+                status: "active",
                 lastSeen: null,
                 joinedAt: null
             });
@@ -916,7 +1009,7 @@ export default function MeetingPage() {
             return;
         }
 
-        // 3. Initialize WebRTC Peer
+        // 4. Initialize WebRTC Peer
         const peer = new window.Peer(myPeerId, {
             host: "0.peerjs.com",
             port: 443,
@@ -948,7 +1041,7 @@ export default function MeetingPage() {
         });
 
         setupCommonPeerEvents(peer);
-    }, [meetingCode, currentUser, meetingInfo]);
+    };
 
     const sendChatMessage = useCallback((text: string) => {
         if (!text.trim()) return;
@@ -1055,6 +1148,42 @@ export default function MeetingPage() {
                         onToggleVideo={toggleVideo}
                         onJoin={joinRoom}
                     />
+                ) : admissionStatus === "waiting" ? (
+                    <div className="h-screen flex flex-col items-center justify-center p-8 text-center space-y-8 bg-gray-50">
+                        <div className="w-24 h-24 rounded-full bg-orange-100 flex items-center justify-center animate-pulse">
+                            <Users className="w-12 h-12 text-orange-500" />
+                        </div>
+                        <div className="space-y-3">
+                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Asking to join...</h1>
+                            <p className="max-w-md text-gray-500 font-medium">
+                                You'll join the meeting as soon as someone lets you in.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                ) : admissionStatus === "denied" ? (
+                    <div className="h-screen flex flex-col items-center justify-center p-8 text-center space-y-8 bg-gray-50">
+                        <div className="w-24 h-24 rounded-full bg-red-100 flex items-center justify-center">
+                            <XIcon className="w-12 h-12 text-red-500" />
+                        </div>
+                        <div className="space-y-3">
+                            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Entry Denied</h1>
+                            <p className="max-w-md text-gray-500 font-medium">
+                                The host has denied your request to join this meeting.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => router.push("/")}
+                            className="px-8 py-3 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg"
+                        >
+                            Return Home
+                        </button>
+                    </div>
                 ) : (
                     <MeetingRoom
                         meetingCode={meetingCode}
@@ -1084,11 +1213,20 @@ export default function MeetingPage() {
                         onSendMessage={sendChatMessage}
                         onLeave={leaveMeeting}
                         isTranscriptionActive={isTranscriptionActive}
-                        onToggleTranscription={toggleTranscription}
-                        transcripts={transcripts}
+                        onToggleTranscription={() => setIsTranscriptionActive(!isTranscriptionActive)}
+                        transcripts={[]}
                         videoFilter={videoFilter}
                         videoBackground={videoBackground}
                         onApplyVisualEffect={applyVisualEffect}
+                        isHost={isHostRef.current}
+                        roomSettings={roomSettings}
+                        onUpdateRoomSettings={(s) => updateRoomSettings(meetingCode, s)}
+                        onMuteAll={() => {
+                            updateRoomSettings(meetingCode, { muteAll: true });
+                            // Reset muteAll flag after 1 second so it can be triggered again
+                            setTimeout(() => updateRoomSettings(meetingCode, { muteAll: false }), 1000);
+                        }}
+                        waitingQueue={waitingQueue}
                     />
                 )}
             </div>
