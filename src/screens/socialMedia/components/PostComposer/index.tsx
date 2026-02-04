@@ -27,6 +27,7 @@ import { UploadedImage, UploadedVideo, TabType, PreviewPlatform, platformIcons }
 
 export default function PostComposer() {
     const { user } = useContext(AuthContext);
+    console.log("user", user)
     const [activeTab, setActiveTab] = useState<TabType>("compose");
     const [previewPlatform, setPreviewPlatform] = useState<PreviewPlatform>("instagram");
     const [postContent, setPostContent] = useState("");
@@ -143,10 +144,6 @@ export default function PostComposer() {
                 }
 
                 if (!video.url) {
-                    // If it's a file, we ideally need to upload it to a public URL first
-                    // For now, if we don't have a direct URL, we might need a separate upload step
-                    // or let the backend handle the file upload if the API supports it.
-                    // Assuming for this demo we use URL for the YouTube service as requested by payload structure.
                     toast.warning("Manual file upload for YouTube is being processed. (Requires S3 URL)");
                 }
 
@@ -166,7 +163,7 @@ export default function PostComposer() {
             if (selectedPlatforms.includes("facebook")) {
                 const fbFormData = new FormData();
                 fbFormData.append("userId", user?.id || (user as any)?._id || "");
-                fbFormData.append("pageId", (user as any).facebook?.page_id || "");
+                fbFormData.append("pageId", (user as any).facebook?.project_id || "");
                 fbFormData.append("message", postContent);
                 
                 if (images.length > 0) {
@@ -206,7 +203,7 @@ export default function PostComposer() {
                 toast.success("Posted to X!");
             }
 
-            toast.success("All posts published successfully!");
+            // toast.success("All posts published successfully!");
 
             setPostContent("");
             setImages([]);
