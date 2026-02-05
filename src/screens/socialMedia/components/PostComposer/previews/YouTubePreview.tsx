@@ -7,9 +7,10 @@ interface YouTubePreviewProps {
   title?: string;
   description: string;
   video: UploadedVideo | null;
+  thumbnailPreview?: string;
 }
 
-export default function YouTubePreview({ title, description, video }: YouTubePreviewProps) {
+export default function YouTubePreview({ title, description, video, thumbnailPreview }: YouTubePreviewProps) {
   const hasVideo = Boolean(video?.preview || video?.url);
 
   return (
@@ -38,7 +39,16 @@ export default function YouTubePreview({ title, description, video }: YouTubePre
 
       <div className="px-4 pb-4">
         <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100">
-          {hasVideo ? (
+          {thumbnailPreview ? (
+            <div className="relative aspect-video">
+              <img src={thumbnailPreview} alt="Thumbnail" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow">
+                  <FiPlay className="w-6 h-6 text-slate-900 ml-0.5" />
+                </div>
+              </div>
+            </div>
+          ) : hasVideo ? (
             <div className="relative aspect-video">
               {video?.preview ? (
                 <video src={video.preview} className="w-full h-full object-cover" />

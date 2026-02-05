@@ -11,6 +11,7 @@ import {
   FiEye,
   FiVideo,
   FiArrowLeft,
+  FiX,
 } from "react-icons/fi";
 import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -54,6 +55,8 @@ export default function CreatePostPage() {
   const [postContent, setPostContent] = useState("");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [video, setVideo] = useState<UploadedVideo | null>(null);
+  const [youtubeThumbnail, setYoutubeThumbnail] = useState<UploadedImage | null>(null);
+  const [youtubeThumbnailDataUrl, setYoutubeThumbnailDataUrl] = useState<string | null>(null);
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isPosting, setIsPosting] = useState(false);
@@ -164,6 +167,46 @@ export default function CreatePostPage() {
     setVideo(null);
   };
 
+  const handleYoutubeThumbnailUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Thumbnail must be an image");
+      return;
+    }
+
+    // Keep this conservative to avoid request body limits
+    const maxSizeBytes = 2 * 1024 * 1024;
+    if (file.size > maxSizeBytes) {
+      toast.error("Thumbnail must be 2MB or smaller");
+      return;
+    }
+
+    const preview = URL.createObjectURL(file);
+    setYoutubeThumbnail((prev) => {
+      if (prev?.preview) URL.revokeObjectURL(prev.preview);
+      return {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        file,
+        preview,
+      };
+    });
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(new Error("Failed to read thumbnail"));
+      reader.readAsDataURL(file);
+    });
+    setYoutubeThumbnailDataUrl(dataUrl);
+  };
+
+  const removeYoutubeThumbnail = () => {
+    setYoutubeThumbnail((prev) => {
+      if (prev?.preview) URL.revokeObjectURL(prev.preview);
+      return null;
+    });
+    setYoutubeThumbnailDataUrl(null);
+  };
+
   const addHashtag = (tag: string) => {
     if (!hashtags.includes(tag)) {
       setHashtags((prev) => [...prev, tag]);
@@ -262,6 +305,7 @@ export default function CreatePostPage() {
                 ? {
                     title: postContent.slice(0, 100) || "Untitled Video",
                     privacyStatus: "public",
+                    thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
                   }
                 : undefined,
           };
@@ -297,6 +341,7 @@ export default function CreatePostPage() {
             privacyStatus: "public",
             videoURL: video.url || "https://placeholder-url.com/video.mp4",
             scheduleAt: youtubeScheduleAt,
+            thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
           });
 
           toast.success(
@@ -359,6 +404,7 @@ export default function CreatePostPage() {
       setPostContent("");
       setImages([]);
       setVideo(null);
+      removeYoutubeThumbnail();
       setHashtags([]);
       setSelectedPlatforms([]);
       setShowScheduler(false);
@@ -534,12 +580,74 @@ export default function CreatePostPage() {
 
                 {/* Video Upload for YouTube */}
                 {selectedPlatforms.includes("youtube") && (
-                  <VideoUploader
-                    video={video}
-                    onUpload={handleVideoUpload}
-                    onUrlSubmit={handleVideoUrlSubmit}
-                    onRemove={removeVideo}
-                  />
+                  <div className="space-y-4">
+                    <VideoUploader
+                      video={video}
+                      onUpload={handleVideoUpload}
+                      onUrlSubmit={handleVideoUrlSubmit}
+                      onRemove={removeVideo}
+                    />
+
+                    {/* YouTube Thumbnail */}
+                    <div>
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        YouTube Thumbnail
+                        <span className="text-[11px] font-normal normal-case text-slate-400">
+                          (optional)
+                        </span>
+                      </label>
+
+                      {youtubeThumbnail ? (
+                        <div className="flex items-start gap-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                          <div className="w-40 rounded-xl overflow-hidden border border-slate-200 bg-white">
+                            <img
+                              src={youtubeThumbnail.preview}
+                              alt="Thumbnail preview"
+                              className="w-full aspect-video object-cover"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-slate-700">Thumbnail selected</p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              Recommended 1280×720, ≤ 2MB
+                            </p>
+                            <button
+                              type="button"
+                              onClick={removeYoutubeThumbnail}
+                              className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors text-sm"
+                            >
+                              <FiX className="w-4 h-4" />
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-medium text-slate-700">Add a custom thumbnail</p>
+                              <p className="text-xs text-slate-500 mt-1">JPG/PNG, ≤ 2MB</p>
+                            </div>
+                            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors text-sm font-medium">
+                              <FiImage className="w-4 h-4" />
+                              Upload
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) void handleYoutubeThumbnailUpload(file);
+                                  e.currentTarget.value = "";
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -670,6 +778,7 @@ export default function CreatePostPage() {
                         title={"New video"}
                         description={getFullContent()}
                         video={video}
+                        thumbnailPreview={youtubeThumbnail?.preview}
                       />
                     )}
                   </motion.div>
