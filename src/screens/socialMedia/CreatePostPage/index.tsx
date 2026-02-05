@@ -333,7 +333,7 @@ export default function CreatePostPage() {
             ).toISOString();
           }
 
-          await uploadYoutubeVideo({
+          const ytResponse = await uploadYoutubeVideo({
             user_id: user?.id || (user as any)?._id || "",
             title: postContent.slice(0, 100) || "Untitled Video",
             description: postContent,
@@ -343,6 +343,16 @@ export default function CreatePostPage() {
             scheduleAt: youtubeScheduleAt,
             thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
           });
+
+          const thumbnailSet =
+            (ytResponse as any)?.thumbnailSet ?? (ytResponse as any)?.details?.thumbnailSet;
+          const thumbnailError =
+            (ytResponse as any)?.thumbnailError ?? (ytResponse as any)?.details?.thumbnailError;
+          if (youtubeThumbnailDataUrl && thumbnailSet === false && thumbnailError) {
+            toast.warn(
+              "Video uploaded, but YouTube thumbnail couldn't be set (channel may not be eligible for custom thumbnails).",
+            );
+          }
 
           toast.success(
             youtubeScheduleAt
