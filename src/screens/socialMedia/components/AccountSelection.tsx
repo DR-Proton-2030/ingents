@@ -67,7 +67,7 @@ export default function AccountSelection() {
   const { user } = useContext(AuthContext);
   const router = useRouter();
   const pathname = usePathname();
-  console.log("=====>user id", user?.id);
+  console.log("=====>user id", user?._id);
   const [profile, setProfile] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [platform, setPlatform] = useState<string | null>(null);
@@ -83,17 +83,17 @@ export default function AccountSelection() {
 
     switch (socialId) {
       case "facebook":
-        authURL = `${baseURL}/api/v1/facebook/login?user_id=${user?.id}`;
+        authURL = `${baseURL}/api/v1/facebook/login?user_id=${user?._id}`;
 
         break;
       case "instagram":
-        authURL = `https://a7b68de5a1df.ngrok-free.app/api/v1/ig/login-instagram?user_id=${user?.id}`;
+        authURL = `https://a7b68de5a1df.ngrok-free.app/api/v1/ig/login-instagram?user_id=${user?._id}`;
         break;
       case "youtube":
-        authURL = `${baseURL}/api/v1/youtube/auth?user_id=${user?.id}`;
+        authURL = `${baseURL}/api/v1/youtube/auth?user_id=${user?._id}`;
         break;
       case "x":
-        authURL = `${baseURL}/api/v1/x/login?user_id=${user?.id}`;
+        authURL = `${baseURL}/api/v1/x/login?user_id=${user?._id}`;
         break;
       default:
         console.log("Unsupported integration title:", socialId);

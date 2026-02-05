@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import { uploadYoutubeVideo } from "@/service/youtube/youtube.service";
 import { postFacebookContent } from "@/service/facebook/facebook.service";
 import { postXContent } from "@/service/x/x.service";
+import { schedulePost, SchedulePostData } from "@/service/scheduler/scheduler.service";
 
 import PlatformSelector from "./PlatformSelector";
 import HashtagInput from "./HashtagInput";
@@ -25,7 +26,11 @@ import Scheduler from "./Scheduler";
 import { InstagramPreview, FacebookPreview, XPreview } from "./previews";
 import { UploadedImage, UploadedVideo, TabType, PreviewPlatform, platformIcons } from "./types";
 
-export default function PostComposer() {
+interface PostComposerProps {
+    onPostScheduled?: () => void;
+}
+
+export default function PostComposer({ onPostScheduled }: PostComposerProps) {
     const { user } = useContext(AuthContext);
     console.log("user", user)
     const [activeTab, setActiveTab] = useState<TabType>("compose");
@@ -124,24 +129,65 @@ export default function PostComposer() {
         if (selectedPlatforms.length === 0) return;
 
         setIsPosting(true);
+        const userId = user?.id || (user as any)?._id;
 
         try {
-            console.log({
-                content: postContent,
-                hashtags,
-                images: images.map((i) => i.file),
-                video: video,
-                platforms: selectedPlatforms,
-                scheduled: showScheduler ? { date: scheduleDate, time: scheduleTime } : null,
-            });
+            // Check if this is a scheduled post
+            const isScheduled = showScheduler && scheduleDate && scheduleTime;
+            
+            if (isScheduled) {
+                // Use the scheduler for scheduled posts
+                const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+                const mediaUrls = images.map(img => img.preview); // In production, upload to S3 first
+                
+                for (const platform of selectedPlatforms) {
+                    const platformMapping: Record<string, "facebook" | "instagram" | "youtube" | "x"> = {
+                        facebook: "facebook",
+                        instagram: "instagram",
+                        youtube: "youtube",
+                        X: "x",
+                    };
+                    
+                    const mappedPlatform = platformMapping[platform];
+                    if (!mappedPlatform) continue;
 
-            // Handle YouTube Upload separately if selected
-            if (selectedPlatforms.includes("youtube")) {
-                if (!video) {
-                    toast.error("Please provide a video for YouTube");
-                    setIsPosting(false);
-                    return;
+                    const scheduleData: SchedulePostData = {
+                        user_id: userId,
+                        platform: mappedPlatform,
+                        content: postContent,
+                        media_urls: video?.url ? [video.url] : mediaUrls,
+                        media_type: video ? "video" : images.length > 0 ? "image" : "text",
+                        hashtags,
+                        scheduled_at: scheduledDateTime,
+                        page_id: mappedPlatform === "facebook" ? (user as any).facebook?.project_id : undefined,
+                        platform_specific_data: mappedPlatform === "youtube" ? {
+                            title: postContent.slice(0, 100) || "Untitled Video",
+                            privacyStatus: "public",
+                        } : undefined,
+                    };
+
+                    await schedulePost(scheduleData);
                 }
+
+                toast.success("Posts scheduled successfully!");
+                onPostScheduled?.();
+            } else {
+                // Immediate posting (existing logic)
+                console.log({
+                    content: postContent,
+                    hashtags,
+                    images: images.map((i) => i.file),
+                    video: video,
+                    platforms: selectedPlatforms,
+                });
+
+                // Handle YouTube Upload separately if selected
+                if (selectedPlatforms.includes("youtube")) {
+                    if (!video) {
+                        toast.error("Please provide a video for YouTube");
+                        setIsPosting(false);
+                        return;
+                    }
 
                 if (!video.url) {
                     toast.warning("Manual file upload for YouTube is being processed. (Requires S3 URL)");
@@ -213,6 +259,7 @@ export default function PostComposer() {
                 await postXContent(xFormData);
                 toast.success("Posted to X!");
             }
+            } // Close the else block for immediate posting
 
             // toast.success("All posts published successfully!");
 
