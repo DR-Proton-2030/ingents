@@ -86,7 +86,7 @@ export default function SocialMediaDashboard() {
                   {activeTab === tab.id && (
                     <motion.div
                       layoutId="activeTab"
-                      className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl"
+                      className="absolute inset-0 bg-gradient-to-r from-black/70 -400 to-black/80 -500 rounded-xl"
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
                   )}
