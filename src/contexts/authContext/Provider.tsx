@@ -70,11 +70,13 @@ const AuthContextProvider = ({ children }: ContextProviderProps) => {
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname;
       const isProtected =
+        currentPath.includes("site") ||
         currentPath.includes("dashboard") ||
         currentPath.includes("analytics") ||
         currentPath.includes("chat") ||
         currentPath.includes("meeting") ||
-        currentPath.includes("seo-management");
+        currentPath.includes("seo-management") ||
+        currentPath.includes("social-media");
       setIsOnProtectedRoute(isProtected);
     }
   }, []);
