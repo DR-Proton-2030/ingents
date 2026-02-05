@@ -10,6 +10,7 @@ export async function uploadYoutubeVideo(payload: {
   tags?: string[];
   privacyStatus?: 'public' | 'private' | 'unlisted';
   videoURL: string;
+  scheduleAt?: string;
 }): Promise<any> {
   const endpoint = process.env.YT_UPLOAD_ENDPOINT || DEFAULT_UPLOAD_ENDPOINT;
   try {

@@ -7,6 +7,7 @@ export interface YoutubeUploadPayload {
   tags?: string[];
   privacyStatus?: "public" | "private" | "unlisted";
   videoURL: string;
+  scheduleAt?: string;
 }
 
 /**

@@ -4,6 +4,7 @@ export type FacebookPostBody = {
   userId: string;
   pageId: string;
   message: string;
+  scheduleAt?: string;
 };
 
 export type FacebookPostResponse = {
@@ -93,8 +94,8 @@ export async function postVideoToFacebook(payload: any) {
 }
 
 // Multipart/form-data uploader (for image/file uploads)
-export async function postToFacebookFormData(opts: { userId: string; pageId: string; message?: string; imagePath?: string; imageBuffer?: Buffer; filename?: string; contentType?: string; }) {
-  const { userId, pageId, message = '', imagePath, imageBuffer, filename = 'upload.jpg', contentType = 'image/jpeg' } = opts;
+export async function postToFacebookFormData(opts: { userId: string; pageId: string; message?: string; imagePath?: string; imageBuffer?: Buffer; filename?: string; contentType?: string; scheduleAt?: string; }) {
+  const { userId, pageId, message = '', imagePath, imageBuffer, filename = 'upload.jpg', contentType = 'image/jpeg', scheduleAt } = opts;
   const url = `${BASE_URL.replace(/\/$/, '')}/api/v1/facebook/post`;
   try {
     // Lazy import to avoid opt-in deps when not used
@@ -105,6 +106,9 @@ export async function postToFacebookFormData(opts: { userId: string; pageId: str
     form.append('userId', userId);
     form.append('pageId', pageId);
     form.append('message', message);
+    if (scheduleAt) {
+      form.append('scheduleAt', scheduleAt);
+    }
 
     if (imageBuffer) {
       form.append('image', imageBuffer, { filename, contentType });

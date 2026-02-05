@@ -147,6 +147,11 @@ export default function PostComposer() {
                     toast.warning("Manual file upload for YouTube is being processed. (Requires S3 URL)");
                 }
 
+                let youtubeScheduleAt;
+                if (showScheduler && scheduleDate && scheduleTime) {
+                    youtubeScheduleAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+                }
+
                 await uploadYoutubeVideo({
                     user_id: user?.id || (user as any)?._id || "",
                     title: postContent.slice(0, 100) || "Untitled Video",
@@ -154,9 +159,10 @@ export default function PostComposer() {
                     tags: hashtags,
                     privacyStatus: "public",
                     videoURL: video.url || "https://placeholder-url.com/video.mp4", // Fallback for demo
+                    scheduleAt: youtubeScheduleAt,
                 });
 
-                toast.success("YouTube video upload started!");
+                toast.success(youtubeScheduleAt ? "YouTube video scheduled!" : "YouTube video upload started!");
             }
 
             // Handle Facebook
@@ -175,8 +181,13 @@ export default function PostComposer() {
                     fbFormData.append("videoURL", video.url);
                 }
 
+                if (showScheduler && scheduleDate && scheduleTime) {
+                    const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+                    fbFormData.append("scheduleAt", scheduledDateTime);
+                }
+
                 await postFacebookContent(fbFormData);
-                toast.success("Posted to Facebook!");
+                toast.success(showScheduler ? "Post scheduled for Facebook!" : "Posted to Facebook!");
             }
 
             // Handle X (Twitter)

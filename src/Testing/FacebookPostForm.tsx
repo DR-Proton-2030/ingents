@@ -13,7 +13,8 @@ export default function FacebookPostForm() {
   const [userId, setUserId] = useState<string>("");
   const [message, setMessage] = useState<string>('');
   const [file, setFile] = useState<File | null>(null);
-
+  const [scheduleAt, setScheduleAt] = useState<string>('');
+ 
   useEffect(() => {
     if (user) {
       setPageId(user.facebook?.project_id ?? "");
@@ -23,6 +24,7 @@ export default function FacebookPostForm() {
       setUserId("");
     }
   }, [user]);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -32,6 +34,7 @@ export default function FacebookPostForm() {
       form.append('userId', userId || '68ef911fd860ee30f6103bdb');
       form.append('pageId', pageId || '806839612517191');
       form.append('message', message || 'Test post');
+      if (scheduleAt) form.append('scheduleAt', scheduleAt);
       if (file) form.append('image', file, file.name);
 
       const resp = await fetch('/api/test/facebook/post', { method: 'POST', body: form });
@@ -55,6 +58,10 @@ export default function FacebookPostForm() {
         <div>
           <label className="block text-sm">Image</label>
           <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+        </div>
+        <div>
+          <label className="block text-sm">Schedule At (ISO string)</label>
+          <input value={scheduleAt} onChange={(e) => setScheduleAt(e.target.value)} placeholder="2026-02-10T15:30:00Z" className="border p-1 w-full" />
         </div>
         <div>
           <button disabled={loading} className="px-3 py-1 bg-blue-600 text-white rounded">{loading ? 'Posting...' : 'Post'}</button>

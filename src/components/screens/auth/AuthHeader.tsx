@@ -19,7 +19,7 @@ export const AuthHeader = ({ onPress, btn ,login}: any) => {
             <span className="block">
               <span className="relative inline-block align-middle">
                 {/* The visible text */}
-                <span className="relative z-20">Wellcome</span>
+                <span className="relative z-20">Welcome</span>
 
                 {/* Hand-drawn scribble SVG behind the word "Login" */}
                 <svg
