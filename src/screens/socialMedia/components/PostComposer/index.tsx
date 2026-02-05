@@ -23,7 +23,7 @@ import HashtagInput from "./HashtagInput";
 import ImageUploader from "./ImageUploader";
 import VideoUploader from "./VideoUploader";
 import Scheduler from "./Scheduler";
-import { InstagramPreview, FacebookPreview, XPreview } from "./previews";
+import { InstagramPreview, FacebookPreview, XPreview, YouTubePreview } from "./previews";
 import { UploadedImage, UploadedVideo, TabType, PreviewPlatform, platformIcons } from "./types";
 
 interface PostComposerProps {
@@ -505,8 +505,8 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
                         {/* Preview Platform Tabs */}
                         <div className="flex justify-center mb-6">
                             <div className="flex bg-slate-100 rounded-2xl p-1.5 gap-1">
-                                {(["instagram", "facebook", "X"] as PreviewPlatform[]).map((platform) => {
-                                    const config = platformIcons[platform];
+                                {(["instagram", "facebook", "x", "youtube"] as PreviewPlatform[]).map((platform) => {
+                                    const config = platform === "x" ? platformIcons["X"] : platformIcons[platform];
                                     return (
                                         <button
                                             key={platform}
@@ -540,8 +540,11 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
                                     {previewPlatform === "facebook" && (
                                         <FacebookPreview content={getFullContent()} images={images} />
                                     )}
-                                    {previewPlatform === "X" && (
+                                    {previewPlatform === "x" && (
                                         <XPreview content={getFullContent()} images={images} />
+                                    )}
+                                    {previewPlatform === "youtube" && (
+                                        <YouTubePreview title={"New video"} description={getFullContent()} video={video} />
                                     )}
                                 </motion.div>
                             </AnimatePresence>

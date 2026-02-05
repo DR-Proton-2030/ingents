@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 // Modular Components
 import PlatformStatCard from "./PlatformStatCard";
 import AudienceGrowthChart from "./AudienceGrowthChart";
+import PlatformGrowthChart from "./PlatformGrowthChart";
 import PerformanceMetrics, { PerformanceMetric } from "./PerformanceMetrics";
 import DateRangeSelector from "./DateRangeSelector";
 
@@ -144,6 +145,11 @@ export default function SocialAnalyticsDashboard({
     onConnect?.(platformId);
   };
 
+  const handleRefresh = (platformId: string) => {
+    // Trigger page refresh to get latest data
+    window.location.reload();
+  };
+
   // Render: Stats Only (for header section)
   if (showOnlyStats) {
     return (
@@ -155,6 +161,7 @@ export default function SocialAnalyticsDashboard({
             index={index}
             onConnect={() => handleConnect(platform.id)}
             onManage={() => handleViewDetails(platform.id)}
+            onRefresh={() => handleRefresh(platform.id)}
           />
         ))}
       </div>
@@ -165,8 +172,7 @@ export default function SocialAnalyticsDashboard({
   if (showChartAndMetrics) {
     return (
       <div className="space-y-6">
-        
-        <AudienceGrowthChart data={chartData} formatNumber={formatNumber} />
+        <PlatformGrowthChart dateRange={dateRange} />
         <PerformanceMetrics metrics={performanceMetrics} />
       </div>
     );
@@ -189,16 +195,17 @@ export default function SocialAnalyticsDashboard({
             index={index}
             onConnect={() => handleConnect(platform.id)}
             onManage={() => handleViewDetails(platform.id)}
+            onRefresh={() => handleRefresh(platform.id)}
           />
         ))}
       </div>
 
-      <AudienceGrowthChart data={chartData} formatNumber={formatNumber} />
+      <PlatformGrowthChart dateRange={dateRange} />
       <PerformanceMetrics metrics={performanceMetrics} />
     </div>
   );
 }
 
 // Re-export components for external use
-export { PlatformStatCard, AudienceGrowthChart, PerformanceMetrics, DateRangeSelector };
+export { PlatformStatCard, AudienceGrowthChart, PlatformGrowthChart, PerformanceMetrics, DateRangeSelector };
 export { PLATFORMS, DEFAULT_MONTHLY_DATA, formatNumber, getAuthUrl } from "./constants";

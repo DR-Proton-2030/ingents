@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
+import { RefreshCw } from "lucide-react";
 
 export interface PlatformStatCardProps {
   id: string;
@@ -13,6 +14,7 @@ export interface PlatformStatCardProps {
   index?: number;
   onConnect?: () => void;
   onManage?: () => void;
+  onRefresh?: () => void;
 }
 
 export default function PlatformStatCard({
@@ -26,6 +28,7 @@ export default function PlatformStatCard({
   index = 0,
   onConnect,
   onManage,
+  onRefresh,
 }: PlatformStatCardProps) {
   const getConnectButtonStyles = () => {
     switch (id) {
@@ -55,6 +58,18 @@ export default function PlatformStatCard({
       <div className="relative">
         <div className="flex items-center justify-between mb-3">
           <div className={color}>{icon}</div>
+          {connected && onRefresh && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRefresh();
+              }}
+              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors group/refresh"
+              title="Refresh stats"
+            >
+              <RefreshCw className="w-4 h-4 text-slate-400 group-hover/refresh:text-slate-600 group-hover/refresh:rotate-180 transition-all duration-300" />
+            </button>
+          )}
         </div>
         <div className="text-3xl font-bold text-slate-800 mb-1">{followers}</div>
         <div className="text-sm text-slate-500">Followers</div>

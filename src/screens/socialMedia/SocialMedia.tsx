@@ -6,7 +6,7 @@ import StatCard from "./components/StatCard";
 import TotalMessagesCard from "./components/TotalMessagesCard";
 import FollowersOverviewCard from "./components/FollowersOverviewCard";
 import AccountSelection from "./components/AccountSelection";
-import PostComposer from "./components/PostComposer";
+import CreatePostCTA from "./components/CreatePostCTA";
 import ScheduledPosts from "./components/ScheduledPosts";
 import PostedContentHistory from "./components/PostedContentHistory";
 import SocialAnalyticsDashboard from "./components/SocialAnalyticsDashboard";
@@ -111,7 +111,7 @@ export default function SocialMediaDashboard() {
               <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showChartAndMetrics />
             )}
             {activeTab === "compose" && (
-              <PostComposer onPostScheduled={handlePostScheduled} />
+              <CreatePostCTA />
             )}
             {activeTab === "scheduled" && (
               <ScheduledPosts />

@@ -49,4 +49,4 @@ export interface UploadedVideo {
 }
 
 export type TabType = "compose" | "preview";
-export type PreviewPlatform = "instagram" | "facebook" | "X";
+export type PreviewPlatform = "instagram" | "facebook" | "x" | "youtube";

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiCheck } from "react-icons/fi";
+import { FiCheck, FiAlertCircle } from "react-icons/fi";
 import { platformIcons } from "./types";
 
 interface PlatformSelectorProps {
@@ -17,18 +17,19 @@ export default function PlatformSelector({
 }: PlatformSelectorProps) {
     if (connectedPlatforms.length === 0) {
         return (
-            <div className="mb-5 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 rounded-2xl">
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-3">
+                <FiAlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
                 <p className="text-sm text-amber-700 font-medium">
-                    ⚠️ Connect your social media accounts above to start posting.
+                    Connect your social media accounts to start posting.
                 </p>
             </div>
         );
     }
 
     return (
-        <div className="mb-5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+        <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                 Select Platforms
             </label>
             <div className="flex flex-wrap gap-2">
@@ -41,8 +42,8 @@ export default function PlatformSelector({
                             onClick={() => onTogglePlatform(platform)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${isSelected
-                                    ? `${config.bgColor} text-white shadow-lg`
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${isSelected
+                                    ? `${config.bgColor} text-white shadow-md`
                                     : "bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200"
                                 }`}
                         >

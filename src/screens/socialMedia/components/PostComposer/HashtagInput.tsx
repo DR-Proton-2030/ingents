@@ -26,12 +26,12 @@ export default function HashtagInput({
     };
 
     return (
-        <div className="mt-5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
+        <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
                 Hashtags
             </label>
-            <div className="flex items-center gap-2 flex-wrap p-3 bg-slate-50/80 border-2 border-slate-200 rounded-2xl min-h-[50px]">
+            <div className="flex items-center gap-2 flex-wrap p-3 bg-slate-50 border border-slate-200 rounded-xl min-h-[50px]">
                 <AnimatePresence>
                     {hashtags.map((tag) => (
                         <motion.span
@@ -39,7 +39,7 @@ export default function HashtagInput({
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full text-xs font-semibold shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-medium shadow-sm"
                         >
                             {tag}
                             <button
@@ -70,12 +70,12 @@ export default function HashtagInput({
                                 }
                             }}
                             placeholder="Type hashtag..."
-                            className="w-32 px-3 py-1.5 text-xs bg-white border-2 border-indigo-300 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
+                            className="w-32 px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-400"
                             autoFocus
                         />
                         <button
                             onClick={handleAdd}
-                            className="p-1.5 bg-indigo-500 text-white rounded-full hover:bg-indigo-600 transition-colors shadow-sm"
+                            className="p-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
                         >
                             <FiPlus size={12} />
                         </button>
@@ -84,7 +84,7 @@ export default function HashtagInput({
                                 setShowInput(false);
                                 setNewHashtag("");
                             }}
-                            className="p-1.5 bg-slate-200 text-slate-600 rounded-full hover:bg-slate-300 transition-colors"
+                            className="p-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors"
                         >
                             <FiX size={12} />
                         </button>
@@ -92,7 +92,7 @@ export default function HashtagInput({
                 ) : (
                     <button
                         onClick={() => setShowInput(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border-2 border-dashed border-slate-300 text-slate-500 rounded-full text-xs font-medium hover:border-indigo-400 hover:text-indigo-500 transition-all"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-dashed border-slate-300 text-slate-500 rounded-lg text-xs font-medium hover:border-slate-400 hover:text-slate-700 transition-all"
                     >
                         <FiHash size={12} />
                         Add hashtag
