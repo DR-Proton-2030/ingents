@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import Header from "./components/Header";
 import FollowersChart from "./components/FollowersChart";
 import StatCard from "./components/StatCard";
@@ -9,78 +9,107 @@ import AccountSelection from "./components/AccountSelection";
 import PostComposer from "./components/PostComposer";
 import ScheduledPosts from "./components/ScheduledPosts";
 import PostedContentHistory from "./components/PostedContentHistory";
+import SocialAnalyticsDashboard from "./components/SocialAnalyticsDashboard";
 import AiSidebar from "@/components/shared/aiSidebar/AiSidebar";
 import { getCompanyDetails, storeDefaultCompanyDetails } from "@/lib/storage";
 import Layout from "../layout/Layout";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import AuthContext from "@/contexts/authContext/authContext";
+import { motion } from "framer-motion";
+import { 
+  LayoutDashboard, 
+  PenSquare, 
+  CalendarClock, 
+  History,
+  ChevronRight
+} from "lucide-react";
 
 export default function SocialMediaDashboard() {
   const pathname = usePathname();
+  const { user } = useContext(AuthContext);
   const [selectedCompany, setSelectedCompany] = useState(0);
   const [companyDetails, setCompanyDetails] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"compose" | "scheduled" | "history">("compose");
+  const [activeTab, setActiveTab] = useState<"analytics" | "compose" | "scheduled" | "history">("analytics");
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const scheduledPostsRef = useRef<{ refresh: () => void } | null>(null);
 
   useEffect(() => {
-    // If you'd like to seed the localStorage with the example company, uncomment:
-    // storeDefaultCompanyDetails();
-
     const details = getCompanyDetails();
     setCompanyDetails(details);
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      const platforms: string[] = [];
+      if ((user as any)?.youtube?.access_token) platforms.push("youtube");
+      if ((user as any)?.facebook?.access_token || (user as any)?.facebook?.page_id) platforms.push("facebook");
+      if ((user as any)?.instagram?.access_token) platforms.push("instagram");
+      if ((user as any)?.x?.access_token) platforms.push("x");
+      setConnectedPlatforms(platforms);
+    }
+  }, [user]);
+
   const handlePostScheduled = () => {
-    // Refresh scheduled posts list
     setActiveTab("scheduled");
   };
+
+  const tabs = [
+    { id: "analytics", label: "Analytics", icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: "compose", label: "Create Post", icon: <PenSquare className="w-4 h-4" /> },
+    { id: "scheduled", label: "Scheduled", icon: <CalendarClock className="w-4 h-4" /> },
+    { id: "history", label: "History", icon: <History className="w-4 h-4" /> },
+  ] as const;
 
   console.log("<=====>", companyDetails);
   return (
     <Layout>
-      <div className="mx-auto px-5 max-w-7xl font-sans gap-5 flex flex-col lg:flex-row  grid grid-cols-1  lg:grid-cols-12">
-        <div className="flex-grow  lg:col-span-8 h-[87vh] overflow-y-auto pb-10 hidescroll">
+      <div className="mx-auto px-5 max-w-7xl font-sans gap-5 flex flex-col lg:flex-row grid grid-cols-1 lg:grid-cols-12">
+        <div className="flex-grow lg:col-span-8 h-[87vh] overflow-y-auto pb-10 hidescroll">
         
-          <AccountSelection />
+          {/* Platform Stats Cards at Top */}
+          <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showOnlyStats />
           
-          {/* Tab Navigation */}
-          <div className="mt-6 mb-4">
-            <div className="flex bg-slate-100 rounded-xl p-1 gap-1">
-              <button
-                onClick={() => setActiveTab("compose")}
-                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === "compose"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-600 hover:text-slate-800"
-                }`}
-              >
-                Create Post
-              </button>
-              <button
-                onClick={() => setActiveTab("scheduled")}
-                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === "scheduled"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-600 hover:text-slate-800"
-                }`}
-              >
-                Scheduled
-              </button>
-              <button
-                onClick={() => setActiveTab("history")}
-                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                  activeTab === "history"
-                    ? "bg-white text-indigo-600 shadow-sm"
-                    : "text-slate-600 hover:text-slate-800"
-                }`}
-              >
-                History
-              </button>
+          {/* Enhanced Tab Navigation */}
+          <div className="mt-6 mb-6">
+            <div className="flex bg-slate-50 rounded-2xl p-1.5 gap-1 shadow-sm">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    activeTab === tab.id
+                      ? "text-white"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                  }`}
+                >
+                  {activeTab === tab.id && (
+                    <motion.div
+                      layoutId="activeTab"
+                      className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  <span className="relative flex items-center gap-2">
+                    {tab.icon}
+                    {tab.label}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Tab Content */}
-          <div className="mt-4">
+          <motion.div 
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4"
+          >
+            {activeTab === "analytics" && (
+              <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showChartAndMetrics />
+            )}
             {activeTab === "compose" && (
               <PostComposer onPostScheduled={handlePostScheduled} />
             )}
@@ -90,9 +119,9 @@ export default function SocialMediaDashboard() {
             {activeTab === "history" && (
               <PostedContentHistory />
             )}
-          </div>
+          </motion.div>
         </div>
-        <div className="w-full   flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
+        <div className="w-full flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
           <AiSidebar aiUrl="social" context={companyDetails} />
         </div>
       </div>

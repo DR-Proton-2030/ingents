@@ -73,15 +73,18 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
   const [newScheduleDate, setNewScheduleDate] = useState("");
   const [newScheduleTime, setNewScheduleTime] = useState("");
 
-  const userId = user?.id || (user as any)?._id;
+  const userId = user?._id || (user as any)?.id;
 
   useEffect(() => {
     if (userId) {
       fetchScheduledPosts();
+    } else {
+      setLoading(false);
     }
   }, [userId, filter]);
 
   const fetchScheduledPosts = async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       const response = await getScheduledPosts(userId, filter);
@@ -89,6 +92,7 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
         setPosts(response.data);
       }
     } catch (error: any) {
+      console.error("Failed to fetch scheduled posts:", error);
       toast.error(error.response?.data?.message || "Failed to fetch scheduled posts");
     } finally {
       setLoading(false);

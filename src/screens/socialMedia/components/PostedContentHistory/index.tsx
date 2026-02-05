@@ -44,18 +44,21 @@ const platformColors: Record<string, string> = {
 export default function PostedContentHistory({ limit }: PostedContentHistoryProps) {
   const { user } = useContext(AuthContext);
   const [posts, setPosts] = useState<PostedContent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<{ platform?: string }>({});
 
-  const userId = user?.id || (user as any)?._id;
+  const userId = user?._id || (user as any)?.id;
 
   useEffect(() => {
     if (userId) {
       fetchPostedContent();
+    } else {
+      setLoading(false);
     }
   }, [userId, filter]);
 
   const fetchPostedContent = async () => {
+    if (!userId) return;
     try {
       setLoading(true);
       const response = await getPostedContent(userId, { ...filter, limit });
@@ -63,6 +66,7 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
         setPosts(response.data);
       }
     } catch (error: any) {
+      console.error("Failed to fetch posted content:", error);
       toast.error(error.response?.data?.message || "Failed to fetch posted content");
     } finally {
       setLoading(false);
