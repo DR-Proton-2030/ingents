@@ -5,21 +5,35 @@ import { motion } from "framer-motion";
 
 interface PostActivityProps {
   activity: any;
-  platform?: "youtube" | "facebook";
+  platform?: "youtube" | "facebook" | "x";
 }
 
 const PostActivity = ({ activity, platform = "youtube" }: PostActivityProps) => {
   const isYouTube = platform === "youtube";
+  const isFacebook = platform === "facebook";
+  const isX = platform === "x";
 
-  const stats = isYouTube ? [
-    { label: "Shorts", value: activity?.shorts || "0" },
-    { label: "Videos", value: activity?.videos || "0" },
-    { label: "Lives", value: activity?.lives || "0" },
-  ] : [
-    { label: "Photos", value: activity?.photos || "0" },
-    { label: "Videos", value: activity?.videos || "0" },
-    { label: "Statuses", value: activity?.statuses || "0" },
-  ];
+  let stats = [];
+
+  if (isYouTube) {
+    stats = [
+      { label: "Shorts", value: activity?.shorts || "0" },
+      { label: "Videos", value: activity?.videos || "0" },
+      { label: "Lives", value: activity?.lives || "0" },
+    ];
+  } else if (isX) {
+    stats = [
+      { label: "Tweets", value: activity?.tweets || "0" },
+      { label: "Retweets", value: activity?.retweets || "0" },
+      { label: "Replies", value: activity?.replies || "0" },
+    ];
+  } else {
+    stats = [
+      { label: "Photos", value: activity?.photos || "0" },
+      { label: "Videos", value: activity?.videos || "0" },
+      { label: "Statuses", value: activity?.statuses || "0" },
+    ];
+  }
 
   const days = ["S", "M", "T", "W", "T", "F", "S"];
   
@@ -27,14 +41,22 @@ const PostActivity = ({ activity, platform = "youtube" }: PostActivityProps) => 
   const gridData = activity?.growthTrend || [];
 
   const getCircleStyle = (intensity: number) => {
-    const colorClass = isYouTube ? "purple" : "blue";
+    const colorClass = isYouTube ? "purple" : isX ? "slate" : "blue";
     switch (intensity) {
-      case 3: return `bg-${colorClass}-600 text-white shadow-lg shadow-${colorClass}-200`;
-      case 2: return `bg-${colorClass}-500 text-white`;
-      case 1: return `bg-${colorClass}-200 text-${colorClass}-700 font-bold`;
+      case 3: return `bg-${isX ? "black" : `${colorClass}-600`} text-white shadow-lg shadow-${colorClass}-200`;
+      case 2: return `bg-${isX ? "slate-800" : `${colorClass}-500`} text-white`;
+      case 1: return `bg-${isX ? "slate-200" : `${colorClass}-200`} text-${isX ? "slate-900" : `${colorClass}-700`} font-bold`;
       default: return "bg-gray-100 text-gray-400";
     }
   };
+
+  const getAccentColorClass = () => {
+    if (isYouTube) return "purple";
+    if (isX) return "slate";
+    return "blue";
+  };
+
+  const accentColorClass = getAccentColorClass();
 
   return (
     <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
@@ -43,7 +65,7 @@ const PostActivity = ({ activity, platform = "youtube" }: PostActivityProps) => 
           <h3 className="text-xl font-bold text-gray-900">Post Activity</h3>
           <p className="text-xs text-gray-400 font-medium mt-1">From 15 Feb - 15 May, 2024</p>
         </div>
-        <button className={`text-${isYouTube ? "purple" : "blue"}-500 border border-${isYouTube ? "purple" : "blue"}-500 rounded-full px-4 py-1.5 text-xs font-bold hover:bg-gray-50 transition-colors`}>
+        <button className={`text-${isX ? "black" : `${accentColorClass}-500`} border border-${isX ? "black" : `${accentColorClass}-500`} rounded-full px-4 py-1.5 text-xs font-bold hover:bg-gray-50 transition-colors`}>
           Change Period
         </button>
       </div>

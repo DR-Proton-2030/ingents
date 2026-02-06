@@ -1,8 +1,9 @@
 import axios from "axios";
 
-export const getXDetails = async (userId: string) => {
+export const getXDetails = async (userId: string, accessToken?: string) => {
   try {
-    const response = await axios.get(`/api/x/profile?userId=${userId}`);
+    const url = `/api/x/get-all-details?userId=${userId}${accessToken ? `&access_token=${accessToken}` : ""}`;
+    const response = await axios.get(url);
     return response.data;
   } catch (error: any) {
     console.error("Frontend X Service Error:", error.response?.data || error.message);
