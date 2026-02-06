@@ -1,11 +1,11 @@
 "use client";
 import React, { useContext } from "react";
 import { motion } from "framer-motion";
-import { 
-  PenSquare, 
-  Sparkles, 
-  Share2, 
-  Clock, 
+import {
+  PenSquare,
+  Sparkles,
+  Share2,
+  Clock,
   ArrowRight,
   Image,
   Video,
@@ -74,11 +74,11 @@ export default function CreatePostCTA() {
       >
         {/* Subtle background accent */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-slate-50 to-transparent rounded-full transform translate-x-1/3 -translate-y-1/3" />
-        
+
         <div className="relative">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-slate-900 rounded-xl">
+              <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl">
                 <PenSquare className="w-6 h-6 text-white" />
               </div>
               <div>
@@ -88,11 +88,11 @@ export default function CreatePostCTA() {
                 </p>
               </div>
             </div>
-            
+
             {/* Quick action button */}
             <button
               onClick={handleCreatePost}
-              className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800 transition-all group"
+              className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl font-medium hover:bg-slate-800 transition-all group"
             >
               <Zap className="w-4 h-4" />
               Quick Post
@@ -180,7 +180,7 @@ export default function CreatePostCTA() {
             </div>
           </div>
         </div>
-        
+
         <button
           onClick={handleCreatePost}
           className="text-sm text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1 transition-colors"

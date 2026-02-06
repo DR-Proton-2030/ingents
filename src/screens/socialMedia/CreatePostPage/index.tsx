@@ -70,13 +70,18 @@ export default function CreatePostPage() {
     const platforms: string[] = [];
     const userData = user as any;
 
-    if (userData.instagram?.id || userData.instagram?.name)
+    if (userData.instagram?.id || userData.instagram?.name || userData.instagram?.access_token)
       platforms.push("instagram");
-    if (userData.facebook?.page_id || userData.facebook?.name)
+    if (userData.facebook?.page_id || userData.facebook?.name || userData.facebook?.access_token)
       platforms.push("facebook");
-    if (userData.x?.id || userData.x?.name) platforms.push("X");
-    if (userData.youtube?.id || userData.youtube?.name)
+    if (userData.x?.id || userData.x?.name || userData.x?.access_token) platforms.push("X");
+    if (userData.youtube?.id || userData.youtube?.name || userData.youtube?.access_token)
       platforms.push("youtube");
+
+    // If no platforms detected but user exists, show all platforms as options
+    if (platforms.length === 0) {
+      return ["instagram", "facebook", "X", "youtube"];
+    }
 
     return platforms;
   };
@@ -303,10 +308,10 @@ export default function CreatePostPage() {
             platform_specific_data:
               mappedPlatform === "youtube"
                 ? {
-                    title: postContent.slice(0, 100) || "Untitled Video",
-                    privacyStatus: "public",
-                    thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
-                  }
+                  title: postContent.slice(0, 100) || "Untitled Video",
+                  privacyStatus: "public",
+                  thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
+                }
                 : undefined,
           };
 
@@ -456,7 +461,7 @@ export default function CreatePostPage() {
               </p>
             </div>
           </div>
-          
+
           {/* Top-right: platform selection + publish */}
           <div className="hidden md:flex items-center gap-3">
             <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
@@ -467,11 +472,10 @@ export default function CreatePostPage() {
                   <button
                     key={platform}
                     onClick={() => togglePlatformFromHeader(platform)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
-                      isSelected
-                        ? `${config.bgColor} text-white shadow-sm`
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    }`}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${isSelected
+                      ? `${config.bgColor} text-white shadow-sm`
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                      }`}
                     title={`Select ${config.name}`}
                   >
                     {config.icon}
@@ -488,13 +492,12 @@ export default function CreatePostPage() {
                 (!postContent.trim() && images.length === 0 && !video) ||
                 selectedPlatforms.length === 0
               }
-              className={`px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${
-                isPosting ||
+              className={`px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${isPosting ||
                 (!postContent.trim() && images.length === 0 && !video) ||
                 selectedPlatforms.length === 0
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
-              }`}
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
+                }`}
             >
               {isPosting ? (
                 <>
@@ -539,27 +542,107 @@ export default function CreatePostPage() {
             <div className="p-6 space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto hidescroll">
               {/* Platform selection moved to header */}
 
-              {/* Text Area */}
+              {/* YouTube: Video + Thumbnail FIRST */}
+              {selectedPlatforms.includes("youtube") && (
+                <div className="space-y-4">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                    Video
+                    <span className="text-[11px] font-normal normal-case text-slate-400">
+                      (Required for YouTube)
+                    </span>
+                  </label>
+                  <VideoUploader
+                    video={video}
+                    onUpload={handleVideoUpload}
+                    onUrlSubmit={handleVideoUrlSubmit}
+                    onRemove={removeVideo}
+                  />
+
+                  {/* YouTube Thumbnail */}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      Thumbnail
+                      <span className="text-[11px] font-normal normal-case text-slate-400">
+                        (optional)
+                      </span>
+                    </label>
+
+                    {youtubeThumbnail ? (
+                      <div className="flex items-start gap-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div className="w-40 rounded-xl overflow-hidden border border-slate-200 bg-white">
+                          <img
+                            src={youtubeThumbnail.preview}
+                            alt="Thumbnail preview"
+                            className="w-full aspect-video object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-slate-700">Thumbnail selected</p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Recommended 1280×720, ≤ 2MB
+                          </p>
+                          <button
+                            type="button"
+                            onClick={removeYoutubeThumbnail}
+                            className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors text-sm"
+                          >
+                            <FiX className="w-4 h-4" />
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-medium text-slate-700">Add a custom thumbnail</p>
+                            <p className="text-xs text-slate-500 mt-1">JPG/PNG, ≤ 2MB</p>
+                          </div>
+                          <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors text-sm font-medium">
+                            <FiImage className="w-4 h-4" />
+                            Upload
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void handleYoutubeThumbnailUpload(file);
+                                e.currentTarget.value = "";
+                              }}
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Text Area - Shows as Title/Description for YouTube */}
               <div className="relative">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                  Post Content
+                  {selectedPlatforms.includes("youtube") ? "Title & Description" : "Post Content"}
                 </label>
                 <div className="relative">
                   <textarea
                     value={postContent}
                     onChange={(e) => setPostContent(e.target.value)}
-                    placeholder="What's on your mind? Write your post here..."
+                    placeholder={selectedPlatforms.includes("youtube")
+                      ? "Enter your video title and description..."
+                      : "What's on your mind? Write your post here..."}
                     className="w-full min-h-[160px] p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all resize-none text-sm leading-relaxed"
                     maxLength={maxCharacters}
                   />
                   <div className="absolute bottom-3 right-3">
                     <div
-                      className={`text-xs font-medium px-2 py-1 rounded-md ${
-                        characterCount > maxCharacters * 0.9
-                          ? "bg-amber-100 text-amber-600"
-                          : "bg-white text-slate-400 border border-slate-200"
-                      }`}
+                      className={`text-xs font-medium px-2 py-1 rounded-md ${characterCount > maxCharacters * 0.9
+                        ? "bg-amber-100 text-amber-600"
+                        : "bg-white text-slate-400 border border-slate-200"
+                        }`}
                     >
                       {characterCount}/{maxCharacters}
                     </div>
@@ -567,109 +650,98 @@ export default function CreatePostPage() {
                 </div>
               </div>
 
-              {/* Hashtags */}
+              {/* Hashtags / Tags */}
               <HashtagInput
                 hashtags={hashtags}
                 onAddHashtag={addHashtag}
                 onRemoveHashtag={removeHashtag}
               />
 
-              {/* Media Section */}
-              <div className="space-y-4">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  Media
-                </label>
-                
-                {/* Image Upload */}
-                <ImageUploader
-                  images={images}
-                  onUpload={handleImageUpload}
-                  onRemove={removeImage}
-                />
-
-                {/* Video Upload for YouTube */}
-                {selectedPlatforms.includes("youtube") && (
+              {/* Media Section for Instagram/Facebook/X (not YouTube) */}
+              {(selectedPlatforms.includes("instagram") ||
+                selectedPlatforms.includes("facebook") ||
+                selectedPlatforms.includes("X")) && !selectedPlatforms.includes("youtube") && (
                   <div className="space-y-4">
-                    <VideoUploader
-                      video={video}
-                      onUpload={handleVideoUpload}
-                      onUrlSubmit={handleVideoUrlSubmit}
-                      onRemove={removeVideo}
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      Media
+                      <span className="text-[11px] font-normal normal-case text-slate-400">
+                        {selectedPlatforms.includes("instagram")
+                          ? "(Up to 10 images for carousel)"
+                          : "(Images or Video)"}
+                      </span>
+                    </label>
+
+                    {/* Image Upload */}
+                    <ImageUploader
+                      images={images}
+                      onUpload={handleImageUpload}
+                      onRemove={removeImage}
                     />
 
-                    {/* YouTube Thumbnail */}
-                    <div>
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                        YouTube Thumbnail
-                        <span className="text-[11px] font-normal normal-case text-slate-400">
-                          (optional)
-                        </span>
-                      </label>
-
-                      {youtubeThumbnail ? (
-                        <div className="flex items-start gap-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                          <div className="w-40 rounded-xl overflow-hidden border border-slate-200 bg-white">
-                            <img
-                              src={youtubeThumbnail.preview}
-                              alt="Thumbnail preview"
-                              className="w-full aspect-video object-cover"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-slate-700">Thumbnail selected</p>
-                            <p className="text-xs text-slate-500 mt-1">
-                              Recommended 1280×720, ≤ 2MB
-                            </p>
-                            <button
-                              type="button"
-                              onClick={removeYoutubeThumbnail}
-                              className="mt-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors text-sm"
-                            >
-                              <FiX className="w-4 h-4" />
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl">
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-medium text-slate-700">Add a custom thumbnail</p>
-                              <p className="text-xs text-slate-500 mt-1">JPG/PNG, ≤ 2MB</p>
-                            </div>
-                            <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors text-sm font-medium">
-                              <FiImage className="w-4 h-4" />
-                              Upload
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) void handleYoutubeThumbnailUpload(file);
-                                  e.currentTarget.value = "";
-                                }}
-                              />
-                            </label>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    {/* Video Upload for Facebook/X */}
+                    {(selectedPlatforms.includes("facebook") || selectedPlatforms.includes("X")) && (
+                      <div>
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                          Video
+                          <span className="text-[11px] font-normal normal-case text-slate-400">
+                            (optional)
+                          </span>
+                        </label>
+                        <VideoUploader
+                          video={video}
+                          onUpload={handleVideoUpload}
+                          onUrlSubmit={handleVideoUrlSubmit}
+                          onRemove={removeVideo}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+
+              {/* Media for platforms when YouTube is ALSO selected (e.g., YouTube + Instagram) */}
+              {selectedPlatforms.includes("youtube") &&
+                (selectedPlatforms.includes("instagram") ||
+                  selectedPlatforms.includes("facebook") ||
+                  selectedPlatforms.includes("X")) && (
+                  <div className="space-y-4">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      Images
+                      <span className="text-[11px] font-normal normal-case text-slate-400">
+                        (For Instagram, Facebook, X)
+                      </span>
+                    </label>
+
+                    <ImageUploader
+                      images={images}
+                      onUpload={handleImageUpload}
+                      onRemove={removeImage}
+                    />
+                  </div>
+                )}
+
+              {/* No platform selected message */}
+              {selectedPlatforms.length === 0 && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <p className="text-sm text-amber-700 font-medium">
+                    Select a platform above to see media options
+                  </p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    Different platforms support different media types
+                  </p>
+                </div>
+              )}
 
               {/* Scheduler */}
               <div>
                 <button
                   onClick={() => setShowScheduler(!showScheduler)}
-                  className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all ${
-                    showScheduler 
-                      ? "bg-slate-900 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
+                  className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all ${showScheduler
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }`}
                 >
                   <FiClock className="w-4 h-4" />
                   {showScheduler ? "Scheduled" : "Schedule for later"}
@@ -700,15 +772,14 @@ export default function CreatePostPage() {
                       !video) ||
                     selectedPlatforms.length === 0
                   }
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
-                    isPosting ||
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${isPosting ||
                     (!postContent.trim() &&
                       images.length === 0 &&
                       !video) ||
                     selectedPlatforms.length === 0
-                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
-                  }`}
+                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
+                    }`}
                 >
                   {isPosting ? (
                     <>
