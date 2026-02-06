@@ -60,6 +60,7 @@ interface Props {
   platform: keyof typeof platformConfig;
   accounts: Account[];
   onSelect: (accountId: string) => void;
+  token?: string;
 }
 
 const AccountSelectionModal: React.FC<Props> = ({
@@ -68,6 +69,7 @@ const AccountSelectionModal: React.FC<Props> = ({
   platform,
   accounts,
   onSelect,
+  token,
 }) => {
   const { user, setUser } = useContext(AuthContext);
 
@@ -86,6 +88,7 @@ const AccountSelectionModal: React.FC<Props> = ({
     setUser,
     onSelect,
     onClose,
+    token,
     platformColor: platformConfig[platform]?.color,
   });
 

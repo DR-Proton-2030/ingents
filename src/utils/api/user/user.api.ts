@@ -32,3 +32,13 @@ export const getUser = async (query: Params): Promise<IUser[]> => {
     throw new Error(error.response?.data?.message || "Search failed");
   }
 }
+
+export const updateUser = async (payload : any): Promise<IUser[]> => {
+  try {
+    const response = await API.patch(`/${initialRoute}/update-user`, payload);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Update failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Update failed");
+  }
+}

@@ -18,6 +18,7 @@ interface UseAccountSelectionProps {
   onSelect: (accountId: string) => void;
   onClose: () => void;
   platformColor?: string;
+  token?: string;
 }
 
 export const useAccountSelection = ({
@@ -28,6 +29,7 @@ export const useAccountSelection = ({
   onSelect,
   onClose,
   platformColor,
+  token,
 }: UseAccountSelectionProps) => {
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -49,10 +51,11 @@ export const useAccountSelection = ({
 
     try {
       const payload = {
-        userId: (user as { id?: string })?.id,
+        userId: (user as any)?._id || (user as any)?.id,
         [platform]: {
-          [platform === "facebook" ? "page_id" : "project_id"]: selected.id,
+          [platform === "facebook" ? "project_id" : "project_id"]: selected.id,
           name: selected.name,
+          access_token: token,
         },
       };
 
