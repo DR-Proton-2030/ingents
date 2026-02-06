@@ -25,7 +25,11 @@ export const uploadYoutubeVideo = async (payload: YoutubeUploadPayload | FormDat
     });
     return response.data;
   } catch (error: any) {
-    console.error("Frontend Youtube Service Error:", error.response?.data || error.message);
+    const errorBody = error.response?.data;
+    const errorMessage = (errorBody && typeof errorBody === 'object' && Object.keys(errorBody).length > 0) 
+      ? JSON.stringify(errorBody) 
+      : error.message;
+    console.error("Frontend Youtube Service Error:", errorMessage);
     throw error;
   }
 };

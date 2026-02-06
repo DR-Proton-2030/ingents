@@ -16,6 +16,7 @@ export async function GET(req: Request) {
   }
 
   try {
+    console.log(`Fetching YouTube details for userId: ${userId} from ${BACKEND_URL}`);
     const response = await axios.get(
       `${BACKEND_URL}/api/v1/youtube/channel/get-all-details?user_id=${userId}`,
       {
@@ -25,14 +26,20 @@ export async function GET(req: Request) {
       }
     );
 
-    console.log("Youtube channel details : ", response.data)
+    console.log("YouTube API Response Status:", response.status);
     
     return NextResponse.json(response.data);
   } catch (err: any) {
-    console.error("Backend API error:", err.response?.data || err.message);
+    const errorData = err.response?.data;
+    console.error("YouTube API Route Error:", {
+      status: err.response?.status,
+      data: errorData,
+      message: err.message
+    });
+    
     return NextResponse.json(
       {
-        error: err.response?.data?.message || "Failed to fetch youtube channel details",
+        error: errorData?.message || err.message || "Failed to fetch youtube channel details",
       },
       { status: err.response?.status || 500 }
     );
