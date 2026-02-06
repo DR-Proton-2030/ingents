@@ -709,6 +709,7 @@ export default function CreatePostPage() {
                           onUpload={handleVideoUpload}
                           onUrlSubmit={handleVideoUrlSubmit}
                           onRemove={removeVideo}
+                          hideUrlInput={true}
                         />
                       </div>
                     )}

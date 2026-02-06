@@ -9,6 +9,7 @@ interface VideoUploaderProps {
     onUpload: (file: File) => void;
     onUrlSubmit: (url: string) => void;
     onRemove: () => void;
+    hideUrlInput?: boolean;
 }
 
 export default function VideoUploader({
@@ -16,6 +17,7 @@ export default function VideoUploader({
     onUpload,
     onUrlSubmit,
     onRemove,
+    hideUrlInput = false,
 }: VideoUploaderProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [videoUrl, setVideoUrl] = useState("");
@@ -37,11 +39,7 @@ export default function VideoUploader({
     };
 
     return (
-        <div className="mt-5">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                YouTube Video
-            </label>
+        <div className="">
             <input
                 type="file"
                 id="video-upload-input"
@@ -61,10 +59,10 @@ export default function VideoUploader({
                         />
                     ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 gap-2">
-                           <FiVideo size={32} className="text-red-500" />
-                           <span className="text-xs font-medium text-slate-600 truncate max-w-[80%] px-4">
-                               {video.url}
-                           </span>
+                            <FiVideo size={32} className="text-indigo-500" />
+                            <span className="text-xs font-medium text-slate-600 truncate max-w-[80%] px-4">
+                                {video.url}
+                            </span>
                         </div>
                     )}
                     <button
@@ -78,10 +76,10 @@ export default function VideoUploader({
             ) : (
                 <div className="space-y-3">
                     {!showUrlInput ? (
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className={`grid ${hideUrlInput ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className="p-8 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-red-400 hover:text-red-500 hover:bg-red-50/30 transition-all"
+                                className="p-8 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all"
                             >
                                 <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
                                     <FiVideo size={24} />
@@ -92,18 +90,20 @@ export default function VideoUploader({
                                 </div>
                             </button>
 
-                            <button
-                                onClick={() => setShowUrlInput(true)}
-                                className="p-8 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all"
-                            >
-                                <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
-                                    <FiLink size={24} />
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-sm font-semibold">Video URL</p>
-                                    <p className="text-[10px] mt-1">Direct link to video</p>
-                                </div>
-                            </button>
+                            {!hideUrlInput && (
+                                <button
+                                    onClick={() => setShowUrlInput(true)}
+                                    className="p-8 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center gap-3 text-slate-400 hover:border-indigo-400 hover:text-indigo-500 hover:bg-indigo-50/30 transition-all"
+                                >
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center">
+                                        <FiLink size={24} />
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-sm font-semibold">Video URL</p>
+                                        <p className="text-[10px] mt-1">Direct link to video</p>
+                                    </div>
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <form onSubmit={handleUrlSubmit} className="relative">

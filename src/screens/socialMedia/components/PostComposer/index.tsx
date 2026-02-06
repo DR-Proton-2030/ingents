@@ -393,15 +393,19 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
                                 onRemove={removeImage}
                             />
 
-                            {/* Video Upload for YouTube */}
-                            {selectedPlatforms.includes("youtube") && (
-                                <VideoUploader
-                                    video={video}
-                                    onUpload={handleVideoUpload}
-                                    onUrlSubmit={handleVideoUrlSubmit}
-                                    onRemove={removeVideo}
-                                />
-                            )}
+                            {/* Video Upload for YouTube/Facebook/X */}
+                            {(selectedPlatforms.includes("youtube") ||
+                                selectedPlatforms.includes("facebook") ||
+                                selectedPlatforms.includes("x") ||
+                                selectedPlatforms.includes("X")) && (
+                                    <VideoUploader
+                                        video={video}
+                                        onUpload={handleVideoUpload}
+                                        onUrlSubmit={handleVideoUrlSubmit}
+                                        onRemove={removeVideo}
+                                        hideUrlInput={!selectedPlatforms.includes("youtube")}
+                                    />
+                                )}
 
                             {/* Scheduler */}
                             <Scheduler
@@ -423,15 +427,18 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
                                     <FiImage size={14} />
                                     <span>Image</span>
                                 </button>
-                                {selectedPlatforms.includes("youtube") && (
-                                    <button
-                                        onClick={() => document.getElementById('video-upload-input')?.click()}
-                                        className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-slate-600 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
-                                    >
-                                        <FiVideo size={14} />
-                                        <span>Video</span>
-                                    </button>
-                                )}
+                                {(selectedPlatforms.includes("youtube") ||
+                                    selectedPlatforms.includes("facebook") ||
+                                    selectedPlatforms.includes("x") ||
+                                    selectedPlatforms.includes("X")) && (
+                                        <button
+                                            onClick={() => document.getElementById('video-upload-input')?.click()}
+                                            className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-slate-600 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                                        >
+                                            <FiVideo size={14} />
+                                            <span>Video</span>
+                                        </button>
+                                    )}
                                 <button
                                     onClick={() => document.getElementById('hashtag-input-field')?.focus()}
                                     className="flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-slate-600 text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
