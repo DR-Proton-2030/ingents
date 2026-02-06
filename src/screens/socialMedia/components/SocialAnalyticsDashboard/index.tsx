@@ -37,6 +37,7 @@ export interface SocialAnalyticsDashboardProps {
   onConnect?: (platformId: string) => void;
   onDisconnect?: (platformId: string) => void;
   chartData?: typeof DEFAULT_MONTHLY_DATA;
+  metrics?: any;
 }
 
 export default function SocialAnalyticsDashboard({
@@ -46,6 +47,7 @@ export default function SocialAnalyticsDashboard({
   onConnect,
   onDisconnect,
   chartData = DEFAULT_MONTHLY_DATA,
+  metrics,
 }: SocialAnalyticsDashboardProps) {
   const { user } = useContext(AuthContext);
   const router = useRouter();
@@ -59,7 +61,18 @@ export default function SocialAnalyticsDashboard({
       let followers = "0";
       let connected = connectedPlatforms.includes(platform.id);
 
-      if (platformData) {
+      // Check if we have dynamic metrics from the metrics prop
+      const metricsList = Array.isArray(metrics) ? metrics : metrics?.metrics;
+      const metricData = metricsList?.find(
+        (m: any) => 
+          m.platform?.toLowerCase() === platform.id.toLowerCase() || 
+          (platform.id === "x" && m.platform?.toLowerCase() === "twitter")
+      );
+
+      if (metricData) {
+        followers = formatNumber(Number(metricData.count || 0));
+        connected = true;
+      } else if (platformData) {
         const followerValue =
           platform.id === "youtube"
             ? platformData.subscriberCount
@@ -73,11 +86,11 @@ export default function SocialAnalyticsDashboard({
           );
           connected = true;
         }
+      }
 
-        // Check for access token as backup connection indicator
-        if (platformData.access_token || platformData.page_id) {
-          connected = true;
-        }
+      // Check for access token as backup connection indicator
+      if (platformData?.access_token || platformData?.page_id) {
+        connected = true;
       }
 
       return {
@@ -90,7 +103,7 @@ export default function SocialAnalyticsDashboard({
         connected,
       };
     });
-  }, [user, connectedPlatforms]);
+  }, [user, connectedPlatforms, metrics]);
 
   // Performance metrics
   const performanceMetrics: PerformanceMetric[] = useMemo(
