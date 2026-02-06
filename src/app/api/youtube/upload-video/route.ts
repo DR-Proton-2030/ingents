@@ -9,25 +9,30 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:898
  */
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const contentType = req.headers.get("content-type") || "";
+    let dataToForward: any;
+    let axiosConfig: any = {};
 
-    // Validation
-    if (!body.user_id || !body.videoURL) {
-      return NextResponse.json(
-        { success: false, message: "Missing user_id or videoURL" },
-        { status: 400 }
-      );
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const backendFormData = new FormData();
+      
+      // Copy all fields from incoming FormData to new FormData
+      for (const [key, value] of formData.entries()) {
+        backendFormData.append(key, value);
+      }
+      
+      dataToForward = backendFormData;
+      // When sending FormData, Axios will set the correct content-type with boundary
+    } else {
+      dataToForward = await req.json();
+      axiosConfig.headers = { "Content-Type": "application/json" };
     }
 
-    
     const response = await axios.post(
       `${BACKEND_URL}/api/v1/youtube/upload-video`,
-      body,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      dataToForward,
+      axiosConfig
     );
 
     // Return Backend Response to Frontend

@@ -338,16 +338,31 @@ export default function CreatePostPage() {
             ).toISOString();
           }
 
-          const ytResponse = await uploadYoutubeVideo({
-            user_id: user?.id || (user as any)?._id || "",
-            title: postContent.slice(0, 100) || "Untitled Video",
-            description: postContent,
-            tags: hashtags,
-            privacyStatus: "public",
-            videoURL: video.url || "https://placeholder-url.com/video.mp4",
-            scheduleAt: youtubeScheduleAt,
-            thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
-          });
+          let ytResponse;
+          if (video.file) {
+            const ytFormData = new FormData();
+            ytFormData.append("user_id", user?.id || (user as any)?._id || "");
+            ytFormData.append("title", postContent.slice(0, 100) || "Untitled Video");
+            ytFormData.append("description", postContent);
+            ytFormData.append("tags", hashtags.join(","));
+            ytFormData.append("privacyStatus", "public");
+            ytFormData.append("video", video.file);
+            if (youtubeScheduleAt) ytFormData.append("scheduleAt", youtubeScheduleAt);
+            if (youtubeThumbnailDataUrl) ytFormData.append("thumbnailDataUrl", youtubeThumbnailDataUrl);
+
+            ytResponse = await uploadYoutubeVideo(ytFormData);
+          } else {
+            ytResponse = await uploadYoutubeVideo({
+              user_id: user?.id || (user as any)?._id || "",
+              title: postContent.slice(0, 100) || "Untitled Video",
+              description: postContent,
+              tags: hashtags,
+              privacyStatus: "public",
+              videoURL: video.url || "https://placeholder-url.com/video.mp4",
+              scheduleAt: youtubeScheduleAt,
+              thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
+            });
+          }
 
           const thumbnailSet =
             (ytResponse as any)?.thumbnailSet ?? (ytResponse as any)?.details?.thumbnailSet;

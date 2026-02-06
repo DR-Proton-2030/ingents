@@ -15,11 +15,12 @@ export interface YoutubeUploadPayload {
  * Service used by Frontend Components to upload a video.
  * It calls the internal Next.js API route.
  */
-export const uploadYoutubeVideo = async (payload: YoutubeUploadPayload) => {
+export const uploadYoutubeVideo = async (payload: YoutubeUploadPayload | FormData) => {
   try {
+    const isFormData = payload instanceof FormData;
     const response = await axios.post("/api/youtube/upload-video", payload, {
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": isFormData ? "multipart/form-data" : "application/json",
       },
     });
     return response.data;
