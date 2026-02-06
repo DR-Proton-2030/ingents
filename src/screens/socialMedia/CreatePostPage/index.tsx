@@ -855,23 +855,26 @@ export default function CreatePostPage() {
                       <InstagramPreview
                         content={getFullContent()}
                         images={images}
+                        video={video}
                       />
                     )}
                     {previewPlatform === "facebook" && (
                       <FacebookPreview
                         content={getFullContent()}
                         images={images}
+                        video={video}
                       />
                     )}
                     {previewPlatform === "x" && (
                       <XPreview
                         content={getFullContent()}
                         images={images}
+                        video={video}
                       />
                     )}
                     {previewPlatform === "youtube" && (
                       <YouTubePreview
-                        title={"New video"}
+                        title={postContent.split('\n')[0].slice(0, 100) || "New video"}
                         description={getFullContent()}
                         video={video}
                         thumbnailPreview={youtubeThumbnail?.preview}

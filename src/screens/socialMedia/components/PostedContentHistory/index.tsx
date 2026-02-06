@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useContext } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FiCalendar,
   FiClock,
@@ -13,6 +13,8 @@ import {
   FiMessageCircle,
   FiShare2,
   FiEye,
+  FiPlay,
+  FiFilter,
 } from "react-icons/fi";
 import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -28,17 +30,17 @@ interface PostedContentHistoryProps {
 }
 
 const platformIcons: Record<string, React.ReactNode> = {
-  facebook: <FaFacebook className="text-blue-600" />,
-  instagram: <FaInstagram className="text-pink-600" />,
-  youtube: <FaYoutube className="text-red-600" />,
-  x: <FaXTwitter className="text-gray-900" />,
+  facebook: <FaFacebook />,
+  instagram: <FaInstagram />,
+  youtube: <FaYoutube />,
+  x: <FaXTwitter />,
 };
 
-const platformColors: Record<string, string> = {
-  facebook: "border-blue-200 bg-blue-50",
-  instagram: "border-pink-200 bg-gradient-to-r from-purple-50 to-pink-50",
-  youtube: "border-red-200 bg-red-50",
-  x: "border-gray-200 bg-gray-50",
+const platformBrandColors: Record<string, string> = {
+  facebook: "text-blue-600 bg-blue-50",
+  instagram: "text-pink-600 bg-pink-50",
+  youtube: "text-red-600 bg-red-50",
+  x: "text-slate-900 bg-slate-50",
 };
 
 export default function PostedContentHistory({ limit }: PostedContentHistoryProps) {
@@ -76,7 +78,6 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
-      weekday: "short",
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -98,203 +99,241 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
     return num.toString();
   };
 
+  const getMediaUrl = (post: PostedContent, index: number) => {
+    const url = post.media_urls?.[index];
+    if (!url) return null;
+
+    // Handle YouTube
+    if (post.platform === "youtube" && post.platform_post_id) {
+      return `https://img.youtube.com/vi/${post.platform_post_id}/mqdefault.jpg`;
+    }
+
+    // Handle standard URL (images usually)
+    return url;
+  };
+
+  const isVideo = (post: PostedContent) => {
+    return post.media_type === "video" || post.platform === "youtube";
+  };
+
+  const getPlatformLink = (post: PostedContent) => {
+    if (!post.platform_post_id) return "#";
+
+    switch (post.platform) {
+      case "youtube":
+        return `https://www.youtube.com/watch?v=${post.platform_post_id}`;
+      case "facebook":
+        return `https://facebook.com/${post.platform_post_id}`;
+      case "instagram":
+        return `https://instagram.com/p/${post.platform_post_id}`;
+      case "x":
+        return `https://x.com/status/${post.platform_post_id}`;
+      default:
+        return "#";
+    }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl border border-slate-200 shadow-lg overflow-hidden"
-    >
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-green-50 to-emerald-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center">
-              <FiCheckCircle className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">Post History</h2>
-              <p className="text-sm text-slate-500">Your published content</p>
-            </div>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+            Post History
+            {loading && <FiLoader className="w-4 h-4 animate-spin text-indigo-500" />}
+          </h2>
+          <p className="text-sm text-slate-500">Manage and track your published content</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="relative group">
+            <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+            <select
+              value={filter.platform || ""}
+              onChange={(e) => setFilter({ ...filter, platform: e.target.value || undefined })}
+              className="pl-9 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all cursor-pointer appearance-none shadow-sm hover:border-slate-300"
+            >
+              <option value="">All Platforms</option>
+              <option value="youtube">YouTube</option>
+              <option value="instagram">Instagram</option>
+              <option value="facebook">Facebook</option>
+              <option value="x">X (Twitter)</option>
+            </select>
           </div>
+
           <button
             onClick={fetchPostedContent}
-            className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+            title="Refresh list"
           >
             <FiRefreshCw className={`w-4 h-4 text-slate-600 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
-
-        {/* Filters */}
-        <div className="flex gap-2 mt-4">
-          <select
-            value={filter.platform || ""}
-            onChange={(e) => setFilter({ ...filter, platform: e.target.value || undefined })}
-            className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="">All Platforms</option>
-            <option value="facebook">Facebook</option>
-            <option value="instagram">Instagram</option>
-            <option value="youtube">YouTube</option>
-            <option value="x">X (Twitter)</option>
-          </select>
-        </div>
       </div>
 
-      {/* Posts List */}
-      <div className="p-4 max-h-[500px] overflow-y-auto">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <FiLoader className="w-8 h-8 text-green-500 animate-spin" />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {loading && posts.length === 0 ? (
+          <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white/50 backdrop-blur-sm border border-slate-100 rounded-3xl">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin" />
+              <FiLoader className="absolute inset-0 m-auto w-6 h-6 text-indigo-600" />
+            </div>
+            <p className="mt-4 text-slate-500 font-medium">Loading your content history...</p>
           </div>
         ) : posts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-            <FiCalendar className="w-12 h-12 mb-3" />
-            <p className="text-lg font-medium">No posts yet</p>
-            <p className="text-sm">Your published posts will appear here</p>
+          <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white border border-dashed border-slate-300 rounded-3xl">
+            <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+              <FiCalendar className="w-10 h-10 text-slate-300" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">No published content found</h3>
+            <p className="text-slate-500 max-w-[280px] text-center mt-1">
+              Start creating and publishing posts to see your history here.
+            </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {posts.map((post) => (
+          <AnimatePresence mode="popLayout">
+            {posts.map((post, idx) => (
               <motion.div
-                key={post._id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className={`p-4 rounded-xl border ${platformColors[post.platform]} transition-all hover:shadow-md`}
+                key={(post as any)._id || idx}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: idx * 0.05 }}
+                className="group relative bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-indigo-200 transition-all shadow"
               >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-2xl shadow-sm">
-                    {platformIcons[post.platform]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                            post.status === "published"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {post.status === "published" ? (
-                            <FiCheckCircle className="w-3 h-3" />
-                          ) : (
-                            <FiXCircle className="w-3 h-3" />
-                          )}
-                          {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
-                        </span>
-                        {post.is_scheduled && (
-                          <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">
-                            Scheduled
-                          </span>
-                        )}
-                      </div>
-                      {post.platform_post_id && (
-                        <a
-                          href="#"
-                          className="text-slate-400 hover:text-slate-600 transition-colors"
-                          title="View on platform"
-                        >
-                          <FiExternalLink className="w-4 h-4" />
-                        </a>
+                {/* Status Bar */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-slate-50 overflow-hidden">
+                  <div
+                    className={`h-full ${post.status === "published" ? "bg-emerald-500" : "bg-red-500"}`}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+
+                <div className="p-5">
+                  <div className="flex items-start gap-4">
+                    {/* Media Thumbnail */}
+                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 group/media shadow-sm">
+                      {getMediaUrl(post, 0) ? (
+                        isVideo(post) && post.platform !== "youtube" ? (
+                          <video
+                            src={getMediaUrl(post, 0)!}
+                            className="w-full h-full object-cover"
+                            preload="metadata"
+                          />
+                        ) : (
+                          <img
+                            src={getMediaUrl(post, 0)!}
+                            alt="Media preview"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover/media:scale-110"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${post.platform}&background=f1f5f9&color=64748b`;
+                            }}
+                          />
+                        )
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-50">
+                          {platformIcons[post.platform]}
+                        </div>
+                      )}
+
+                      {/* Video Indicator */}
+                      {isVideo(post) && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/media:bg-black/40 transition-colors">
+                          <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-lg transform scale-90 sm:scale-100">
+                            <FiPlay className="w-4 h-4 text-indigo-600 fill-indigo-600" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Multiple Media Badge */}
+                      {post.media_urls && post.media_urls.length > 1 && (
+                        <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] text-white font-bold">
+                          +{post.media_urls.length - 1}
+                        </div>
                       )}
                     </div>
 
-                    <p className="text-sm text-slate-800 line-clamp-2 mb-2">{post.content}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className={`p-1.5 rounded-lg text-sm ${platformBrandColors[post.platform]}`}>
+                            {platformIcons[post.platform]}
+                          </div>
+                          <span className="text-[11px] font-bold text-slate-400 tracking-widest uppercase">
+                            {post.platform}
+                          </span>
+                        </div>
 
-                    {/* Media Preview */}
-                    {post.media_urls && post.media_urls.length > 0 && (
-                      <div className="flex gap-2 mb-3">
-                        {post.media_urls.slice(0, 3).map((url, idx) => (
-                          <div
-                            key={idx}
-                            className="w-16 h-16 rounded-lg bg-slate-200 overflow-hidden"
-                          >
-                            <img
-                              src={url}
-                              alt=""
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = "none";
-                              }}
-                            />
-                          </div>
-                        ))}
-                        {post.media_urls.length > 3 && (
-                          <div className="w-16 h-16 rounded-lg bg-slate-300 flex items-center justify-center text-sm font-medium text-slate-600">
-                            +{post.media_urls.length - 3}
-                          </div>
-                        )}
+                        <a
+                          href={getPlatformLink(post)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all opacity-0 group-hover:opacity-100"
+                        >
+                          <FiExternalLink className="w-4 h-4" />
+                        </a>
                       </div>
-                    )}
 
-                    {/* Engagement Stats */}
-                    {post.engagement && (
-                      <div className="flex items-center gap-4 mb-2">
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <FiHeart className="w-3.5 h-3.5 text-red-400" />
-                          {formatNumber(post.engagement.likes)}
+                      <h3 className="text-sm font-semibold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                        {post.content || "Untitled Post"}
+                      </h3>
+
+                      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-500 font-medium">
+                        <div className="flex items-center gap-1">
+                          <FiCalendar className="w-3.5 h-3.5" />
+                          {formatDate(post.posted_at)}
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <FiMessageCircle className="w-3.5 h-3.5 text-blue-400" />
-                          {formatNumber(post.engagement.comments)}
+                        <div className="flex items-center gap-1">
+                          <FiClock className="w-3.5 h-3.5" />
+                          {formatTime(post.posted_at)}
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <FiShare2 className="w-3.5 h-3.5 text-green-400" />
-                          {formatNumber(post.engagement.shares)}
-                        </div>
-                        {post.engagement.views !== undefined && (
-                          <div className="flex items-center gap-1 text-xs text-slate-500">
-                            <FiEye className="w-3.5 h-3.5 text-purple-400" />
-                            {formatNumber(post.engagement.views)}
-                          </div>
-                        )}
                       </div>
-                    )}
 
-                    {/* Date & Time */}
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <FiCalendar className="w-3.5 h-3.5" />
-                        {formatDate(post.posted_at)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <FiClock className="w-3.5 h-3.5" />
-                        {formatTime(post.posted_at)}
-                      </span>
+                      {/* Engagement Bar */}
+                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5 group/stat">
+                          <FiHeart className="w-3.5 h-3.5 text-slate-400 group-hover/stat:text-pink-500 transition-colors" />
+                          <span className="text-[11px] font-bold text-slate-600 tracking-tighter">
+                            {formatNumber(post.engagement?.likes)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 group/stat">
+                          <FiMessageCircle className="w-3.5 h-3.5 text-slate-400 group-hover/stat:text-blue-500 transition-colors" />
+                          <span className="text-[11px] font-bold text-slate-600 tracking-tighter">
+                            {formatNumber(post.engagement?.comments)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 group/stat">
+                          <FiEye className="w-3.5 h-3.5 text-slate-400 group-hover/stat:text-indigo-500 transition-colors" />
+                          <span className="text-[11px] font-bold text-slate-600 tracking-tighter">
+                            {formatNumber(post.engagement?.views)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-
-                    {/* Hashtags */}
-                    {post.hashtags && post.hashtags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {post.hashtags.slice(0, 5).map((tag, i) => (
-                          <span
-                            key={i}
-                            className="px-2 py-0.5 bg-white/70 text-slate-600 text-xs rounded-full border border-slate-200"
-                          >
-                            #{tag.replace("#", "")}
-                          </span>
-                        ))}
-                        {post.hashtags.length > 5 && (
-                          <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs rounded-full">
-                            +{post.hashtags.length - 5} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Error Message */}
-                    {post.error_message && (
-                      <div className="mt-2 p-2 bg-red-100 rounded-lg">
-                        <p className="text-xs text-red-600">{post.error_message}</p>
-                      </div>
-                    )}
                   </div>
+
+                  {/* Status & Error */}
+                  {post.status === "failed" && (
+                    <div className="mt-3 p-2 rounded-lg bg-red-50 border border-red-100 flex items-center gap-2">
+                      <FiXCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0" />
+                      <p className="text-[10px] font-medium text-red-600 truncate">
+                        {post.error_message || "Publication failed"}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
-          </div>
+          </AnimatePresence>
         )}
       </div>
-    </motion.div>
+
+      {loading && posts.length > 0 && (
+        <div className="flex justify-center py-4">
+          <FiLoader className="w-6 h-6 animate-spin text-indigo-500" />
+        </div>
+      )}
+    </div>
   );
 }
+

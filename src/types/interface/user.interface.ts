@@ -2,6 +2,7 @@ import { ICompany } from "./company.interface";
 
 export interface IUser {
   id: string;
+  _id?: string;
   full_name: string;
   email: string;
   password: string;

@@ -134,12 +134,12 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
         try {
             // Check if this is a scheduled post
             const isScheduled = showScheduler && scheduleDate && scheduleTime;
-            
+
             if (isScheduled) {
                 // Use the scheduler for scheduled posts
                 const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
                 const mediaUrls = images.map(img => img.preview); // In production, upload to S3 first
-                
+
                 for (const platform of selectedPlatforms) {
                     const platformMapping: Record<string, "facebook" | "instagram" | "youtube" | "x"> = {
                         facebook: "facebook",
@@ -147,7 +147,7 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
                         youtube: "youtube",
                         X: "x",
                     };
-                    
+
                     const mappedPlatform = platformMapping[platform];
                     if (!mappedPlatform) continue;
 
@@ -189,76 +189,76 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
                         return;
                     }
 
-                if (!video.url) {
-                    toast.warning("Manual file upload for YouTube is being processed. (Requires S3 URL)");
+                    if (!video.url) {
+                        toast.warning("Manual file upload for YouTube is being processed. (Requires S3 URL)");
+                    }
+
+                    let youtubeScheduleAt;
+                    if (showScheduler && scheduleDate && scheduleTime) {
+                        youtubeScheduleAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+                    }
+
+                    await uploadYoutubeVideo({
+                        user_id: user?.id || (user as any)?._id || "",
+                        title: postContent.slice(0, 100) || "Untitled Video",
+                        description: postContent,
+                        tags: hashtags,
+                        privacyStatus: "public",
+                        videoURL: video.url || "https://placeholder-url.com/video.mp4", // Fallback for demo
+                        scheduleAt: youtubeScheduleAt,
+                    });
+
+                    toast.success(youtubeScheduleAt ? "YouTube video scheduled!" : "YouTube video upload started!");
                 }
 
-                let youtubeScheduleAt;
-                if (showScheduler && scheduleDate && scheduleTime) {
-                    youtubeScheduleAt = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+                // Handle Facebook
+                if (selectedPlatforms.includes("facebook")) {
+                    const fbFormData = new FormData();
+                    fbFormData.append("userId", user?.id || (user as any)?._id || "");
+                    fbFormData.append("pageId", (user as any).facebook?.project_id || "");
+                    fbFormData.append("message", postContent);
+
+                    if (images.length > 0) {
+                        fbFormData.append("image", images[0].file!);
+                    }
+                    if (video?.file) {
+                        fbFormData.append("video", video.file);
+                    } else if (video?.url) {
+                        fbFormData.append("videoURL", video.url);
+                    }
+
+                    if (showScheduler && scheduleDate && scheduleTime) {
+                        const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
+                        fbFormData.append("scheduleAt", scheduledDateTime);
+                    }
+
+                    await postFacebookContent(fbFormData);
+                    toast.success(showScheduler ? "Post scheduled for Facebook!" : "Posted to Facebook!");
                 }
 
-                await uploadYoutubeVideo({
-                    user_id: user?.id || (user as any)?._id || "",
-                    title: postContent.slice(0, 100) || "Untitled Video",
-                    description: postContent,
-                    tags: hashtags,
-                    privacyStatus: "public",
-                    videoURL: video.url || "https://placeholder-url.com/video.mp4", // Fallback for demo
-                    scheduleAt: youtubeScheduleAt,
-                });
+                // Handle X (Twitter)
+                if (selectedPlatforms.includes("X")) {
+                    const xFormData = new FormData();
+                    xFormData.append("userId", user?.id || (user as any)?._id || "");
+                    xFormData.append("message", postContent);
 
-                toast.success(youtubeScheduleAt ? "YouTube video scheduled!" : "YouTube video upload started!");
-            }
+                    // Add hashtags
+                    if (hashtags.length > 0) {
+                        xFormData.append("hashtags", hashtags.join(","));
+                    }
 
-            // Handle Facebook
-            if (selectedPlatforms.includes("facebook")) {
-                const fbFormData = new FormData();
-                fbFormData.append("userId", user?.id || (user as any)?._id || "");
-                fbFormData.append("pageId", (user as any).facebook?.project_id || "");
-                fbFormData.append("message", postContent);
-                
-                if (images.length > 0) {
-                    fbFormData.append("image", images[0].file!);
+                    if (images.length > 0) {
+                        xFormData.append("image", images[0].file!);
+                    }
+                    if (video?.file) {
+                        xFormData.append("video", video.file);
+                    } else if (video?.url) {
+                        xFormData.append("videoURL", video.url);
+                    }
+
+                    await postXContent(xFormData);
+                    toast.success("Posted to X!");
                 }
-                if (video?.file) {
-                    fbFormData.append("video", video.file);
-                } else if (video?.url) {
-                    fbFormData.append("videoURL", video.url);
-                }
-
-                if (showScheduler && scheduleDate && scheduleTime) {
-                    const scheduledDateTime = new Date(`${scheduleDate}T${scheduleTime}`).toISOString();
-                    fbFormData.append("scheduleAt", scheduledDateTime);
-                }
-
-                await postFacebookContent(fbFormData);
-                toast.success(showScheduler ? "Post scheduled for Facebook!" : "Posted to Facebook!");
-            }
-
-            // Handle X (Twitter)
-            if (selectedPlatforms.includes("X")) {
-                const xFormData = new FormData();
-                xFormData.append("userId", user?.id || (user as any)?._id || "");
-                xFormData.append("message", postContent);
-                
-                // Add hashtags
-                if (hashtags.length > 0) {
-                    xFormData.append("hashtags", hashtags.join(","));
-                }
-
-                if (images.length > 0) {
-                    xFormData.append("image", images[0].file!);
-                }
-                if (video?.file) {
-                    xFormData.append("video", video.file);
-                } else if (video?.url) {
-                    xFormData.append("videoURL", video.url);
-                }
-
-                await postXContent(xFormData);
-                toast.success("Posted to X!");
-            }
             } // Close the else block for immediate posting
 
             // toast.success("All posts published successfully!");
@@ -535,16 +535,16 @@ export default function PostComposer({ onPostScheduled }: PostComposerProps) {
                                     transition={{ duration: 0.2 }}
                                 >
                                     {previewPlatform === "instagram" && (
-                                        <InstagramPreview content={getFullContent()} images={images} />
+                                        <InstagramPreview content={getFullContent()} images={images} video={video} />
                                     )}
                                     {previewPlatform === "facebook" && (
-                                        <FacebookPreview content={getFullContent()} images={images} />
+                                        <FacebookPreview content={getFullContent()} images={images} video={video} />
                                     )}
                                     {previewPlatform === "x" && (
-                                        <XPreview content={getFullContent()} images={images} />
+                                        <XPreview content={getFullContent()} images={images} video={video} />
                                     )}
                                     {previewPlatform === "youtube" && (
-                                        <YouTubePreview title={"New video"} description={getFullContent()} video={video} />
+                                        <YouTubePreview title={postContent.split('\n')[0].slice(0, 100) || "New video"} description={getFullContent()} video={video} />
                                     )}
                                 </motion.div>
                             </AnimatePresence>
