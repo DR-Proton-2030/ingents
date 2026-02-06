@@ -27,6 +27,8 @@ import {
 import AccountSelectionModal from "@/components/shared/AccountSelectionModal/AccountSelectionModal";
 import { updateUser } from "@/utils/api/user/user.api";
 
+import { useSocialMetrics } from "@/hooks/useSocialMetrics";
+
 export default function SocialMediaDashboard() {
   const pathname = usePathname();
   const router = useRouter();
@@ -37,6 +39,8 @@ export default function SocialMediaDashboard() {
   const [activeTab, setActiveTab] = useState<"analytics" | "compose" | "scheduled" | "history">("analytics");
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const scheduledPostsRef = useRef<{ refresh: () => void } | null>(null);
+
+  const { metrics, loading: metricsLoading } = useSocialMetrics((user as any)?._id || (user as any)?.id);
 
   // Account Selection Modal State
   const [profile, setProfile] = useState<any>(null);
@@ -150,7 +154,7 @@ export default function SocialMediaDashboard() {
         <div className="flex-grow lg:col-span-8 h-[87vh] overflow-y-auto pb-10 hidescroll">
         
           {/* Platform Stats Cards at Top */}
-          <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showOnlyStats />
+          <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showOnlyStats metrics={metrics} />
           
           {/* Enhanced Tab Navigation */}
           <div className="mt-6 mb-6">
@@ -190,7 +194,7 @@ export default function SocialMediaDashboard() {
             className="mt-4"
           >
             {activeTab === "analytics" && (
-              <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showChartAndMetrics />
+              <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showChartAndMetrics metrics={metrics} />
             )}
             {activeTab === "compose" && (
               <CreatePostCTA />
