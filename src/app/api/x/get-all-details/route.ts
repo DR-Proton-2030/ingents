@@ -7,9 +7,9 @@ const BACKEND_URL =
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const access_token = searchParams.get("access_token");
   const userId = searchParams.get("userId");
-  console.log("==========>", userId);
+  const access_token = searchParams.get("access_token");
+
   if (!userId) {
     return NextResponse.json(
       { error: "Missing userId" },
@@ -17,8 +17,9 @@ export async function GET(req: Request) {
     );
   }
 
-  const url = `${BACKEND_URL}/api/v1/x/handle/get-all-details?user_id=${userId}`;
-  console.log("Calling Backend URL:", url);
+  // Use the exact backend URL provided by the user, including the double slash if specified
+  const url = `${BACKEND_URL}/api/v1/x//handle/get-all-details?user_id=${userId}`;
+  console.log("X Get All Details - Calling Backend URL:", url);
 
   try {
     const response = await axios.get(
@@ -30,12 +31,12 @@ export async function GET(req: Request) {
         },
       }
     );
-    console.log("Backend Success Response:", JSON.stringify(response.data).substring(0, 100) + "...");
+    console.log("X Get All Details - Success");
     return NextResponse.json(response.data);
   } catch (err: any) {
-    console.error("Backend API error:", err.response?.data || err.message);
+    console.error("X Get All Details - Backend API error:", err.response?.data || err.message);
     return NextResponse.json(
-      { error: err.response?.data?.message || "Failed to fetch user profile" },
+      { error: err.response?.data?.message || "Failed to fetch X all details" },
       { status: err.response?.status || 500 }
     );
   }

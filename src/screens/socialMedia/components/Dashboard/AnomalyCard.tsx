@@ -6,12 +6,22 @@ import { motion } from "framer-motion";
 
 interface AnomalyCardProps {
   statistics: any;
-  platform?: "youtube" | "facebook";
+  platform?: "youtube" | "facebook" | "x";
 }
 
 const AnomalyCard = ({ statistics, platform = "youtube" }: AnomalyCardProps) => {
   const isYouTube = platform === "youtube";
-  const count = Number(isYouTube ? statistics?.subscriberCount : statistics?.fan_count || 0);
+  const isFacebook = platform === "facebook";
+  const isX = platform === "x";
+
+  let count = 0;
+  if (isYouTube) {
+    count = Number(statistics?.subscriberCount || 0);
+  } else {
+    // For X and Facebook from this backend, it's fan_count
+    count = Number(statistics?.fan_count || statistics?.public_metrics?.followers_count || 0);
+  }
+
   const label = isYouTube ? "Subscribers" : "Followers";
   
   // Neutral state if no significant data
@@ -21,7 +31,7 @@ const AnomalyCard = ({ statistics, platform = "youtube" }: AnomalyCardProps) => 
         <Flag className="w-12 h-12 text-gray-200 mb-4" />
         <h3 className="text-lg font-bold text-gray-400">No anomalies detected</h3>
         <p className="text-xs text-gray-300 text-center mt-2 max-w-[200px]">
-          We'll notify you here if we detect unusual activity in your {isYouTube ? "channel's" : "page's"} growth.
+          We'll notify you here if we detect unusual activity in your {isYouTube ? "channel's" : isX ? "profile's" : "page's"} growth.
         </p>
       </div>
     );
@@ -37,7 +47,7 @@ const AnomalyCard = ({ statistics, platform = "youtube" }: AnomalyCardProps) => 
       </div>
       
       <p className="text-xs text-gray-400 font-medium leading-relaxed mb-8 max-w-[280px]">
-        Your {isYouTube ? "channel" : "page"} is maintaining a healthy growth rate. Keep creating content to see more insights!
+        Your {isYouTube ? "channel" : isX ? "profile" : "page"} is maintaining a healthy growth rate. Keep creating content to see more insights!
       </p>
 
       <div className="h-[120px] w-full relative mb-8">
@@ -67,7 +77,7 @@ const AnomalyCard = ({ statistics, platform = "youtube" }: AnomalyCardProps) => 
            <h2 className="text-4xl font-bold text-gray-900 leading-none">Healthy</h2>
            <p className="text-xs text-gray-400 font-medium mt-2">Status: Active</p>
         </div>
-        <button className={`text-${isYouTube ? "blue" : "blue"}-500 border border-blue-500 rounded-full px-5 py-2 text-xs font-bold hover:bg-blue-50 transition-colors`}>
+        <button className={`text-blue-500 border border-blue-500 rounded-full px-5 py-2 text-xs font-bold hover:bg-blue-50 transition-colors`}>
           Explore
         </button>
       </div>

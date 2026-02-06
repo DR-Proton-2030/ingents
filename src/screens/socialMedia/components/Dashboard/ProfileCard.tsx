@@ -1,12 +1,12 @@
 "use client";
 import React, { useState } from "react";
-import { Facebook, MoreHorizontal, Youtube } from "lucide-react";
+import { Facebook, MoreHorizontal, Youtube, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ProfileCardProps {
   data: any;
   demographics: any;
-  platform?: "youtube" | "facebook";
+  platform?: "youtube" | "facebook" | "x";
 }
 
 const ProfileCard = ({ data, demographics, platform = "youtube" }: ProfileCardProps) => {
@@ -28,6 +28,29 @@ const ProfileCard = ({ data, demographics, platform = "youtube" }: ProfileCardPr
   const displayData = getTabData();
 
   const isYouTube = platform === "youtube";
+  const isFacebook = platform === "facebook";
+  const isX = platform === "x";
+
+  const getPlatformIcon = () => {
+    if (isYouTube) return <Youtube className="w-3 h-3 text-white" />;
+    if (isFacebook) return <Facebook className="w-3 h-3 text-white" />;
+    if (isX) return <Twitter className="w-3 h-3 text-white" />;
+    return null;
+  };
+
+  const getPlatformColor = () => {
+    if (isYouTube) return "bg-red-600";
+    if (isFacebook) return "bg-blue-600";
+    if (isX) return "bg-black";
+    return "bg-gray-600";
+  };
+
+  const getBarColor = () => {
+    if (isYouTube) return "bg-red-500";
+    if (isFacebook) return "bg-blue-500";
+    if (isX) return "bg-slate-900";
+    return "bg-gray-500";
+  };
 
   return (
     <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100">
@@ -35,16 +58,12 @@ const ProfileCard = ({ data, demographics, platform = "youtube" }: ProfileCardPr
         <div className="flex items-center gap-3">
           <div className="relative">
             <img
-              src={data?.thumbnails?.default?.url || data?.picture || "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam"}
+              src={data?.thumbnails?.default?.url || data?.picture || data?.profile_image_url || "https://api.dicebear.com/7.x/avataaars/svg?seed=Sam"}
               alt="Avatar"
               className="w-12 h-12 rounded-full border-2 border-white shadow-sm"
             />
-            <div className={`absolute -bottom-1 -right-1 ${isYouTube ? "bg-red-600" : "bg-blue-600"} rounded-full p-0.5 border-2 border-white`}>
-              {isYouTube ? (
-                <Youtube className="w-3 h-3 text-white" />
-              ) : (
-                <Facebook className="w-3 h-3 text-white" />
-              )}
+            <div className={`absolute -bottom-1 -right-1 ${getPlatformColor()} rounded-full p-0.5 border-2 border-white`}>
+              {getPlatformIcon()}
             </div>
           </div>
           <div>
@@ -60,7 +79,11 @@ const ProfileCard = ({ data, demographics, platform = "youtube" }: ProfileCardPr
       <div className="mb-8">
         <div className="flex items-baseline gap-2">
           <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
-            {Number(isYouTube ? data?.statistics?.subscriberCount : data?.fan_count || 0).toLocaleString()}
+            {Number(
+              isYouTube 
+                ? data?.statistics?.subscriberCount 
+                : (data?.fan_count || data?.public_metrics?.followers_count || 0)
+            ).toLocaleString()}
           </h2>
           <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">
             {isYouTube ? "Subscribers" : "Followers"}
@@ -97,7 +120,7 @@ const ProfileCard = ({ data, demographics, platform = "youtube" }: ProfileCardPr
                   initial={{ width: 0 }}
                   animate={{ width: `${item.percentage || 0}%` }}
                   transition={{ duration: 1, delay: idx * 0.1 }}
-                  className={`${item.color || (isYouTube ? "bg-red-500" : "bg-blue-500")} h-full rounded-full`}
+                  className={`${item.color || getBarColor()} h-full rounded-full`}
                 />
               </div>
             </div>
