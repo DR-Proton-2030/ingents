@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 import { Facebook, MoreHorizontal, Youtube, Twitter } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -76,19 +77,32 @@ const ProfileCard = ({ data, demographics, platform = "youtube" }: ProfileCardPr
         </button>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-8 space-y-4">
         <div className="flex items-baseline gap-2">
           <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
-            {Number(
+            {formatCompactNumber(
               isYouTube 
                 ? data?.statistics?.subscriberCount 
                 : (data?.fan_count || data?.public_metrics?.followers_count || 0)
-            ).toLocaleString()}
+            )}
           </h2>
           <span className="text-gray-400 font-bold text-[10px] uppercase tracking-wider">
             {isYouTube ? "Subscribers" : "Followers"}
           </span>
         </div>
+        
+        {isYouTube && data?.statistics && (
+          <div className="flex flex-wrap gap-4 pt-2 border-t border-gray-50 mt-4">
+             <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-bold text-gray-700">{formatCompactNumber(data.statistics.viewCount)}</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Views</span>
+             </div>
+             <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-bold text-gray-700">{formatCompactNumber(data.statistics.videoCount)}</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Videos</span>
+             </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-gray-50 p-1 rounded-2xl flex mb-8">

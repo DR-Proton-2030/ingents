@@ -8,6 +8,7 @@ export interface PlatformStatCardProps {
   name: string;
   icon: React.ReactNode;
   followers: string;
+  views?: string;
   color: string;
   bgColor: string;
   connected: boolean;
@@ -22,6 +23,7 @@ export default function PlatformStatCard({
   name,
   icon,
   followers,
+  views,
   color,
   bgColor,
   connected,
@@ -71,8 +73,18 @@ export default function PlatformStatCard({
             </button>
           )}
         </div>
-        <div className="text-3xl font-bold text-slate-800 mb-1">{followers}</div>
-        <div className="text-sm text-slate-500">Followers</div>
+        <div className="flex flex-col">
+          <div className="flex items-baseline gap-2">
+            <div className="text-3xl font-bold text-slate-800">{followers}</div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{id === 'youtube' ? 'Subs' : 'Followers'}</div>
+          </div>
+          {views && (
+            <div className="flex items-baseline gap-2 mt-1">
+              <div className="text-xl font-bold text-slate-600">{views}</div>
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Views</div>
+            </div>
+          )}
+        </div>
 
         {/* Connect or Manage button */}
         {connected ? (

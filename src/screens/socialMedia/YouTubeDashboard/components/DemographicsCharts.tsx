@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface DemographicsChartsProps {
@@ -14,14 +15,23 @@ interface DemographicsChartsProps {
 const COLORS = ['#3b82f6', '#d946ef', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6'];
 
 const DemographicsCharts = ({ demographics }: DemographicsChartsProps) => {
-  const { topLocations = [], ageRange = [], gender = [], subscribedStatus = [] } = demographics || {};
+  const { topLocations = [], ageRange = [], gender = [], subscribedStatus = [], geography = {} } = (demographics as any) || {};
+
+  const countries = (geography as any)?.countries || topLocations;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Gender Distribution */}
         <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 flex flex-col">
-          <h3 className="text-xl font-black text-slate-900 mb-8">Gender</h3>
+          <div className="flex justify-between items-start mb-8">
+            <h3 className="text-xl font-black text-slate-900">Gender</h3>
+            {gender.length > 0 && (
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg">
+                {gender.reduce((acc: number, curr: any) => acc + Number(curr.value || 0), 0)}% Total
+              </span>
+            )}
+          </div>
           <div className="h-[200px] w-full mt-auto">
             {gender.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -36,7 +46,7 @@ const DemographicsCharts = ({ demographics }: DemographicsChartsProps) => {
                     dataKey="value"
                     nameKey="gender"
                   >
-                    {gender.map((entry, index) => (
+                    {gender.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
                     ))}
                   </Pie>
@@ -59,7 +69,14 @@ const DemographicsCharts = ({ demographics }: DemographicsChartsProps) => {
 
         {/* Age Range Distribution */}
         <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 col-span-1 lg:col-span-2 flex flex-col">
-          <h3 className="text-xl font-black text-slate-900 mb-8">Age Range</h3>
+          <div className="flex justify-between items-start mb-8">
+            <h3 className="text-xl font-black text-slate-900">Age Range</h3>
+            {ageRange.length > 0 && (
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg">
+                View Distribution
+              </span>
+            )}
+          </div>
           <div className="h-[200px] w-full mt-auto">
             {ageRange.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -96,24 +113,24 @@ const DemographicsCharts = ({ demographics }: DemographicsChartsProps) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Locations */}
+        {/* Top Locations / Geography */}
         <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-          <h3 className="text-xl font-black text-slate-900 mb-8">Top Locations</h3>
+          <h3 className="text-xl font-black text-slate-900 mb-8">Top Geography</h3>
           <div className="space-y-6">
-            {topLocations.length > 0 ? (
-              topLocations.map((loc, idx) => (
+            {countries.length > 0 ? (
+              countries.map((loc: any, idx: number) => (
                 <div key={idx} className="space-y-2">
                   <div className="flex justify-between text-xs font-black text-slate-700">
                     <div className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                      <span>{loc.country}</span>
+                      <span>{loc.country || loc.countryCode || 'Other'}</span>
                     </div>
-                    <span>{Number(loc.views).toLocaleString()} views ({loc.percentage}%)</span>
+                    <span>{formatCompactNumber(loc.views)} views {loc.percentage ? `(${loc.percentage}%)` : ''}</span>
                   </div>
                   <div className="h-2 w-full bg-slate-50 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-blue-500 rounded-full shadow-sm shadow-blue-100" 
-                      style={{ width: `${loc.percentage}%` }}
+                      style={{ width: `${loc.percentage || (loc.views / countries[0].views * 100)}%` }}
                     />
                   </div>
                 </div>
@@ -130,9 +147,9 @@ const DemographicsCharts = ({ demographics }: DemographicsChartsProps) => {
         </div>
 
         {/* Subscriber Loyalty */}
-        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+        <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 flex flex-col">
            <h3 className="text-xl font-black text-slate-900 mb-8">Subscriber Loyalty</h3>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center h-full">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center flex-grow">
               <div className="h-[180px]">
                  {subscribedStatus.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
@@ -162,11 +179,11 @@ const DemographicsCharts = ({ demographics }: DemographicsChartsProps) => {
                  )}
               </div>
               <div className="space-y-4">
-                 {subscribedStatus.map((item, idx) => (
+                 {subscribedStatus.map((item: any, idx: number) => (
                     <div key={idx} className="p-4 rounded-3xl bg-slate-50/50 border border-slate-100/50">
                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{item.status}</p>
                        <div className="flex justify-between items-end">
-                          <span className="text-xl font-black text-slate-900">{Number(item.views).toLocaleString()}</span>
+                          <span className="text-xl font-black text-slate-900">{formatCompactNumber(item.views)}</span>
                           <span className="text-xs font-bold text-slate-500">Views</span>
                        </div>
                     </div>

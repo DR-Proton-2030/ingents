@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 import { Search, Globe, ChevronRight } from "lucide-react";
 
 interface DiscoveryDetailsProps {
@@ -31,7 +32,7 @@ const DiscoveryDetails = ({ searchTerms = [], externalSites = [] }: DiscoveryDet
                   <span className="text-xs font-black text-gray-700">{term.term}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="text-xs font-black text-slate-900">{term.views} views</span>
+                    <span className="text-xs font-black text-slate-900">{formatCompactNumber(term.views)} views</span>
                     <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
                 </div>
               </div>
@@ -70,7 +71,7 @@ const DiscoveryDetails = ({ searchTerms = [], externalSites = [] }: DiscoveryDet
                   <span className="text-xs font-black text-gray-700">{site.site}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="text-xs font-black text-slate-900">{site.views} views</span>
+                    <span className="text-xs font-black text-slate-900">{formatCompactNumber(site.views)} views</span>
                     <span className="text-[10px] font-black text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg">{site.percentage}%</span>
                 </div>
               </div>

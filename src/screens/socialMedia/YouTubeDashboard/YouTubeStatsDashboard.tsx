@@ -1,5 +1,6 @@
 "use client";
 import React, { useContext, useMemo, useState } from "react";
+import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 import Layout from "@/screens/layout/Layout";
 import { motion } from "framer-motion";
 import ProfileCard from "@/screens/socialMedia/components/Dashboard/ProfileCard";
@@ -146,9 +147,11 @@ const YouTubeStatsDashboard = () => {
                    <div className="flex flex-wrap items-center gap-4">
                      <span className="px-5 py-2 rounded-2xl bg-white/60 backdrop-blur-sm text-xs font-black text-slate-600 uppercase tracking-widest border border-white/50">{data?.channel?.handle}</span>
                      <span className="w-2 h-2 rounded-full bg-slate-300" />
-                     <span className="text-base font-black text-slate-500">{Number(data?.channel?.statistics?.subscriberCount).toLocaleString()} <span className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Subscribers</span></span>
+                     <span className="text-base font-black text-slate-500">{formatCompactNumber(data?.channel?.statistics?.subscriberCount)} <span className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Subscribers</span></span>
                      <span className="w-2 h-2 rounded-full bg-slate-300" />
-                     <span className="text-base font-black text-slate-500">{Number(data?.channel?.statistics?.videoCount).toLocaleString()} <span className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Videos</span></span>
+                     <span className="text-base font-black text-slate-500">{formatCompactNumber(data?.channel?.statistics?.viewCount)} <span className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Views</span></span>
+                     <span className="w-2 h-2 rounded-full bg-slate-300" />
+                     <span className="text-base font-black text-slate-500">{formatCompactNumber(data?.channel?.statistics?.videoCount)} <span className="text-xs font-bold uppercase tracking-widest text-slate-400 ml-1">Videos</span></span>
                      <span className="w-2 h-2 rounded-full bg-slate-300" />
                      <span className="px-4 py-1.5 rounded-xl bg-slate-100 text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-2">
                         <img src={`https://flagcdn.com/w20/${data?.channel?.branding?.channel?.country?.toLowerCase() || 'in'}.png`} className="w-4 h-3 rounded-sm object-cover" alt="" />
@@ -215,9 +218,66 @@ const YouTubeStatsDashboard = () => {
               
               {activeTab === "overview" && (
                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {/* Dashboard Summary Section */}
+                  {data?.dashboard?.overview28d && (
+                    <section className="bg-white p-8 rounded-[50px] shadow-sm border border-gray-100">
+                      <div className="flex items-center justify-between mb-8">
+                        <div>
+                          <h3 className="text-2xl font-black text-slate-900 tracking-tight">Last 28 Days Performance</h3>
+                          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Official Studio Summary</p>
+                        </div>
+                        <div className="px-4 py-2 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">
+                           Channel Hub
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                         <div className="p-6 rounded-[35px] bg-blue-50/50 border border-blue-100/50">
+                            <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">Total Views</p>
+                            <h4 className="text-3xl font-black text-slate-900">{formatCompactNumber(data.dashboard.overview28d.totalViews)}</h4>
+                         </div>
+                         <div className="p-6 rounded-[35px] bg-emerald-50/50 border border-emerald-100/50">
+                            <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-1">Watch hours</p>
+                            <h4 className="text-3xl font-black text-slate-900">{data.dashboard.overview28d.totalWatchTimeHours}</h4>
+                         </div>
+                         <div className="p-6 rounded-[35px] bg-red-50/50 border border-red-100/50">
+                            <p className="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Gained</p>
+                            <h4 className="text-3xl font-black text-slate-900">+{data.dashboard.overview28d.subscribersGained}</h4>
+                         </div>
+                         <div className="p-6 rounded-[35px] bg-slate-50 border border-slate-100">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Net Flow</p>
+                            <h4 className="text-3xl font-black text-slate-900">{data.dashboard.overview28d.netSubscribers}</h4>
+                         </div>
+                      </div>
+
+                      {data.dashboard.overview28d.topContent?.length > 0 && (
+                        <div>
+                           <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-6 px-2">Top Performance Hub</h4>
+                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                              {data.dashboard.overview28d.topContent.map((video: any, idx: number) => (
+                                <div key={idx} className="flex gap-4 p-4 rounded-[30px] bg-white border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+                                   <div className="relative w-24 h-16 rounded-2xl overflow-hidden flex-shrink-0">
+                                      <img src={video.thumbnails?.default?.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
+                                      <div className="absolute inset-0 bg-black/20" />
+                                   </div>
+                                   <div className="flex flex-col justify-center min-w-0">
+                                      <h5 className="text-[11px] font-black text-slate-900 truncate mb-1">{video.title}</h5>
+                                      <div className="flex items-center gap-2">
+                                         <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg">{formatCompactNumber(video.views)} Views</span>
+                                         <span className="text-[10px] font-bold text-slate-400 uppercase">{video.duration.replace('PT','').toLowerCase()}</span>
+                                      </div>
+                                   </div>
+                                </div>
+                              ))}
+                           </div>
+                        </div>
+                      )}
+                    </section>
+                  )}
+
                   <section>
                     <div className="flex items-center justify-between mb-8">
-                       <h2 className="text-3xl font-black text-slate-900 tracking-tight">Channel Analytics</h2>
+                       <h2 className="text-3xl font-black text-slate-900 tracking-tight">Detailed Analytics</h2>
                     </div>
                     <YouTubeAnalyticsGrid 
                       overview={data?.analytics?.overview} 
@@ -245,6 +305,8 @@ const YouTubeStatsDashboard = () => {
                   <DemographicsCharts 
                     demographics={{
                       ...data?.demographics,
+                      ...data?.analytics?.audience,
+                      geography: data?.analytics?.geography,
                       subscribedStatus: data?.analytics?.subscribedStatus
                     }} 
                   />
@@ -285,7 +347,10 @@ const YouTubeStatsDashboard = () => {
               <div className="p-2 bg-white/30 backdrop-blur-sm rounded-[52px] border border-white/40 shadow-sm">
                 <ProfileCard 
                   data={data?.channel} 
-                  demographics={data?.demographics} 
+                  demographics={{
+                    ...data?.demographics,
+                    ...data?.analytics?.audience
+                  }} 
                   platform="youtube"
                 />
               </div>
@@ -365,7 +430,7 @@ const YouTubeStatsDashboard = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">Net Subscriber Flow</p>
-                      <h4 className="text-5xl font-black text-blue-600 tracking-tighter">{data?.analytics?.overview?.netSubscribers || 0}</h4>
+                      <h4 className="text-5xl font-black text-blue-600 tracking-tighter">{formatCompactNumber(data?.analytics?.overview?.netSubscribers || 0)}</h4>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden sm:block">

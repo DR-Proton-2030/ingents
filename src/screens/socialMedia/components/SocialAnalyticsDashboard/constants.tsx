@@ -58,9 +58,13 @@ export const DEFAULT_MONTHLY_DATA = [
 ];
 
 export const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
-  return num.toString();
+  if (!num) return "0";
+  const n = Number(num);
+  if (n >= 10000000) return (n / 10000000).toFixed(n % 10000000 === 0 ? 0 : 1) + " Cr";
+  if (n >= 1000000) return (n / 1000000).toFixed(n % 1000000 === 0 ? 0 : 1) + " M";
+  if (n >= 100000) return (n / 100000).toFixed(n % 100000 === 0 ? 0 : 1) + " Lakh";
+  if (n >= 1000) return (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + " K";
+  return n.toLocaleString();
 };
 
 export const getAuthUrl = (platformId: string, userId: string, baseURL: string): string => {

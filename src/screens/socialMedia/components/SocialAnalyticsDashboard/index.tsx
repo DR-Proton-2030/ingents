@@ -25,6 +25,7 @@ export interface PlatformStat {
   name: string;
   icon: React.ReactNode;
   followers: string;
+  views?: string;
   color: string;
   bgColor: string;
   connected: boolean;
@@ -98,6 +99,7 @@ export default function SocialAnalyticsDashboard({
         name: platform.name,
         icon: platform.icon,
         followers,
+        views: platform.id === "youtube" ? formatNumber(Number(platformData?.viewCount || platformData?.statistics?.viewCount || 0)) : undefined,
         color: platform.color,
         bgColor: platform.bgColor,
         connected,
