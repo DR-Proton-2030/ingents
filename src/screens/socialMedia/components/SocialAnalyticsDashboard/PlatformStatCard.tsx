@@ -78,12 +78,12 @@ export default function PlatformStatCard({
             <div className="text-3xl font-bold text-slate-800">{followers}</div>
             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{id === 'youtube' ? 'Subs' : 'Followers'}</div>
           </div>
-          {views && (
+          {/* {views && (
             <div className="flex items-baseline gap-2 mt-1">
               <div className="text-xl font-bold text-slate-600">{views}</div>
               <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Views</div>
             </div>
-          )}
+          )} */}
         </div>
 
         {/* Connect or Manage button */}
