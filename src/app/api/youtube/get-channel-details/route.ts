@@ -23,6 +23,7 @@ export async function GET(req: Request) {
         headers: {
           "Content-Type": "application/json",
         },
+        timeout: 30000,
       }
     );
 

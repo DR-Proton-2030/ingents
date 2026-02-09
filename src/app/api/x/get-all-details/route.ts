@@ -29,6 +29,7 @@ export async function GET(req: Request) {
           "Content-Type": "application/json",
           ...(access_token && { Authorization: `Bearer ${access_token}` }),
         },
+        timeout: 30000,
       }
     );
     console.log("X Get All Details - Success");

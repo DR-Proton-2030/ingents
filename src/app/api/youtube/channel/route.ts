@@ -24,6 +24,7 @@ export async function GET(req: Request) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${access_token}`,
         },
+        timeout: 30000,
       }
     );
     console.log("response from fetch youtube channel back", response);
