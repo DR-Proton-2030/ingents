@@ -31,7 +31,7 @@ const RetentionAnalytic = ({ retention }: RetentionAnalyticProps) => {
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Avg. Duration</p>
                 <div className="flex items-center gap-2 justify-end">
                    <Clock className="w-4 h-4 text-blue-500" />
-                   <span className="text-xl font-black text-slate-900">{averages.averageViewDuration}s</span>
+                   <span className="text-xl font-black text-slate-900">{Math.round(averages.averageViewDuration)}s</span>
                 </div>
              </div>
              <div className="w-px h-10 bg-slate-100" />
@@ -109,7 +109,7 @@ const RetentionAnalytic = ({ retention }: RetentionAnalyticProps) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-blue-500" />
-                  <span className="text-lg font-black text-slate-900">{video.averageViewDuration}s</span>
+                   <span className="text-lg font-black text-slate-900">{Math.round(video.averageViewDuration)}s</span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase ml-auto">Avg Duration</span>
                 </div>
               </div>

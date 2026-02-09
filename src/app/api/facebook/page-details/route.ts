@@ -19,7 +19,8 @@ export async function GET(req: Request) {
 
   try {
     const response = await axios.get(
-      `${BACKEND_URL}/api/v1/facebook/page/get-all-details?userId=${userId}&pageId=${pageId}`
+      `${BACKEND_URL}/api/v1/facebook/page/get-all-details?userId=${userId}&pageId=${pageId}`,
+      { timeout: 30000 } // Extended timeout for multiple Graph API calls
     );
     return NextResponse.json(response.data);
   } catch (err: any) {

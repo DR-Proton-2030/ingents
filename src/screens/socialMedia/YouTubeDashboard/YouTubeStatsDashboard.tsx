@@ -238,15 +238,15 @@ const YouTubeStatsDashboard = () => {
                          </div>
                          <div className="p-6 rounded-[35px] bg-emerald-50/50 border border-emerald-100/50">
                             <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-1">Watch hours</p>
-                            <h4 className="text-3xl font-black text-slate-900">{data.dashboard.overview28d.totalWatchTimeHours}</h4>
+                            <h4 className="text-3xl font-black text-slate-900">{Number(data.dashboard.overview28d.totalWatchTimeHours || 0).toFixed(2)}</h4>
                          </div>
                          <div className="p-6 rounded-[35px] bg-red-50/50 border border-red-100/50">
                             <p className="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Gained</p>
-                            <h4 className="text-3xl font-black text-slate-900">+{data.dashboard.overview28d.subscribersGained}</h4>
+                            <h4 className="text-3xl font-black text-slate-900">+{formatCompactNumber(Math.round(data.dashboard.overview28d.subscribersGained || 0))}</h4>
                          </div>
                          <div className="p-6 rounded-[35px] bg-slate-50 border border-slate-100">
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Net Flow</p>
-                            <h4 className="text-3xl font-black text-slate-900">{data.dashboard.overview28d.netSubscribers}</h4>
+                            <h4 className="text-3xl font-black text-slate-900">{formatCompactNumber(Math.round(data.dashboard.overview28d.netSubscribers || 0))}</h4>
                          </div>
                       </div>
 
@@ -397,10 +397,10 @@ const YouTubeStatsDashboard = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                     <div className="p-6 rounded-[30px] bg-green-50/30 border border-green-50 flex justify-between items-center group/item hover:bg-green-50/50 transition-colors">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Gained</span>
-                          <span className="text-3xl font-black text-green-600">+{data?.analytics?.overview?.subscribersGained || 0}</span>
-                        </div>
+                         <div className="flex flex-col">
+                           <span className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Gained</span>
+                           <span className="text-3xl font-black text-green-600">+{formatCompactNumber(Math.round(data?.analytics?.overview?.subscribersGained || 0))}</span>
+                         </div>
                         <div className="w-20 h-2 bg-green-100 rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
@@ -411,10 +411,10 @@ const YouTubeStatsDashboard = () => {
                     </div>
 
                     <div className="p-6 rounded-[30px] bg-red-50/30 border border-red-50 flex justify-between items-center group/item hover:bg-red-50/50 transition-colors">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Lost</span>
-                          <span className="text-3xl font-black text-red-600">-{data?.analytics?.overview?.subscribersLost || 0}</span>
-                        </div>
+                         <div className="flex flex-col">
+                           <span className="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Lost</span>
+                           <span className="text-3xl font-black text-red-600">-{formatCompactNumber(Math.round(data?.analytics?.overview?.subscribersLost || 0))}</span>
+                         </div>
                         <div className="w-20 h-2 bg-red-100 rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
@@ -430,7 +430,7 @@ const YouTubeStatsDashboard = () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">Net Subscriber Flow</p>
-                      <h4 className="text-5xl font-black text-blue-600 tracking-tighter">{formatCompactNumber(data?.analytics?.overview?.netSubscribers || 0)}</h4>
+                       <h4 className="text-5xl font-black text-blue-600 tracking-tighter">{formatCompactNumber(Math.round(data?.analytics?.overview?.netSubscribers || 0))}</h4>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right hidden sm:block">
