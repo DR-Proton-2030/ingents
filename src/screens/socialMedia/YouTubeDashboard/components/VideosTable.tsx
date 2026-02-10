@@ -1,13 +1,21 @@
 "use client";
 import React from "react";
-import { Eye, ThumbsUp, MessageSquare, Clock } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { Eye, ThumbsUp, MessageSquare, Clock, BarChart2 } from "lucide-react";
 
 interface VideosTableProps {
   videos: any[];
 }
 
 const VideosTable = ({ videos }: VideosTableProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
   if (!videos || videos.length === 0) return null;
+
+  const handleRowClick = (videoId: string) => {
+    router.push(`${pathname}/video/${videoId}`);
+  };
 
   return (
     <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
@@ -30,12 +38,16 @@ const VideosTable = ({ videos }: VideosTableProps) => {
               <th className="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Date</th>
               <th className="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Views</th>
               <th className="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Likes</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Comments</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">Analytics</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
             {videos.map((video) => (
-              <tr key={video.id} className="hover:bg-slate-50/50 transition-colors group">
+              <tr 
+                key={video.id} 
+                onClick={() => handleRowClick(video.id)}
+                className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+              >
                 <td className="px-8 py-6 max-w-[400px]">
                   <div className="flex gap-4">
                     <div className="relative flex-shrink-0">
@@ -78,8 +90,12 @@ const VideosTable = ({ videos }: VideosTableProps) => {
                 <td className="px-6 py-6 text-right">
                   <div className="text-sm font-bold text-gray-900">{Number(video.statistics?.likeCount || 0).toLocaleString()}</div>
                 </td>
-                <td className="px-8 py-6 text-right">
-                  <div className="text-sm font-bold text-gray-900">{Number(video.statistics?.commentCount || 0).toLocaleString()}</div>
+                <td className="px-8 py-6 text-center">
+                  <div className="flex justify-center">
+                    <button className="p-2 rounded-xl bg-slate-100 text-slate-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                      <BarChart2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

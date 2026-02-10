@@ -1,13 +1,22 @@
 "use client";
 import React from "react";
-import { TrendingUp, Award, Play, Eye, Clock, ThumbsUp, MessageSquare, ExternalLink } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { TrendingUp, Award, Play, Eye, Clock, ThumbsUp, MessageSquare, ExternalLink, BarChart2 } from "lucide-react";
 
 interface TopVideosRankProps {
   topVideos: any[];
 }
 
 const TopVideosRank = ({ topVideos }: TopVideosRankProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
   if (!topVideos || topVideos.length === 0) return null;
+
+  const handleVideoClick = (videoId: string) => {
+     // Assuming pathname is .../social-media/youtube
+     router.push(`${pathname}/video/${videoId}`);
+  };
 
   return (
     <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
@@ -26,9 +35,14 @@ const TopVideosRank = ({ topVideos }: TopVideosRankProps) => {
           const retention = Number(video.averageViewPercentage || 0).toFixed(1);
           const likes = Number(video.statistics?.likeCount || 0).toLocaleString();
           const comments = Number(video.statistics?.commentCount || 0).toLocaleString();
+          const videoId = video.videoId || video.id;
           
           return (
-            <div key={idx} className="relative group bg-slate-50/30 p-5 rounded-[32px] border border-transparent hover:border-slate-100 hover:bg-white hover:shadow-xl transition-all duration-500">
+            <div 
+              key={idx} 
+              onClick={() => handleVideoClick(videoId)}
+              className="relative group bg-slate-50/30 p-5 rounded-[32px] border border-transparent hover:border-slate-100 hover:bg-white hover:shadow-xl transition-all duration-500 cursor-pointer"
+            >
               {/* Rank Badge */}
               <div className={`absolute -top-3 -left-3 w-10 h-10 flex items-center justify-center rounded-2xl text-lg font-black z-10 shadow-lg ${
                 idx === 0 ? 'bg-amber-500 text-white rotate-[-12deg]' :
@@ -59,16 +73,29 @@ const TopVideosRank = ({ topVideos }: TopVideosRankProps) => {
                 <div className="flex-grow min-w-0">
                   <div className="flex justify-between items-start mb-3 gap-4">
                     <h4 className="text-base font-black text-slate-900 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
-                      {video.title || `Video ${video.videoId}`}
+                      {video.title || `Video ${videoId}`}
                     </h4>
-                    <a 
-                      href={video.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-blue-500 hover:border-blue-100 transition-all shadow-sm"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
+                    <div className="flex gap-2">
+                       <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleVideoClick(videoId);
+                        }}
+                        className="p-2 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-blue-500 hover:border-blue-100 transition-all shadow-sm"
+                        title="Show Analytics"
+                       >
+                         <BarChart2 className="w-4 h-4" />
+                       </button>
+                       <a 
+                         href={video.url} 
+                         target="_blank" 
+                         rel="noopener noreferrer"
+                         onClick={(e) => e.stopPropagation()}
+                         className="p-2 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:border-red-100 transition-all shadow-sm"
+                       >
+                         <ExternalLink className="w-4 h-4" />
+                       </a>
+                    </div>
                   </div>
 
                   {/* Metrics Row 1 */}

@@ -43,3 +43,13 @@ export const getChannelDetails = async (userId: string) => {
     throw error;
   }
 };
+
+export const getVideoAnalytics = async (userId: string, videoId: string) => {
+  try {
+    const response = await axios.post(`/api/youtube/video-analytics`, { userId, videoId });
+    return response.data;
+  } catch (error: any) {
+    console.error("Frontend Youtube Video Analytics Service Error:", error.response?.data || error.message);
+    throw error;
+  }
+};

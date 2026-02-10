@@ -15,7 +15,7 @@ import Link from "next/link";
 import { useYouTubeDetails } from "@/hooks/useYouTubeDetails";
 import AuthContext from "@/contexts/authContext/authContext";
 import { Loading } from "@/components/shared/loadingScreen/Loading";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 
 import YouTubeAnalyticsGrid from "./components/YouTubeAnalyticsGrid";
@@ -33,6 +33,7 @@ import { Award, TrendingUp, Users2, Search, Calendar, MessageSquare } from "luci
 const YouTubeStatsDashboard = () => {
   const { user, setUser } = useContext(AuthContext);
   const router = useRouter();
+  const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("overview");
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const { data, loading, error } = useYouTubeDetails((user as any)?._id || (user as any)?.id);
@@ -253,9 +254,13 @@ const YouTubeStatsDashboard = () => {
                       {data.dashboard.overview28d.topContent?.length > 0 && (
                         <div>
                            <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-6 px-2">Top Performance Hub</h4>
-                           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                               {data.dashboard.overview28d.topContent.map((video: any, idx: number) => (
-                                <div key={idx} className="flex gap-4 p-4 rounded-[30px] bg-white border border-slate-100 shadow-sm hover:shadow-xl transition-all group">
+                                <button 
+                                  key={idx} 
+                                  onClick={() => router.push(`${pathname}/video/${video.videoId || video.id}`)}
+                                  className="flex text-left w-full gap-4 p-4 rounded-[30px] bg-white border border-slate-100 shadow-sm hover:shadow-xl transition-all group"
+                                >
                                    <div className="relative w-24 h-16 rounded-2xl overflow-hidden flex-shrink-0">
                                       <img src={video.thumbnails?.default?.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="" />
                                       <div className="absolute inset-0 bg-black/20" />
@@ -267,7 +272,7 @@ const YouTubeStatsDashboard = () => {
                                          <span className="text-[10px] font-bold text-slate-400 uppercase">{video.duration.replace('PT','').toLowerCase()}</span>
                                       </div>
                                    </div>
-                                </div>
+                                </button>
                               ))}
                            </div>
                         </div>

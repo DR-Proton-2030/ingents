@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
-import { MessageSquare, UserPlus, Calendar, ExternalLink, Clock } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { MessageSquare, UserPlus, Calendar, ExternalLink, Clock, BarChart2 } from "lucide-react";
 
 interface CommunityEngagementProps {
   comments: any[];
@@ -9,6 +10,15 @@ interface CommunityEngagementProps {
 }
 
 const CommunityEngagement = ({ comments = [], subscribers = [], schedule = [] }: CommunityEngagementProps) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleVideoRedirect = (videoId: string) => {
+    // Navigate back to the youtube dashboard base path if we're deeper, 
+    // but usually pathname here is [site]/social-media/youtube
+    router.push(`${pathname}/video/${videoId}`);
+  };
+
   return (
     <div className="space-y-12">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -33,13 +43,13 @@ const CommunityEngagement = ({ comments = [], subscribers = [], schedule = [] }:
                     className="w-12 h-12 rounded-full border-2 border-white shadow-sm" 
                     alt="" 
                   />
-                  <div className="flex-grow">
+                  <div className="flex-grow min-w-0">
                      <div className="flex justify-between items-start mb-1">
                         <h4 className="text-sm font-black text-slate-900">{comment.author || comment.authorDisplayName}</h4>
                         <span className="text-[10px] font-bold text-slate-400">{new Date(comment.publishedAt).toLocaleDateString()}</span>
                      </div>
                      <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{comment.text}</p>
-                     <div className="mt-3 flex items-center gap-3">
+                     <div className="mt-3 flex flex-wrap items-center gap-3">
                         <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-blue-50 border border-blue-100">
                            <span className="text-[10px] font-black text-blue-600 uppercase">Reply Center</span>
                            {comment.replyCount > 0 && (
@@ -49,14 +59,24 @@ const CommunityEngagement = ({ comments = [], subscribers = [], schedule = [] }:
                            )}
                         </div>
                         <div className="w-1 h-1 rounded-full bg-slate-200" />
-                        <a 
-                          href={comment.videoId ? `https://www.youtube.com/watch?v=${comment.videoId}` : '#'} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[10px] font-bold text-slate-400 hover:text-blue-500 transition-colors truncate max-w-[150px]"
-                        >
-                          On: {comment.videoTitle || comment.videoId || 'Your video'}
-                        </a>
+                        <div className="flex items-center gap-2 max-w-[200px]">
+                           <button 
+                            onClick={() => comment.videoId && handleVideoRedirect(comment.videoId)}
+                            className="text-[10px] font-black text-blue-600 hover:text-blue-800 transition-colors truncate flex items-center gap-1"
+                           >
+                              <BarChart2 className="w-3 h-3" />
+                              View Analytics
+                           </button>
+                           <span className="text-[10px] text-slate-300">|</span>
+                           <a 
+                            href={comment.videoId ? `https://www.youtube.com/watch?v=${comment.videoId}` : '#'} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors truncate"
+                           >
+                            On YouTube
+                           </a>
+                        </div>
                      </div>
                   </div>
                 </div>
