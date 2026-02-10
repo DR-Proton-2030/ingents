@@ -53,3 +53,13 @@ export const getVideoAnalytics = async (userId: string, videoId: string, dateRan
     throw error;
   }
 };
+
+export const getYoutubeVideos = async (userId: string) => {
+  try {
+    const response = await axios.get(`/api/youtube/get-videos?userId=${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error("Frontend Youtube Get Videos Service Error:", error.response?.data || error.message);
+    throw error;
+  }
+};

@@ -37,8 +37,32 @@ const PostActivity = ({ activity, platform = "youtube" }: PostActivityProps) => 
 
   const days = ["S", "M", "T", "W", "T", "F", "S"];
   
-  // Mock grid data [value, isActive/intensity]
-  const gridData = activity?.growthTrend || [];
+  // Handle both [value, intensity] and {date, views, subscribersGained} formats
+  const rawData = activity?.growthTrend || [];
+  
+  // Format data for the grid
+  const gridData = React.useMemo(() => {
+    if (!rawData.length) return [];
+    
+    // Most analytics dashboards show last 28-35 days in the activity grid
+    // For large datasets (e.g. LIFETIME), we should only show the tail
+    const displayData = rawData.length > 35 ? rawData.slice(-35) : rawData;
+    
+    return displayData.map((item: any) => {
+      if (Array.isArray(item)) return item; 
+      
+      // Calculate intensity based on views or subscribersGained
+      const value = item.views || item.subscribersGained || 0;
+      let intensity = 0;
+      if (value > 0) {
+        if (value > 100) intensity = 3;
+        else if (value > 10) intensity = 2;
+        else intensity = 1;
+      }
+      
+      return [value, intensity, item.date];
+    });
+  }, [rawData]);
 
   const getCircleStyle = (intensity: number) => {
     const colorClass = isYouTube ? "purple" : isX ? "slate" : "blue";
@@ -63,14 +87,16 @@ const PostActivity = ({ activity, platform = "youtube" }: PostActivityProps) => 
       <div className="flex justify-between items-start mb-2">
         <div>
           <h3 className="text-xl font-bold text-gray-900">Post Activity</h3>
-          <p className="text-xs text-gray-400 font-medium mt-1">From 15 Feb - 15 May, 2024</p>
+          <p className="text-xs text-gray-400 font-medium mt-1">
+            {rawData.length > 0 ? `Activity across ${rawData.length} days` : "No activity recorded"}
+          </p>
         </div>
         <button className={`text-${isX ? "black" : `${accentColorClass}-500`} border border-${isX ? "black" : `${accentColorClass}-500`} rounded-full px-4 py-1.5 text-xs font-bold hover:bg-gray-50 transition-colors`}>
-          Change Period
+          Detailed View
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 my-8">
+      <div className="grid grid-cols-3 gap-4 my-6">
         {stats.map((stat, idx) => (
           <div key={idx}>
             <div className="text-3xl font-bold text-gray-900 leading-none mb-1">{stat.value}</div>
@@ -91,13 +117,15 @@ const PostActivity = ({ activity, platform = "youtube" }: PostActivityProps) => 
               key={idx}
               initial={{ scale: 0, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: idx * 0.01 }}
+              transition={{ delay: Math.min(idx * 0.02, 1) }}
               className={`aspect-square rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold ${getCircleStyle(cell[1])}`}
+              title={cell[2] ? `${cell[2]}: ${cell[0]} units` : undefined}
             >
-              {cell[0] > 0 ? cell[0] : ""}
+              {cell[0] > 0 ? (cell[0] > 99 ? '99+' : cell[0]) : ""}
             </motion.div>
           ))}
         </div>
+        <p className="text-[9px] text-gray-400 text-center italic mt-4">Showing most recent activity</p>
       </div>
     </div>
   );

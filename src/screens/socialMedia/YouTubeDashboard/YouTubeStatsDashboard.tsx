@@ -19,7 +19,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { toast } from "react-toastify";
 
 import YouTubeAnalyticsGrid from "./components/YouTubeAnalyticsGrid";
-import VideosTable from "./components/VideosTable";
 import ReachFunnel from "./components/ReachFunnel";
 import RetentionAnalytic from "./components/RetentionAnalytic";
 import DemographicsCharts from "./components/DemographicsCharts";
@@ -28,7 +27,9 @@ import TopVideosRank from "./components/TopVideosRank";
 import RevenueOverview from "./components/RevenueOverview";
 import DiscoveryDetails from "./components/DiscoveryDetails";
 import CommunityEngagement from "./components/CommunityEngagement";
-import { Award, TrendingUp, Users2, Search, Calendar, MessageSquare } from "lucide-react";
+import GeographySection from "./components/GeographySection";
+import RecentPostsList from "./components/RecentPostsList";
+import { Award, TrendingUp, Users2, Search, Calendar, MessageSquare, Map } from "lucide-react";
 
 import DateRangeFilter from "@/components/shared/DateRangeFilter";
 
@@ -39,7 +40,52 @@ const YouTubeStatsDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [dateRange, setDateRange] = useState("LAST_28_DAYS");
-  const { data, loading, error } = useYouTubeDetails((user as any)?._id || (user as any)?.id, dateRange);
+  const { data: rawData, loading, error } = useYouTubeDetails((user as any)?._id || (user as any)?.id, dateRange);
+
+  // Normalize data structure for inconsistent API responses (e.g. LIFETIME filter)
+  const data = useMemo(() => {
+    if (!rawData) return null;
+    const result = { ...rawData };
+
+    // 1. Map growthTrend to dailyTrend if analytics is missing
+    if (!result.analytics?.dailyTrend && result.postActivity?.growthTrend) {
+      if (!result.analytics) result.analytics = {};
+      result.analytics.dailyTrend = result.postActivity.growthTrend;
+    }
+
+    // 2. Aggregate overview stats from growthTrend if missing
+    if (!result.analytics?.overview) {
+      if (!result.analytics) result.analytics = {};
+      
+      // Calculate sums from the trend data
+      const trendAggregates = (result.postActivity?.growthTrend || []).reduce(
+        (acc: any, curr: any) => ({
+          views: acc.views + (Number(curr.views) || 0),
+          subs: acc.subs + (Number(curr.subscribersGained) || 0),
+        }),
+        { views: 0, subs: 0 }
+      );
+
+      result.analytics.overview = {
+        views: trendAggregates.views || result.channel?.statistics?.viewCount || 0,
+        subscribersGained: trendAggregates.subs || result.channel?.statistics?.subscriberCount || 0,
+        videoCount: result.channel?.statistics?.videoCount || 0,
+      };
+    }
+
+    // 3. Populate dashboard overview if missing
+    if (!result.dashboard?.overview28d) {
+      if (!result.dashboard) result.dashboard = {};
+      result.dashboard.overview28d = {
+        totalViews: result.analytics.overview.views,
+        netSubscribers: result.analytics.overview.subscribersGained,
+        totalWatchTimeHours: 0, // Placeholder as it's usually not in growthTrend
+        subscribersGained: result.analytics.overview.subscribersGained,
+      };
+    }
+
+    return result;
+  }, [rawData]);
 
   const youtubeConnected = useMemo(() => {
     return Boolean((user as any)?.youtube?.access_token);
@@ -116,10 +162,6 @@ const YouTubeStatsDashboard = () => {
     <Layout>
       <div className="min-h-screen bg-[#EAEEF6] p-4 lg:p-12 font-sans">
         <div className="max-w-[1700px] mx-auto space-y-12">
-          <div className="flex justify-end">
-            <DateRangeFilter value={dateRange} onChange={setDateRange} />
-          </div>
-          
           {/* Banner Image */}
           {data?.channel?.branding?.image?.bannerExternalUrl && (
             <div className="relative w-full h-48 rounded-[50px] overflow-hidden mb-12 shadow-2xl border-4 border-white">
@@ -170,15 +212,6 @@ const YouTubeStatsDashboard = () => {
                        {data?.channel?.description}
                      </p>
                    )}
-                   {data?.channel?.branding?.channel?.keywords && (
-                     <div className="mt-4 flex flex-wrap gap-2">
-                       {data.channel.branding.channel.keywords.split(' ').slice(0, 5).map((kw: string, i: number) => (
-                         <span key={i} className="text-[9px] font-black text-slate-400 uppercase tracking-tighter border border-slate-200 px-2 py-0.5 rounded-lg bg-slate-50/50 italic">
-                           {kw.replace(/"/g, '')}
-                         </span>
-                       ))}
-                     </div>
-                   )}
                 </div>
              </div>
              
@@ -200,22 +233,28 @@ const YouTubeStatsDashboard = () => {
              </div>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex overflow-x-auto gap-2 p-2 bg-white/50 backdrop-blur-md rounded-[35px] border border-white/50 w-fit hidescroll">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-10 py-4 rounded-[28px] text-xs font-black uppercase tracking-widest transition-all flex items-center gap-3 ${
-                  activeTab === tab.id 
-                    ? "bg-slate-900 text-white shadow-xl shadow-slate-200" 
-                    : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
-                }`}
-              >
-                <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? "text-white" : "text-slate-400"}`} />
-                {tab.label}
-              </button>
-            ))}
+          {/* Navigation & Controls */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div className="flex overflow-x-auto gap-2 p-2 bg-white/50 backdrop-blur-md rounded-[35px] border border-white/50 w-fit hidescroll">
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-10 py-4 rounded-[28px] cursor-pointer text-xs font-black uppercase tracking-widest transition-all flex items-center gap-3 ${
+                    activeTab === tab.id 
+                      ? "bg-slate-900 text-white shadow-xl shadow-slate-200" 
+                      : "text-slate-500 hover:text-slate-900 hover:bg-white/50"
+                  }`}
+                >
+                  <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? "text-white" : "text-slate-400"}`} />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            
+            <div className="flex-shrink-0">
+               <DateRangeFilter value={dateRange} onChange={setDateRange} />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -230,7 +269,9 @@ const YouTubeStatsDashboard = () => {
                     <section className="bg-white p-8 rounded-[50px] shadow-sm border border-gray-100">
                       <div className="flex items-center justify-between mb-8">
                         <div>
-                          <h3 className="text-2xl font-black text-slate-900 tracking-tight">Last 28 Days Performance</h3>
+                          <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+                            {dateRange === "LAST_28_DAYS" ? "Last 28 Days Performance" : "Overall Channel Performance"}
+                          </h3>
                           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Official Studio Summary</p>
                         </div>
                         <div className="px-4 py-2 rounded-2xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest">
@@ -286,7 +327,7 @@ const YouTubeStatsDashboard = () => {
                     </section>
                   )}
 
-                  <section>
+                   <section>
                     <div className="flex items-center justify-between mb-8">
                        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Detailed Analytics</h2>
                     </div>
@@ -295,7 +336,10 @@ const YouTubeStatsDashboard = () => {
                       dailyTrend={data?.analytics?.dailyTrend} 
                     />
                   </section>
-                  <VideosTable videos={data?.recentVideos} />
+
+                  <GeographySection 
+                    topLocations={data?.demographics?.topLocations || data?.analytics?.audience?.topLocations || []} 
+                  />
                 </div>
               )}
 
@@ -317,9 +361,14 @@ const YouTubeStatsDashboard = () => {
                     demographics={{
                       ...data?.demographics,
                       ...data?.analytics?.audience,
-                      geography: data?.analytics?.geography,
-                      subscribedStatus: data?.analytics?.subscribedStatus
+                      subscribedStatus: data?.analytics?.subscribedStatus,
+                      devices: data?.analytics?.devices || data?.demographics?.devices || [],
+                      operatingSystems: data?.analytics?.operatingSystems || data?.demographics?.operatingSystems || []
                     }} 
+                  />
+                  
+                  <GeographySection 
+                    topLocations={data?.demographics?.topLocations || data?.analytics?.audience?.topLocations || []} 
                   />
                   <InsightsCharts analytics={data?.analytics} />
                 </div>
@@ -353,19 +402,15 @@ const YouTubeStatsDashboard = () => {
 
             </div>
 
-            {/* Side Information Panel */}
+             {/* Side Information Panel */}
             <div className="lg:col-span-4 space-y-12">
-              <div className="p-2 bg-white/30 backdrop-blur-sm rounded-[52px] border border-white/40 shadow-sm">
-                <ProfileCard 
-                  data={data?.channel} 
-                  demographics={{
-                    ...data?.demographics,
-                    ...data?.analytics?.audience
-                  }} 
-                  platform="youtube"
-                />
-              </div>
+              <ProfileCard 
+                data={data?.channel} 
+                platform="youtube"
+              />
               
+              <RecentPostsList videos={data?.recentVideos} />
+
               <PostActivity activity={data?.postActivity} platform="youtube" />
               
               <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
