@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getVideoAnalytics } from "@/service/youtube/youtube.service";
 import { toast } from "react-toastify";
 
-export const useYouTubeVideoAnalytics = (userId: string | undefined, videoId: string | undefined) => {
+export const useYouTubeVideoAnalytics = (userId: string | undefined, videoId: string | undefined, dateRange: string = "LAST_28_DAYS") => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export const useYouTubeVideoAnalytics = (userId: string | undefined, videoId: st
     setLoading(true);
     setError(null);
     try {
-      const response = await getVideoAnalytics(userId, videoId);
+      const response = await getVideoAnalytics(userId, videoId, dateRange);
       if (response.success) {
         setData(response.result);
       } else {
@@ -27,7 +27,7 @@ export const useYouTubeVideoAnalytics = (userId: string | undefined, videoId: st
     } finally {
       setLoading(false);
     }
-  }, [userId, videoId]);
+  }, [userId, videoId, dateRange]);
 
   useEffect(() => {
     fetchAnalytics();

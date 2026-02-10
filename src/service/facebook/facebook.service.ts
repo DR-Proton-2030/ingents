@@ -10,9 +10,9 @@ export const getFacebookDetails = async (userId: string) => {
   }
 };
 
-export const getFacebookPageDetails = async (userId: string, pageId: string) => {
+export const getFacebookPageDetails = async (userId: string, pageId: string, dateRange: string = "LAST_28_DAYS") => {
   try {
-    const response = await axios.get(`/api/facebook/page-details?userId=${userId}&pageId=${pageId}`);
+    const response = await axios.get(`/api/facebook/page-details?userId=${userId}&pageId=${pageId}&dateRange=${dateRange}`);
     return response.data;
   } catch (error: any) {
     console.error("Frontend Facebook Page Details Service Error:", error.response?.data || error.message);

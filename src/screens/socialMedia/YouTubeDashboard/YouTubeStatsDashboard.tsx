@@ -30,13 +30,16 @@ import DiscoveryDetails from "./components/DiscoveryDetails";
 import CommunityEngagement from "./components/CommunityEngagement";
 import { Award, TrendingUp, Users2, Search, Calendar, MessageSquare } from "lucide-react";
 
+import DateRangeFilter from "@/components/shared/DateRangeFilter";
+
 const YouTubeStatsDashboard = () => {
   const { user, setUser } = useContext(AuthContext);
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState("overview");
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const { data, loading, error } = useYouTubeDetails((user as any)?._id || (user as any)?.id);
+  const [dateRange, setDateRange] = useState("LAST_28_DAYS");
+  const { data, loading, error } = useYouTubeDetails((user as any)?._id || (user as any)?.id, dateRange);
 
   const youtubeConnected = useMemo(() => {
     return Boolean((user as any)?.youtube?.access_token);
@@ -113,6 +116,9 @@ const YouTubeStatsDashboard = () => {
     <Layout>
       <div className="min-h-screen bg-[#EAEEF6] p-4 lg:p-12 font-sans">
         <div className="max-w-[1700px] mx-auto space-y-12">
+          <div className="flex justify-end">
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          </div>
           
           {/* Banner Image */}
           {data?.channel?.branding?.image?.bannerExternalUrl && (

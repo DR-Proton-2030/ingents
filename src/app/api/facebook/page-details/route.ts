@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
   const pageId = searchParams.get("pageId");
+  const dateRange = searchParams.get("dateRange") || "LAST_28_DAYS";
 
   if (!userId || !pageId) {
     return NextResponse.json(
@@ -19,7 +20,7 @@ export async function GET(req: Request) {
 
   try {
     const response = await axios.get(
-      `${BACKEND_URL}/api/v1/facebook/page/get-all-details?userId=${userId}&pageId=${pageId}`,
+      `${BACKEND_URL}/api/v1/facebook/page/get-all-details?userId=${userId}&pageId=${pageId}&dateRange=${dateRange}`,
       { timeout: 30000 } // Extended timeout for multiple Graph API calls
     );
     return NextResponse.json(response.data);

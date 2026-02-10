@@ -36,6 +36,8 @@ import FBContentList from "./components/FBContentList";
 import Header from "@/screens/socialMedia/components/Header";
 import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 
+import DateRangeFilter from "@/components/shared/DateRangeFilter";
+
 const TABS = [
   { id: "overview", label: "Overview", icon: Activity },
   { id: "content", label: "Content", icon: PlayCircle },
@@ -49,8 +51,9 @@ const FacebookStatsDashboard = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [dateRange, setDateRange] = useState("LAST_28_DAYS");
 
-  const { data: liveData, loading, error } = useFacebookDetails((user as any)?._id || user?.id, user?.facebook?.project_id);
+  const { data: liveData, loading, error } = useFacebookDetails((user as any)?._id || user?.id, user?.facebook?.project_id, dateRange);
 
   const dashboardData = useMemo(() => {
     return liveData;
@@ -149,8 +152,8 @@ const FacebookStatsDashboard = () => {
               </div>
 
               {/* Profile Info Overlay */}
-              <div className="relative -mt-20 px-12 pb-10 flex flex-col md:flex-row items-end gap-8">
-                <div className="relative group/avatar">
+              <div className="relative px-12 pb-10 flex flex-col md:flex-row items-center md:items-end gap-8 text-center md:text-left">
+                <div className="relative -mt-24 group/avatar">
                   <div className="absolute -inset-1 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full blur opacity-40 animate-pulse"></div>
                   <img 
                     src={page.picture.data.url} 
@@ -165,11 +168,10 @@ const FacebookStatsDashboard = () => {
                 </div>
                 
                 <div className="flex-1 mb-2">
-                  <div className="flex flex-wrap items-center gap-4 mb-3">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-3">
                     <h1 className="text-5xl font-black text-slate-900 tracking-tighter">{page.name}</h1>
-                    <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-blue-100">Verified Partner</span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-6 text-slate-500 font-bold text-sm">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-slate-500 font-bold text-sm">
                     <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                       <Activity className="w-4 h-4 text-blue-500" /> {page.category}
                     </span>
@@ -182,7 +184,7 @@ const FacebookStatsDashboard = () => {
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:text-blue-700 flex items-center gap-2 transition-all hover:translate-x-1"
                     >
-                      fb.me/ps/{page.id} <ExternalLink className="w-4 h-4" />
+                     <ExternalLink className="w-4 h-4" />
                     </a>
                   </div>
                 </div>
@@ -202,7 +204,8 @@ const FacebookStatsDashboard = () => {
           </div>
 
           {/* Tabs Navigation */}
-          <div className="flex overflow-x-auto gap-3 p-3 bg-white/40 backdrop-blur-2xl rounded-[40px] border border-white/60 w-fit shadow-xl shadow-blue-900/5 hidescroll">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="flex overflow-x-auto gap-3 p-3 bg-white/40 backdrop-blur-2xl rounded-[40px] border border-white/60 w-fit shadow-xl shadow-blue-900/5 hidescroll">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -220,6 +223,8 @@ const FacebookStatsDashboard = () => {
                 </button>
               );
             })}
+            </div>
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
           </div>
 
           {/* Main Content Area */}
@@ -442,18 +447,18 @@ const FacebookStatsDashboard = () => {
           {/* Impressions Section (Restricted) */}
           <div className="mt-20 pt-20 border-t border-slate-200">
             <div className="flex items-center gap-4 mb-10">
-              <div className="p-4 bg-slate-100 rounded-3xl text-slate-400">
+              <div className="p-4 bg-amber-50 rounded-3xl text-amber-500">
                 <Monitor className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-2xl font-black text-slate-500 tracking-tight">Restricted Studio Metrics</h3>
-                <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">Platform Restrictions Apply</p>
+                <h3 className="text-2xl font-black text-slate-800 tracking-tight">Restricted Studio Metrics</h3>
+                <p className="text-[10px] text-amber-600 font-black uppercase tracking-[0.2em] mt-1">Platform Restrictions Apply</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 opacity-60">
-              <FBStatCard title="Total Impressions" value={0} disabled tooltipText="Facebook does not expose impressions via Meta Graph API" />
-              <FBStatCard title="Ads Click-through Rate" value={0} disabled tooltipText="Meta Graph API restriction" />
-              <FBStatCard title="Impressions Watch Time" value={0} disabled tooltipText="Unavailable metric" />
+              <FBStatCard title="Total Impressions" value={0} disabled variant="amber" tooltipText="Facebook does not expose impressions via Meta Graph API" />
+              <FBStatCard title="Ads Click-through Rate" value={0} disabled variant="amber" tooltipText="Meta Graph API restriction" />
+              <FBStatCard title="Impressions Watch Time" value={0} disabled variant="amber" tooltipText="Unavailable metric" />
             </div>
           </div>
 

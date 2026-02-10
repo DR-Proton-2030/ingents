@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getFacebookPageDetails } from "@/service/facebook/facebook.service";
 import { toast } from "react-toastify";
 
-export const useFacebookDetails = (userId: string | undefined, pageId: string | undefined) => {
+export const useFacebookDetails = (userId: string | undefined, pageId: string | undefined, dateRange: string = "LAST_28_DAYS") => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export const useFacebookDetails = (userId: string | undefined, pageId: string | 
     setLoading(true);
     setError(null);
     try {
-      const response = await getFacebookPageDetails(userId, pageId);
+      const response = await getFacebookPageDetails(userId, pageId, dateRange);
       if (response && response.success) {
         setData(response.result);
       } else {
@@ -27,7 +27,7 @@ export const useFacebookDetails = (userId: string | undefined, pageId: string | 
     } finally {
       setLoading(false);
     }
-  }, [userId, pageId]);
+  }, [userId, pageId, dateRange]);
 
   useEffect(() => {
     fetchDetails();

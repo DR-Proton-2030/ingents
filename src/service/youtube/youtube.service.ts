@@ -34,9 +34,9 @@ export const uploadYoutubeVideo = async (payload: YoutubeUploadPayload | FormDat
   }
 };
 
-export const getChannelDetails = async (userId: string) => {
+export const getChannelDetails = async (userId: string, dateRange: string = "LAST_28_DAYS") => {
   try {
-    const response = await axios.get(`/api/youtube/get-channel-details?userId=${userId}`);
+    const response = await axios.get(`/api/youtube/get-channel-details?userId=${userId}&dateRange=${dateRange}`);
     return response.data;
   } catch (error: any) {
     console.error("Frontend Youtube Service Error:", error.response?.data || error.message);
@@ -44,9 +44,9 @@ export const getChannelDetails = async (userId: string) => {
   }
 };
 
-export const getVideoAnalytics = async (userId: string, videoId: string) => {
+export const getVideoAnalytics = async (userId: string, videoId: string, dateRange: string = "LAST_28_DAYS") => {
   try {
-    const response = await axios.post(`/api/youtube/video-analytics`, { userId, videoId });
+    const response = await axios.post(`/api/youtube/video-analytics`, { userId, videoId, dateRange });
     return response.data;
   } catch (error: any) {
     console.error("Frontend Youtube Video Analytics Service Error:", error.response?.data || error.message);

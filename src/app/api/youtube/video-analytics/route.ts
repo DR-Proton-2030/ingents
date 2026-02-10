@@ -7,21 +7,21 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:898
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { userId, videoId } = body;
-
-    if (!userId || !videoId) {
-      return NextResponse.json(
-        { error: "Missing userId or videoId" },
-        { status: 400 }
-      );
-    }
-
-    console.log(`Fetching YouTube video analytics for videoId: ${videoId}, userId: ${userId}`);
+    const { userId, videoId, dateRange = "LAST_28_DAYS" } = body;
+  
+      if (!userId || !videoId) {
+        return NextResponse.json(
+          { error: "Missing userId or videoId" },
+          { status: 400 }
+        );
+      }
+  
+      console.log(`Fetching YouTube video analytics for videoId: ${videoId}, userId: ${userId} with dateRange: ${dateRange}`);
     
     // Using the path provided by the user: /api/v1/youtube/video/analytics
     const response = await axios.post(
       `${BACKEND_URL}/api/v1/youtube/video/analytics`,
-      { userId, videoId },
+      { userId, videoId, dateRange },
       {
         headers: {
           "Content-Type": "application/json",

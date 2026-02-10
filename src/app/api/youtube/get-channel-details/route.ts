@@ -7,6 +7,7 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:898
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
+  const dateRange = searchParams.get("dateRange") || "LAST_28_DAYS";
 
   if (!userId) {
     return NextResponse.json(
@@ -16,14 +17,14 @@ export async function GET(req: Request) {
   }
 
   try {
-    console.log(`Fetching YouTube details for userId: ${userId} from ${BACKEND_URL}`);
+    console.log(`Fetching YouTube details for userId: ${userId} with dateRange: ${dateRange} from ${BACKEND_URL}`);
     const response = await axios.get(
-      `${BACKEND_URL}/api/v1/youtube/channel/get-all-details?user_id=${userId}`,
+      `${BACKEND_URL}/api/v1/youtube/channel/get-all-details?user_id=${userId}&dateRange=${dateRange}`,
       {
         headers: {
           "Content-Type": "application/json",
         },
-        timeout: 30000,
+        timeout: 60000,
       }
     );
 

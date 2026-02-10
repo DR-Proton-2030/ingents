@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getChannelDetails } from "@/service/youtube/youtube.service";
 import { toast } from "react-toastify";
 
-export const useYouTubeDetails = (userId: string | undefined) => {
+export const useYouTubeDetails = (userId: string | undefined, dateRange: string = "LAST_28_DAYS") => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,7 +13,7 @@ export const useYouTubeDetails = (userId: string | undefined) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getChannelDetails(userId);
+      const response = await getChannelDetails(userId, dateRange);
       if (response.success) {
         setData(response.result);
       } else {
@@ -27,7 +27,7 @@ export const useYouTubeDetails = (userId: string | undefined) => {
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, dateRange]);
 
   useEffect(() => {
     fetchDetails();
