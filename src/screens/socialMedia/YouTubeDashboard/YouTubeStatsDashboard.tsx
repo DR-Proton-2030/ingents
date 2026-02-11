@@ -404,10 +404,10 @@ const YouTubeStatsDashboard = () => {
 
              {/* Side Information Panel */}
             <div className="lg:col-span-4 space-y-12">
-              <ProfileCard 
+              {/* <ProfileCard 
                 data={data?.channel} 
                 platform="youtube"
-              />
+              /> */}
               
               <RecentPostsList videos={data?.recentVideos} />
 
