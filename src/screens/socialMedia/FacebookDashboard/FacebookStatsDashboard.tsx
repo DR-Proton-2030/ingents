@@ -133,13 +133,13 @@ const FacebookStatsDashboard = () => {
             <div className="flex flex-col gap-4">
               <button
                 onClick={() => window.location.reload()}
-                className="w-full bg-[#1877F2] text-white px-10 py-5 rounded-3xl font-black hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 uppercase tracking-widest text-xs"
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-400 text-white px-10 py-5 rounded-3xl font-black hover:opacity-90 transition-all shadow-xl shadow-orange-200 uppercase tracking-widest text-xs"
               >
                 Retry Synchronization
               </button>
               <Link
                 href="/site/social-media"
-                className="w-full bg-slate-900 text-white px-10 py-5 rounded-3xl font-black hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 block text-center uppercase tracking-widest text-xs"
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-400 text-white px-10 py-5 rounded-3xl font-black hover:opacity-90 transition-all shadow-xl shadow-orange-200 block text-center uppercase tracking-widest text-xs"
               >
                 Back to Center
               </Link>
@@ -170,8 +170,8 @@ const FacebookStatsDashboard = () => {
         <div className="max-w-[1700px] mx-auto space-y-12 px-4 lg:px-12">
           {/* Page Profile Header */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-[60px] blur opacity-15 group-hover:opacity-25 transition duration-1000"></div>
-            <div className="relative bg-white rounded-[50px] shadow-2xl shadow-blue-100 overflow-hidden border border-white">
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-600 to-orange-500 rounded-[60px] blur opacity-15 group-hover:opacity-25 transition duration-1000"></div>
+            <div className="relative bg-white rounded-[50px] shadow-2xl shadow-orange-100 overflow-hidden border border-white">
               {/* Cover Image */}
               <div className="relative h-64 w-full overflow-hidden">
                 <img
@@ -185,13 +185,13 @@ const FacebookStatsDashboard = () => {
               {/* Profile Info Overlay */}
               <div className="relative px-12 pb-10 flex flex-col md:flex-row items-center md:items-end gap-8 text-center md:text-left">
                 <div className="relative -mt-24 group/avatar">
-                  <div className="absolute -inset-1 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full blur opacity-40 animate-pulse"></div>
+                  <div className="absolute -inset-1 bg-gradient-to-tr from-orange-600 to-orange-400 rounded-full blur opacity-40 animate-pulse"></div>
                   <img
                     src={page.picture.data.url}
                     alt={page.name}
                     className="relative w-40 h-40 rounded-full border-8 border-white shadow-2xl object-cover"
                   />
-                  <div className="absolute bottom-2 right-2 bg-blue-600 text-white p-2.5 rounded-full shadow-lg border-4 border-white">
+                  <div className="absolute bottom-2 right-2 bg-gradient-to-r from-orange-500 to-orange-400 text-white p-2.5 rounded-full shadow-lg border-4 border-white">
                     <div className="w-6 h-6 flex items-center justify-center">
                       <svg
                         fill="currentColor"
@@ -212,11 +212,11 @@ const FacebookStatsDashboard = () => {
                   </div>
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-slate-500 font-bold text-sm">
                     <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                      <Activity className="w-4 h-4 text-blue-500" />{" "}
+                      <Activity className="w-4 h-4 text-orange-500" />{" "}
                       {page.category}
                     </span>
                     <span className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-                      <Users className="w-4 h-4 text-blue-500" />{" "}
+                      <Users className="w-4 h-4 text-orange-500" />{" "}
                       {formatCompactNumber(page.fan_count)}{" "}
                       <span className="text-[10px] uppercase tracking-widest text-slate-400 opacity-70">
                         Followers
@@ -226,7 +226,7 @@ const FacebookStatsDashboard = () => {
                       href={page.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-700 flex items-center gap-2 transition-all hover:translate-x-1"
+                      className="text-orange-600 hover:text-orange-700 flex items-center gap-2 transition-all hover:translate-x-1"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -238,7 +238,7 @@ const FacebookStatsDashboard = () => {
                     href={page.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-slate-900 text-white px-10 py-5 rounded-[28px] text-xs font-black uppercase tracking-widest hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-slate-200"
+                    className="bg-gradient-to-r from-orange-500 to-orange-400 text-white px-10 py-5 rounded-[28px] text-xs font-black uppercase tracking-widest hover:opacity-90 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-orange-200"
                   >
                     Manage Page
                   </a>
@@ -249,23 +249,34 @@ const FacebookStatsDashboard = () => {
 
           {/* Tabs Navigation */}
           <div className="flex flex-wrap items-center justify-between gap-6">
-            <div className="flex overflow-x-auto gap-3 p-3 bg-white/40 backdrop-blur-2xl rounded-[40px] border border-white/60 w-fit shadow-xl shadow-blue-900/5 hidescroll">
+            <div className="flex overflow-x-auto gap-3 p-3 bg-white/40 backdrop-blur-2xl rounded-[40px] border border-white/60 w-fit shadow-xl shadow-orange-900/5 hidescroll">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-3 px-10 py-5 rounded-[30px] font-black text-xs uppercase tracking-[0.15em] whitespace-nowrap transition-all ${
+                    className={`flex items-center gap-3 px-10 py-5 rounded-[30px] font-black text-xs uppercase tracking-[0.15em] whitespace-nowrap transition-all relative group ${
                       activeTab === tab.id
-                        ? "bg-gradient-to-r from-orange-500 to-orange-400 text-white shadow-xl shadow-orange-500/30 scale-105"
-                        : "text-slate-500 hover:text-slate-900 hover:bg-white/40"
+                        ? "text-white"
+                        : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="activeTabFB"
+                        className="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-400 rounded-[30px] shadow-xl shadow-orange-500/30"
+                        transition={{
+                          type: "spring",
+                          bounce: 0.15,
+                          duration: 0.5,
+                        }}
+                      />
+                    )}
                     <Icon
-                      className={`w-4 h-4 ${activeTab === tab.id ? "text-white" : "text-slate-400"}`}
+                      className={`w-4 h-4 relative z-10 ${activeTab === tab.id ? "text-white" : "text-slate-400"}`}
                     />
-                    {tab.label}
+                    <span className="relative z-10">{tab.label}</span>
                   </button>
                 );
               })}
@@ -282,8 +293,8 @@ const FacebookStatsDashboard = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-white/60 p-24 rounded-[60px] border border-white/80 backdrop-blur-3xl shadow-2xl text-center space-y-8"
               >
-                <div className="w-24 h-24 bg-blue-50/50 rounded-full flex items-center justify-center mx-auto border border-blue-100/30">
-                  <Activity className="w-12 h-12 text-blue-500 opacity-40 animate-pulse" />
+                <div className="w-24 h-24 bg-orange-50/50 rounded-full flex items-center justify-center mx-auto border border-orange-100/30">
+                  <Activity className="w-12 h-12 text-orange-500 opacity-40 animate-pulse" />
                 </div>
                 <div>
                   <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-4">
@@ -301,7 +312,7 @@ const FacebookStatsDashboard = () => {
                     href={page.link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="bg-[#1877F2] text-white px-10 py-5 rounded-[28px] text-xs font-black uppercase tracking-widest hover:bg-blue-700 hover:scale-105 transition-all shadow-xl shadow-blue-500/20"
+                    className="bg-gradient-to-r from-orange-500 to-orange-400 text-white px-10 py-5 rounded-[28px] text-xs font-black uppercase tracking-widest hover:opacity-90 hover:scale-105 transition-all shadow-xl shadow-orange-500/20"
                   >
                     Go to Facebook Page
                   </a>
@@ -381,7 +392,7 @@ const FacebookStatsDashboard = () => {
                           </span>
                         </h2>
                       </div>
-                      <div className="p-8 bg-blue-50/50 backdrop-blur-md rounded-[40px] text-blue-600 group-hover:scale-110 transition-transform duration-500 shadow-inner border border-blue-100/30">
+                      <div className="p-8 bg-orange-50/50 backdrop-blur-md rounded-[40px] text-orange-600 group-hover:scale-110 transition-transform duration-500 shadow-inner border border-orange-100/30">
                         <PlayCircle className="w-16 h-16" />
                       </div>
                     </div>
@@ -400,8 +411,8 @@ const FacebookStatsDashboard = () => {
                         tooltipText="Facebook does not expose viewer type breakdown via API"
                       />
                       <div className="bg-white/60 p-12 rounded-[50px] shadow-xl border border-white backdrop-blur-2xl flex flex-col justify-center text-center">
-                        <div className="w-16 h-16 bg-blue-50/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-blue-100/30">
-                          <AlertCircle className="w-8 h-8 text-blue-600" />
+                        <div className="w-16 h-16 bg-orange-50/50 rounded-full flex items-center justify-center mx-auto mb-6 border border-orange-100/30">
+                          <AlertCircle className="w-8 h-8 text-orange-600" />
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 mb-2">
                           Content Insight
@@ -501,10 +512,10 @@ const FacebookStatsDashboard = () => {
                           data={audience.demographics.ageGender}
                           xKey="age"
                           bars={[
-                            { key: "male", color: "#1877F2", label: "Male" },
+                            { key: "male", color: "#f97316", label: "Male" },
                             {
                               key: "female",
-                              color: "#F472B6",
+                              color: "#fdba74",
                               label: "Female",
                             },
                           ]}
@@ -520,7 +531,7 @@ const FacebookStatsDashboard = () => {
                         bars={[
                           {
                             key: "percent",
-                            color: "#1877F2",
+                            color: "#f97316",
                             label: "Percentage (%)",
                           },
                         ]}
@@ -533,7 +544,7 @@ const FacebookStatsDashboard = () => {
                         bars={[
                           {
                             key: "percent",
-                            color: "#1877F2",
+                            color: "#f97316",
                             label: "Percentage (%)",
                           },
                         ]}
@@ -552,7 +563,7 @@ const FacebookStatsDashboard = () => {
                       bars={[
                         {
                           key: "percentage",
-                          color: "#42B72A",
+                          color: "#f97316",
                           label: "Percentage (%)",
                         },
                       ]}
@@ -583,14 +594,14 @@ const FacebookStatsDashboard = () => {
           {/* Impressions Section (Restricted) */}
           <div className="mt-20 pt-20 border-t border-slate-200">
             <div className="flex items-center gap-4 mb-10">
-              <div className="p-4 bg-amber-50 rounded-3xl text-amber-500">
+              <div className="p-4 bg-orange-50 rounded-3xl text-orange-500">
                 <Monitor className="w-6 h-6" />
               </div>
               <div>
                 <h3 className="text-2xl font-black text-slate-800 tracking-tight">
                   Restricted Studio Metrics
                 </h3>
-                <p className="text-[10px] text-amber-600 font-black uppercase tracking-[0.2em] mt-1">
+                <p className="text-[10px] text-orange-600 font-black uppercase tracking-[0.2em] mt-1">
                   Platform Restrictions Apply
                 </p>
               </div>
@@ -640,7 +651,7 @@ const FacebookStatsDashboard = () => {
               </button>
               <Link
                 href="/site/social-media"
-                className="bg-slate-900 text-white px-8 py-4 rounded-[24px] text-xs font-black uppercase tracking-widest hover:bg-slate-800 active:scale-95 transition-all shadow-xl shadow-slate-400/20 flex items-center gap-3"
+                className="bg-gradient-to-r from-orange-500 to-orange-400 text-white px-8 py-4 rounded-[24px] text-xs font-black uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-orange-400/20 flex items-center gap-3"
               >
                 Return to Center <ArrowRight className="w-4 h-4" />
               </Link>
