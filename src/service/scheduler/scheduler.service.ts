@@ -7,6 +7,7 @@ export interface SchedulePostData {
   platform: "facebook" | "instagram" | "youtube" | "x";
   content: string;
   media_urls?: string[];
+  media_file?: File;
   media_type?: "image" | "video" | "text";
   hashtags?: string[];
   scheduled_at: string;
@@ -14,6 +15,16 @@ export interface SchedulePostData {
   channel_id?: string;
   platform_specific_data?: Record<string, any>;
 }
+
+const appendIfPresent = (form: FormData, key: string, value: any) => {
+  if (value === undefined || value === null) return;
+  form.append(key, String(value));
+};
+
+const appendJsonIfPresent = (form: FormData, key: string, value: any) => {
+  if (value === undefined || value === null) return;
+  form.append(key, JSON.stringify(value));
+};
 
 export interface ScheduledPost {
   _id: string;
@@ -76,10 +87,35 @@ export const schedulePost = async (
   postData: SchedulePostData
 ): Promise<SchedulerApiResponse<ScheduledPost>> => {
   try {
-    const response = await axios.post(
-      `${API_BASE_URL}/api/v1/scheduler/schedule`,
-      postData
-    );
+    let response;
+    if (postData.media_file) {
+      const form = new FormData();
+      appendIfPresent(form, "user_id", postData.user_id);
+      appendIfPresent(form, "platform", postData.platform);
+      appendIfPresent(form, "content", postData.content);
+      appendIfPresent(form, "media_type", postData.media_type);
+      appendIfPresent(form, "scheduled_at", postData.scheduled_at);
+      appendIfPresent(form, "page_id", postData.page_id);
+      appendIfPresent(form, "channel_id", postData.channel_id);
+      appendJsonIfPresent(form, "hashtags", postData.hashtags || []);
+      appendJsonIfPresent(form, "media_urls", postData.media_urls || []);
+      appendJsonIfPresent(
+        form,
+        "platform_specific_data",
+        postData.platform_specific_data || {}
+      );
+      form.append("media", postData.media_file);
+
+      response = await axios.post(
+        `${API_BASE_URL}/api/v1/scheduler/schedule`,
+        form
+      );
+    } else {
+      response = await axios.post(
+        `${API_BASE_URL}/api/v1/scheduler/schedule`,
+        postData
+      );
+    }
     return response.data;
   } catch (error: any) {
     console.error("Schedule Post Error:", error.response?.data || error.message);

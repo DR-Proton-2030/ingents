@@ -277,7 +277,8 @@ export default function CreatePostPage() {
         const scheduledDateTime = new Date(
           `${scheduleDate}T${scheduleTime}`
         ).toISOString();
-        const mediaUrls = images.map((img) => img.preview);
+        const mediaFile = video?.file || images[0]?.file || undefined;
+        const mediaUrls = video?.url ? [video.url] : [];
 
         for (const platform of selectedPlatforms) {
           const platformMapping: Record<
@@ -297,7 +298,8 @@ export default function CreatePostPage() {
             user_id: userId,
             platform: mappedPlatform,
             content: postContent,
-            media_urls: video?.url ? [video.url] : mediaUrls,
+            media_urls: mediaUrls,
+            media_file: mediaFile,
             media_type: video ? "video" : images.length > 0 ? "image" : "text",
             hashtags,
             scheduled_at: scheduledDateTime,

@@ -72,6 +72,7 @@ export default function AiSidebar({ aiUrl = "social", context }: any) {
         headers: { "Content-Type": "application/json", "x-ai-stream": "1" },
         body: JSON.stringify({
           context: serializedContext,
+          sessionId,
           messages: [...messages, userMsg], // Send full conversation history
         }),
       });
