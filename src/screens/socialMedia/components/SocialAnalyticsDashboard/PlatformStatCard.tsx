@@ -16,6 +16,7 @@ export interface PlatformStatCardProps {
   onConnect?: () => void;
   onManage?: () => void;
   onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
 export default function PlatformStatCard({
@@ -31,6 +32,7 @@ export default function PlatformStatCard({
   onConnect,
   onManage,
   onRefresh,
+  refreshing = false,
 }: PlatformStatCardProps) {
   const getConnectButtonStyles = () => {
     switch (id) {
@@ -64,19 +66,24 @@ export default function PlatformStatCard({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onRefresh();
+                if (!refreshing) onRefresh();
               }}
-              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors group/refresh"
-              title="Refresh stats"
+              disabled={refreshing}
+              className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors group/refresh ${refreshing ? "cursor-not-allowed opacity-50" : ""}`}
+              title={refreshing ? "Refreshing..." : "Refresh stats"}
             >
-              <RefreshCw className="w-4 h-4 text-slate-400 group-hover/refresh:text-slate-600 group-hover/refresh:rotate-180 transition-all duration-300" />
+              <RefreshCw
+                className={`w-4 h-4 text-slate-400 group-hover/refresh:text-slate-600 transition-all duration-300 ${refreshing ? "animate-spin text-blue-500" : "group-hover/refresh:rotate-180"}`}
+              />
             </button>
           )}
         </div>
         <div className="flex flex-col">
           <div className="flex items-baseline gap-2">
             <div className="text-3xl font-bold text-slate-800">{followers}</div>
-            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{id === 'youtube' ? 'Subs' : 'Followers'}</div>
+            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              {id === "youtube" ? "Subs" : "Followers"}
+            </div>
           </div>
           {/* {views && (
             <div className="flex items-baseline gap-2 mt-1">

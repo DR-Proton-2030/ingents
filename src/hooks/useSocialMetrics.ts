@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { getSocialMetrics } from "@/utils/api/social/social.api";
 
 export const useSocialMetrics = (userId: string | undefined) => {
   const [data, setData] = useState<any>(null);
@@ -18,15 +18,15 @@ export const useSocialMetrics = (userId: string | undefined) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`/api/social/metrics?userId=${userId}`);
-      if (response.data && response.data.success) {
-        setData(response.data.result);
+      const result = await getSocialMetrics(userId);
+      if (result && result.success) {
+        setData(result.result);
       } else {
-        setError(response.data?.message || "Failed to fetch metrics");
+        setError(result?.message || "Failed to fetch metrics");
         lastFetchRef.current = ""; // Reset on error
       }
     } catch (err: any) {
-      const msg = err.response?.data?.error || err.message || "An error occurred";
+      const msg = err.message || "An error occurred";
       setError(msg);
       console.warn("useSocialMetrics error:", msg);
       lastFetchRef.current = ""; // Reset on error
@@ -39,8 +39,8 @@ export const useSocialMetrics = (userId: string | undefined) => {
     fetchMetrics();
   }, [fetchMetrics]);
 
-  return { metrics: data, loading, error, refetch: () => {
+  return { metrics: data, loading, error, refetch: async () => {
     lastFetchRef.current = "";
-    fetchMetrics();
+    return fetchMetrics();
   }};
 };

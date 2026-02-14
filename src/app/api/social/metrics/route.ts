@@ -8,12 +8,10 @@ const BACKEND_URL =
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get("userId");
+  console.log("userid ", userId);
 
   if (!userId) {
-    return NextResponse.json(
-      { error: "Missing userId" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
   }
 
   try {
@@ -23,14 +21,20 @@ export async function GET(req: Request) {
         headers: {
           "Content-Type": "application/json",
         },
-      }
+      },
     );
+    console.log(response);
     return NextResponse.json(response.data);
   } catch (err: any) {
-    console.error("Social Metrics - Backend API error:", err.response?.data || err.message);
+    console.error(
+      "Social Metrics - Backend API error:",
+      err.response?.data || err.message,
+    );
     return NextResponse.json(
-      { error: err.response?.data?.message || "Failed to fetch social metrics" },
-      { status: err.response?.status || 500 }
+      {
+        error: err.response?.data?.message || "Failed to fetch social metrics",
+      },
+      { status: err.response?.status || 500 },
     );
   }
 }

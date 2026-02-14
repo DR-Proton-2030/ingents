@@ -17,12 +17,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import AuthContext from "@/contexts/authContext/authContext";
 import { motion } from "framer-motion";
-import { 
-  LayoutDashboard, 
-  PenSquare, 
-  CalendarClock, 
+import {
+  LayoutDashboard,
+  PenSquare,
+  CalendarClock,
   History,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import AccountSelectionModal from "@/components/shared/AccountSelectionModal/AccountSelectionModal";
 import { updateUser } from "@/utils/api/user/user.api";
@@ -36,11 +37,17 @@ export default function SocialMediaDashboard() {
   const { user } = useContext(AuthContext);
   const [selectedCompany, setSelectedCompany] = useState(0);
   const [companyDetails, setCompanyDetails] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"analytics" | "compose" | "scheduled" | "history">("analytics");
+  const [activeTab, setActiveTab] = useState<
+    "analytics" | "compose" | "scheduled" | "history"
+  >("analytics");
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const scheduledPostsRef = useRef<{ refresh: () => void } | null>(null);
 
-  const { metrics, loading: metricsLoading } = useSocialMetrics((user as any)?._id || (user as any)?.id);
+  const {
+    metrics,
+    loading: metricsLoading,
+    refetch: refetchMetrics,
+  } = useSocialMetrics((user as any)?._id || (user as any)?.id);
 
   // Account Selection Modal State
   const [profile, setProfile] = useState<any>(null);
@@ -50,7 +57,11 @@ export default function SocialMediaDashboard() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash === "#_=_") {
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
     }
 
     const platformParam = searchParams.get("platform");
@@ -66,7 +77,8 @@ export default function SocialMediaDashboard() {
   }, [searchParams]);
 
   useEffect(() => {
-    const userId = (user as any)?._id || (user as any)?.id || searchParams.get("user_id");
+    const userId =
+      (user as any)?._id || (user as any)?.id || searchParams.get("user_id");
     if (!token || !userId || !platform) return;
     const normalizedPlatform = platform.toLowerCase();
     if (normalizedPlatform === "facebook") {
@@ -83,7 +95,11 @@ export default function SocialMediaDashboard() {
     if (user) {
       const platforms: string[] = [];
       if ((user as any)?.youtube?.access_token) platforms.push("youtube");
-      if ((user as any)?.facebook?.access_token || (user as any)?.facebook?.page_id) platforms.push("facebook");
+      if (
+        (user as any)?.facebook?.access_token ||
+        (user as any)?.facebook?.page_id
+      )
+        platforms.push("facebook");
       if ((user as any)?.instagram?.access_token) platforms.push("instagram");
       if ((user as any)?.x?.access_token) platforms.push("x");
       setConnectedPlatforms(platforms);
@@ -95,9 +111,21 @@ export default function SocialMediaDashboard() {
   };
 
   const tabs = [
-    { id: "analytics", label: "Analytics", icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: "compose", label: "Create Post", icon: <PenSquare className="w-4 h-4" /> },
-    { id: "scheduled", label: "Scheduled", icon: <CalendarClock className="w-4 h-4" /> },
+    {
+      id: "analytics",
+      label: "Analytics",
+      icon: <LayoutDashboard className="w-4 h-4" />,
+    },
+    {
+      id: "compose",
+      label: "Create Post",
+      icon: <PenSquare className="w-4 h-4" />,
+    },
+    {
+      id: "scheduled",
+      label: "Scheduled",
+      icon: <CalendarClock className="w-4 h-4" />,
+    },
     { id: "history", label: "History", icon: <History className="w-4 h-4" /> },
   ] as const;
 
@@ -108,16 +136,25 @@ export default function SocialMediaDashboard() {
     if (!id) return undefined;
     const normalized = id.toLowerCase();
     if (normalized === "twitter") return "x";
-    const allowed = ["instagram", "facebook", "linkedin", "x", "youtube", "telegram"];
+    const allowed = [
+      "instagram",
+      "facebook",
+      "linkedin",
+      "x",
+      "youtube",
+      "telegram",
+    ];
     return allowed.includes(normalized) ? normalized : undefined;
   }
 
   async function fetchProfile(access_token: string, user_id?: string) {
     try {
       const uid = user_id ?? "";
-      const res = await fetch(`/api/facebook/profile?access_token=${access_token}&userId=${uid}`);
+      const res = await fetch(
+        `/api/facebook/profile?access_token=${access_token}&userId=${uid}`,
+      );
       const data = await res.json();
-      console.log("Facebook profile data : ", data)
+      console.log("Facebook profile data : ", data);
       if (res.ok && data.result) {
         setProfile(Array.isArray(data.result) ? data.result : [data.result]);
       }
@@ -125,7 +162,6 @@ export default function SocialMediaDashboard() {
       console.error("fetchProfile error:", err);
     }
   }
-
 
   async function handleAccountSelect(accountId: string) {
     clearAuthQuery();
@@ -152,41 +188,60 @@ export default function SocialMediaDashboard() {
     <Layout>
       <div className="mx-auto px-5 max-w-7xl font-sans gap-5 flex flex-col lg:flex-row grid grid-cols-1 lg:grid-cols-12">
         <div className="flex-grow lg:col-span-8 h-[87vh] overflow-y-auto pb-10 hidescroll">
-        
           {/* Platform Stats Cards at Top */}
-          <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showOnlyStats metrics={metrics} />
-          
+          <SocialAnalyticsDashboard
+            connectedPlatforms={connectedPlatforms}
+            showOnlyStats
+            metrics={metrics}
+            onRefreshAll={refetchMetrics}
+          />
+
           {/* Enhanced Tab Navigation */}
           <div className="mt-6 mb-6">
-            <div className="flex bg-slate-50 rounded-2xl p-1.5 gap-1 shadow-sm">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
-                    activeTab === tab.id
-                      ? "text-white"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
-                  }`}
-                >
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute inset-0 bg-gradient-to-r from-black/70 -400 to-black/80 -500 rounded-xl"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  <span className="relative flex items-center gap-2">
-                    {tab.icon}
-                    {tab.label}
-                  </span>
-                </button>
-              ))}
+            <div className="flex bg-slate-50 rounded-2xl p-1.5 gap-1 shadow-sm items-center">
+              <div className="flex flex-1 gap-1">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 ${
+                      activeTab === tab.id
+                        ? "text-white"
+                        : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                    }`}
+                  >
+                    {activeTab === tab.id && (
+                      <motion.div
+                        layoutId="activeTab"
+                        className="absolute inset-0 bg-gradient-to-r from-black/70 -400 to-black/80 -500 rounded-xl"
+                        transition={{
+                          type: "spring",
+                          bounce: 0.2,
+                          duration: 0.6,
+                        }}
+                      />
+                    )}
+                    <span className="relative flex items-center gap-2">
+                      {tab.icon}
+                      {tab.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => refetchMetrics()}
+                className="p-2.5 ml-1 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all shadow-sm"
+                title="Refresh Analytics"
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${metricsLoading ? "animate-spin text-blue-500" : ""}`}
+                />
+              </button>
             </div>
           </div>
 
           {/* Tab Content */}
-          <motion.div 
+          <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -194,17 +249,16 @@ export default function SocialMediaDashboard() {
             className="mt-4"
           >
             {activeTab === "analytics" && (
-              <SocialAnalyticsDashboard connectedPlatforms={connectedPlatforms} showChartAndMetrics metrics={metrics} />
+              <SocialAnalyticsDashboard
+                connectedPlatforms={connectedPlatforms}
+                showChartAndMetrics
+                metrics={metrics}
+                onRefreshAll={refetchMetrics}
+              />
             )}
-            {activeTab === "compose" && (
-              <CreatePostCTA />
-            )}
-            {activeTab === "scheduled" && (
-              <ScheduledPosts />
-            )}
-            {activeTab === "history" && (
-              <PostedContentHistory />
-            )}
+            {activeTab === "compose" && <CreatePostCTA />}
+            {activeTab === "scheduled" && <ScheduledPosts />}
+            {activeTab === "history" && <PostedContentHistory />}
           </motion.div>
         </div>
         <div className="w-full flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">

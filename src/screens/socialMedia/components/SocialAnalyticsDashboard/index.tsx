@@ -3,6 +3,7 @@ import React, { useState, useContext, useEffect, useMemo } from "react";
 import { FileText, Heart, Eye } from "lucide-react";
 import AuthContext from "@/contexts/authContext/authContext";
 import { usePathname, useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 // Modular Components
 import PlatformStatCard from "./PlatformStatCard";
@@ -10,6 +11,7 @@ import AudienceGrowthChart from "./AudienceGrowthChart";
 import PlatformGrowthChart from "./PlatformGrowthChart";
 import PerformanceMetrics, { PerformanceMetric } from "./PerformanceMetrics";
 import DateRangeSelector from "./DateRangeSelector";
+import { syncFacebook, syncYoutube } from "@/utils/api/social/social.api";
 
 // Constants & Utilities
 import {
@@ -39,6 +41,7 @@ export interface SocialAnalyticsDashboardProps {
   onDisconnect?: (platformId: string) => void;
   chartData?: typeof DEFAULT_MONTHLY_DATA;
   metrics?: any;
+  onRefreshAll?: () => void;
 }
 
 export default function SocialAnalyticsDashboard({
@@ -49,6 +52,7 @@ export default function SocialAnalyticsDashboard({
   onDisconnect,
   chartData = DEFAULT_MONTHLY_DATA,
   metrics,
+  onRefreshAll,
 }: SocialAnalyticsDashboardProps) {
   const { user } = useContext(AuthContext);
   const router = useRouter();
@@ -65,9 +69,9 @@ export default function SocialAnalyticsDashboard({
       // Check if we have dynamic metrics from the metrics prop
       const metricsList = Array.isArray(metrics) ? metrics : metrics?.metrics;
       const metricData = metricsList?.find(
-        (m: any) => 
-          m.platform?.toLowerCase() === platform.id.toLowerCase() || 
-          (platform.id === "x" && m.platform?.toLowerCase() === "twitter")
+        (m: any) =>
+          m.platform?.toLowerCase() === platform.id.toLowerCase() ||
+          (platform.id === "x" && m.platform?.toLowerCase() === "twitter"),
       );
 
       if (metricData) {
@@ -83,7 +87,7 @@ export default function SocialAnalyticsDashboard({
           followers = formatNumber(
             typeof followerValue === "string"
               ? parseInt(followerValue)
-              : followerValue
+              : followerValue,
           );
           connected = true;
         }
@@ -99,7 +103,16 @@ export default function SocialAnalyticsDashboard({
         name: platform.name,
         icon: platform.icon,
         followers,
-        views: platform.id === "youtube" ? formatNumber(Number(platformData?.viewCount || platformData?.statistics?.viewCount || 0)) : undefined,
+        views:
+          platform.id === "youtube"
+            ? formatNumber(
+                Number(
+                  platformData?.viewCount ||
+                    platformData?.statistics?.viewCount ||
+                    0,
+                ),
+              )
+            : undefined,
         color: platform.color,
         bgColor: platform.bgColor,
         connected,
@@ -129,7 +142,7 @@ export default function SocialAnalyticsDashboard({
         icon: <Eye className="w-5 h-5 text-slate-400" />,
       },
     ],
-    []
+    [],
   );
 
   // Handlers
@@ -160,9 +173,56 @@ export default function SocialAnalyticsDashboard({
     onConnect?.(platformId);
   };
 
-  const handleRefresh = (platformId: string) => {
-    // Trigger page refresh to get latest data
-    window.location.reload();
+  const [refreshingPlatforms, setRefreshingPlatforms] = useState<
+    Record<string, boolean>
+  >({});
+
+  const handleRefresh = async (platformId: string) => {
+    const userId = (user as any)?._id || (user as any)?.id;
+    if (!userId) return;
+
+    setRefreshingPlatforms((prev) => ({ ...prev, [platformId]: true }));
+
+    try {
+      const platformData = (user as any)?.[platformId];
+
+      switch (platformId.toLowerCase()) {
+        case "youtube":
+          await syncYoutube(userId);
+          break;
+        case "facebook":
+          const pageId = platformData?.project_id;
+          if (!pageId) {
+            throw new Error(
+              "Facebook Page ID not found. Please connect your account again.",
+            );
+          }
+          await syncFacebook(userId, pageId);
+          break;
+        default:
+          toast.info(
+            `${platformId} synchronization logic not yet implemented.`,
+          );
+          return;
+      }
+
+      toast.success(
+        `${platformId.charAt(0).toUpperCase() + platformId.slice(1)} sync successful!`,
+      );
+
+      if (onRefreshAll) {
+        await onRefreshAll();
+      } else {
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (err: any) {
+      console.error(`Sync error for ${platformId}:`, err);
+      toast.error(
+        `Error syncing ${platformId}: ${err.message || "Unknown error"}`,
+      );
+    } finally {
+      setRefreshingPlatforms((prev) => ({ ...prev, [platformId]: false }));
+    }
   };
 
   // Render: Stats Only (for header section)
@@ -177,6 +237,7 @@ export default function SocialAnalyticsDashboard({
             onConnect={() => handleConnect(platform.id)}
             onManage={() => handleViewDetails(platform.id)}
             onRefresh={() => handleRefresh(platform.id)}
+            refreshing={refreshingPlatforms[platform.id]}
           />
         ))}
       </div>
@@ -211,6 +272,7 @@ export default function SocialAnalyticsDashboard({
             onConnect={() => handleConnect(platform.id)}
             onManage={() => handleViewDetails(platform.id)}
             onRefresh={() => handleRefresh(platform.id)}
+            refreshing={refreshingPlatforms[platform.id]}
           />
         ))}
       </div>
@@ -222,5 +284,16 @@ export default function SocialAnalyticsDashboard({
 }
 
 // Re-export components for external use
-export { PlatformStatCard, AudienceGrowthChart, PlatformGrowthChart, PerformanceMetrics, DateRangeSelector };
-export { PLATFORMS, DEFAULT_MONTHLY_DATA, formatNumber, getAuthUrl } from "./constants";
+export {
+  PlatformStatCard,
+  AudienceGrowthChart,
+  PlatformGrowthChart,
+  PerformanceMetrics,
+  DateRangeSelector,
+};
+export {
+  PLATFORMS,
+  DEFAULT_MONTHLY_DATA,
+  formatNumber,
+  getAuthUrl,
+} from "./constants";
