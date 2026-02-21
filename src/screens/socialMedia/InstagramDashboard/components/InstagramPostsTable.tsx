@@ -1,0 +1,182 @@
+"use client";
+
+import React from "react";
+import { ExternalLink, Image as ImageIcon, PlayCircle } from "lucide-react";
+import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
+
+interface InstagramPostsTableProps {
+    posts: any[];
+    title?: string;
+}
+
+function formatDate(dateString?: string) {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    }).format(date);
+}
+
+function isVideoType(mediaType?: string) {
+    const t = (mediaType || "").toUpperCase();
+    return t === "VIDEO" || t === "REEL" || t === "REELS";
+}
+
+export default function InstagramPostsTable({
+    posts,
+    title = "Published Content",
+}: InstagramPostsTableProps) {
+    if (!posts || posts.length === 0) {
+        return (
+            <div className="bg-white/60 p-16 rounded-[40px] border border-dashed border-white/60 backdrop-blur-xl text-center">
+                <div className="w-16 h-16 bg-white/40 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/30">
+                    <ImageIcon className="w-8 h-8 text-slate-300" />
+                </div>
+                <p className="text-slate-400 font-black text-xs uppercase tracking-widest text-shadow-sm">
+                    No content found
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden font-sans">
+            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+                <div>
+                    <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                        View your posts and engagement at a glance
+                    </p>
+                </div>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="border-b border-gray-200 bg-gray-50/50">
+                            <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[52%]">
+                                Post
+                            </th>
+                            <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Type
+                            </th>
+                            <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                Date
+                            </th>
+                            <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                                Likes
+                            </th>
+                            <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                                Comments
+                            </th>
+                            <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                                Open
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {posts.map((post: any) => {
+                            const mediaType = post.media_type || post.mediaType;
+                            const mediaUrl = post.media_url || post.mediaUrl;
+                            const permalink = post.permalink;
+                            const caption = post.caption || "";
+
+                            return (
+                                <tr key={post.id} className="hover:bg-gray-50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-4 items-start">
+                                            <div className="relative flex-shrink-0 rounded-lg overflow-hidden shadow-sm ring-1 ring-black/5 w-32 h-[72px] bg-gray-100">
+                                                {isVideoType(mediaType) ? (
+                                                    <>
+                                                        <video
+                                                            src={mediaUrl}
+                                                            className="w-32 h-[72px] object-cover"
+                                                            muted
+                                                            playsInline
+                                                            preload="metadata"
+                                                        />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                                                            <PlayCircle className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <img
+                                                        src={
+                                                            mediaUrl ||
+                                                            "https://picsum.photos/seed/instagram-post/400/225"
+                                                        }
+                                                        className="w-32 h-[72px] object-cover"
+                                                        alt=""
+                                                    />
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-col gap-1 min-w-0">
+                                                <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">
+                                                    {caption || "(No caption)"}
+                                                </p>
+                                                <div className="text-xs text-gray-500">
+                                                    ID: <span className="font-mono">{post.id}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td className="px-4 py-4 whitespace-nowrap">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                            {isVideoType(mediaType) ? (
+                                                <PlayCircle className="w-3.5 h-3.5" />
+                                            ) : (
+                                                <ImageIcon className="w-3.5 h-3.5" />
+                                            )}
+                                            {(mediaType || "POST").toString().replaceAll("_", " ")}
+                                        </span>
+                                    </td>
+
+                                    <td className="px-4 py-4 whitespace-nowrap">
+                                        <span className="text-sm text-gray-900">
+                                            {formatDate(post.timestamp)}
+                                        </span>
+                                    </td>
+
+                                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                                        <span className="text-sm font-medium text-gray-900 block">
+                                            {formatCompactNumber(post.like_count || 0)}
+                                        </span>
+                                    </td>
+
+                                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                                        <span className="text-sm font-medium text-gray-900 block">
+                                            {formatCompactNumber(post.comments_count || 0)}
+                                        </span>
+                                    </td>
+
+                                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (permalink) window.open(permalink, "_blank");
+                                            }}
+                                            className="p-2 text-gray-400 cursor-pointer hover:text-pink-700 hover:bg-pink-50 rounded-lg transition-all"
+                                            title="Open on Instagram"
+                                            disabled={!permalink}
+                                        >
+                                            <ExternalLink className="w-5 h-5" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50 block text-xs text-gray-500 text-center">
+                Showing {posts.length} posts
+            </div>
+        </div>
+    );
+}

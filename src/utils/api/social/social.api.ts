@@ -10,7 +10,10 @@ export const syncYoutube = async (userId: string): Promise<any> => {
     });
     return response.data;
   } catch (error: any) {
-    console.error("❌ YouTube Sync failed:", error.response?.data || error.message);
+    console.error(
+      "❌ YouTube Sync failed:",
+      error.response?.data || error.message,
+    );
     throw error;
   }
 };
@@ -18,14 +21,20 @@ export const syncYoutube = async (userId: string): Promise<any> => {
 /**
  * Synchronizes Facebook data for a specific user and page.
  */
-export const syncFacebook = async (userId: string, pageId: string): Promise<any> => {
+export const syncFacebook = async (
+  userId: string,
+  pageId: string,
+): Promise<any> => {
   try {
     const response = await API.get("/social/sync/facebook", {
       params: { user_id: userId, page_id: pageId },
     });
     return response.data;
   } catch (error: any) {
-    console.error("❌ Facebook Sync failed:", error.response?.data || error.message);
+    console.error(
+      "❌ Facebook Sync failed:",
+      error.response?.data || error.message,
+    );
     throw error;
   }
 };
@@ -45,7 +54,10 @@ export const getSocialMetrics = async (userId: string): Promise<any> => {
     });
     return response.data;
   } catch (error: any) {
-    console.error("❌ Failed to fetch social metrics:", error.response?.data || error.message);
+    console.error(
+      "❌ Failed to fetch social metrics:",
+      error.response?.data || error.message,
+    );
     throw error;
   }
 };
@@ -60,7 +72,10 @@ export const getYoutubeDashboardData = async (userId: string): Promise<any> => {
     });
     return response.data;
   } catch (error: any) {
-    console.error("❌ Failed to fetch YouTube dashboard data:", error.response?.data || error.message);
+    console.error(
+      "❌ Failed to fetch YouTube dashboard data:",
+      error.response?.data || error.message,
+    );
     throw error;
   }
 };
@@ -68,16 +83,39 @@ export const getYoutubeDashboardData = async (userId: string): Promise<any> => {
 /**
  * Fetches Facebook dashboard data for a user.
  */
-export const getFacebookDashboardData = async (userId: string): Promise<any> => {
+export const getFacebookDashboardData = async (
+  userId: string,
+): Promise<any> => {
   try {
     const response = await API.get("/social/facebook/dashboard-data", {
       params: { userId },
     });
     return response.data;
   } catch (error: any) {
-    console.error("❌ Failed to fetch Facebook dashboard data:", error.response?.data || error.message);
+    console.error(
+      "❌ Failed to fetch Facebook dashboard data:",
+      error.response?.data || error.message,
+    );
     throw error;
   }
 };
 
-
+/**
+ * Fetches Instagram dashboard data for a user.
+ */
+export const getInstagramDashboardData = async (
+  userId: string,
+): Promise<any> => {
+  try {
+    const response = await API.get("/social/instagram/dashboard-data", {
+      params: { userId },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Failed to fetch Instagram dashboard data:",
+      error.response?.data || error.message,
+    );
+    throw error;
+  }
+};
