@@ -35,6 +35,7 @@ export interface PlatformStat {
   color: string;
   bgColor: string;
   connected: boolean;
+  lastSyncedAt?: string | null;
 }
 
 export interface SocialAnalyticsDashboardProps {
@@ -120,6 +121,8 @@ export default function SocialAnalyticsDashboard({
         color: platform.color,
         bgColor: platform.bgColor,
         connected,
+        lastSyncedAt:
+          metricData?.last_synced_at || platformData?.last_synced_at || null,
       };
     });
   }, [user, connectedPlatforms, metrics]);

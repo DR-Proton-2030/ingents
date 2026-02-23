@@ -17,6 +17,7 @@ export interface PlatformStatCardProps {
   onManage?: () => void;
   onRefresh?: () => void;
   refreshing?: boolean;
+  lastSyncedAt?: string | null;
 }
 
 export default function PlatformStatCard({
@@ -33,6 +34,7 @@ export default function PlatformStatCard({
   onManage,
   onRefresh,
   refreshing = false,
+  lastSyncedAt,
 }: PlatformStatCardProps) {
   const getConnectButtonStyles = () => {
     switch (id) {
@@ -54,7 +56,7 @@ export default function PlatformStatCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="relative p-5 rounded-2xl border border-slate-100 bg-white hover:shadow-lg transition-all duration-300 cursor-pointer group overflow-hidden"
+      className="relative p-5 rounded-2xl border border-slate-100 bg-white hover:shadow-lg transition-all duration-300 group overflow-hidden"
     >
       <div
         className={`absolute inset-0 ${bgColor} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
@@ -69,7 +71,7 @@ export default function PlatformStatCard({
                 if (!refreshing) onRefresh();
               }}
               disabled={refreshing}
-              className={`p-1.5 rounded-lg hover:bg-slate-100 transition-colors group/refresh ${refreshing ? "cursor-not-allowed opacity-50" : ""}`}
+              className={`p-1.5 cursor-pointer rounded-lg hover:bg-slate-100 transition-colors group/refresh ${refreshing ? "cursor-not-allowed opacity-50" : ""}`}
               title={refreshing ? "Refreshing..." : "Refresh stats"}
             >
               <RefreshCw
@@ -85,12 +87,17 @@ export default function PlatformStatCard({
               {id === "youtube" ? "Subs" : "Followers"}
             </div>
           </div>
-          {/* {views && (
-            <div className="flex items-baseline gap-2 mt-1">
-              <div className="text-xl font-bold text-slate-600">{views}</div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Views</div>
+          {lastSyncedAt && connected && (
+            <div className="text-[10px] text-slate-400 font-medium mt-1 truncate">
+              Synced:{" "}
+              {new Date(lastSyncedAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+              })}
             </div>
-          )} */}
+          )}
         </div>
 
         {/* Connect or Manage button */}
@@ -100,7 +107,7 @@ export default function PlatformStatCard({
               e.stopPropagation();
               onManage?.();
             }}
-            className="mt-3 w-full py-2 rounded-lg text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+            className="mt-3 w-full py-2 cursor-pointer rounded-lg text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             Manage
           </button>
@@ -110,7 +117,7 @@ export default function PlatformStatCard({
               e.stopPropagation();
               onConnect?.();
             }}
-            className={`mt-3 w-full py-2 rounded-lg text-sm font-medium text-white transition-colors ${getConnectButtonStyles()}`}
+            className={`mt-3 w-full py-2 cursor-pointer rounded-lg text-sm font-medium text-white transition-colors ${getConnectButtonStyles()}`}
           >
             Connect
           </button>
