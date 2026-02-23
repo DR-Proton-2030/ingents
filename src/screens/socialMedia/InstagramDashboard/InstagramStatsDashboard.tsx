@@ -5,7 +5,7 @@ import Layout from "@/screens/layout/Layout";
 import AuthContext from "@/contexts/authContext/authContext";
 import { Loading } from "@/components/shared/loadingScreen/Loading";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
@@ -15,8 +15,11 @@ import {
   UserPlus,
   Image as ImageIcon,
   LayoutDashboard,
+  LogOut,
 } from "lucide-react";
 
+import { toast } from "react-toastify";
+import ConfirmationModal from "@/components/shared/ConfirmationModal/ConfirmationModal";
 import Header from "@/screens/socialMedia/components/Header";
 import FBStatCard from "@/screens/socialMedia/FacebookDashboard/components/FBStatCard";
 import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
@@ -54,16 +57,48 @@ function formatPercent(value: unknown) {
 }
 
 function hasKeys(value: unknown) {
-  return !!value && typeof value === "object" && Object.keys(value as any).length > 0;
+  return (
+    !!value && typeof value === "object" && Object.keys(value as any).length > 0
+  );
 }
 
 export default function InstagramStatsDashboard() {
   const { user } = useContext(AuthContext);
   const pathname = usePathname();
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<
     "overview" | "posts" | "audience" | "insights" | "top-content"
   >("overview");
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+
+  const handleDisconnect = async () => {
+    if (isDisconnecting) return;
+    setShowDisconnectModal(true);
+  };
+
+  const confirmDisconnect = async () => {
+    try {
+      setIsDisconnecting(true);
+      const res = await fetch("/api/instagram/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: (user as any)?._id || (user as any)?.id,
+        }),
+      });
+      if (res.ok) {
+        toast.success("Instagram disconnected");
+        router.push("/site/social-media");
+      }
+    } catch (err) {
+      toast.error("Failed to disconnect");
+    } finally {
+      setIsDisconnecting(false);
+      setShowDisconnectModal(false);
+    }
+  };
 
   const userId = (user as any)?._id || (user as any)?.id;
   const { data, loading, error } = useInstagramDetails(userId);
@@ -160,20 +195,23 @@ export default function InstagramStatsDashboard() {
 
           <div className="-mt-2 flex flex-col xl:flex-row items-center justify-between gap-6 p-2 bg-white/60 backdrop-blur-md rounded-[32px] border border-white/50 shadow-sm">
             <div className="flex items-center gap-1 w-full xl:w-auto overflow-x-auto no-scrollbar">
-              {([
-                { id: "overview", label: "Overview" },
-                { id: "posts", label: "Posts" },
-                { id: "audience", label: "Audience" },
-                { id: "insights", label: "Insights" },
-                { id: "top-content", label: "Top Content" },
-              ] as const).map((tab) => (
+              {(
+                [
+                  { id: "overview", label: "Overview" },
+                  { id: "posts", label: "Posts" },
+                  { id: "audience", label: "Audience" },
+                  { id: "insights", label: "Insights" },
+                  { id: "top-content", label: "Top Content" },
+                ] as const
+              ).map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-8 py-3.5 rounded-3xl cursor-pointer text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-2.5 whitespace-nowrap relative group ${activeTab === tab.id
-                    ? "text-white"
-                    : "text-slate-500 hover:text-slate-900"
-                    }`}
+                  className={`px-8 py-3.5 rounded-3xl cursor-pointer text-[11px] font-bold uppercase tracking-wider transition-all flex items-center gap-2.5 whitespace-nowrap relative group ${
+                    activeTab === tab.id
+                      ? "text-white"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
                 >
                   {activeTab === tab.id && (
                     <motion.div
@@ -191,13 +229,27 @@ export default function InstagramStatsDashboard() {
               ))}
             </div>
 
-            <Link
-              href={baseSocialPath}
-              className="px-6 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-md flex items-center gap-2"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              Back Center
-            </Link>
+            <div className="flex items-center gap-2 w-full xl:w-auto mt-4 xl:mt-0">
+              <div className="relative group">
+                <button
+                  onClick={handleDisconnect}
+                  className="w-11 h-11 bg-red-400 cursor-pointer text-white hover:text-black rounded-2xl flex items-center justify-center transition-all border border-slate-100 shadow-sm active:scale-95"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-slate-900 text-white text-[9px] font-black uppercase tracking-[0.15em] rounded-xl opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-2xl z-[100]">
+                  Disconnect Account
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-slate-900" />
+                </div>
+              </div>
+              <Link
+                href={baseSocialPath}
+                className="px-6 py-3.5 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-2xl text-[11px] font-bold uppercase tracking-wider hover:opacity-90 transition-all shadow-md flex items-center gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Back Center
+              </Link>
+            </div>
           </div>
 
           {activeTab === "overview" ? (
@@ -249,7 +301,9 @@ export default function InstagramStatsDashboard() {
                 variant="default"
                 disabled={insights?.accountsReached == null}
                 formatter={(v) =>
-                  insights?.accountsReached == null ? "---" : formatCompactNumber(v)
+                  insights?.accountsReached == null
+                    ? "---"
+                    : formatCompactNumber(v)
                 }
               />
             </div>
@@ -260,7 +314,9 @@ export default function InstagramStatsDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <FBStatCard
                   title="Followers"
-                  value={toNumber(audience?.followers ?? overview?.followersCount ?? 0)}
+                  value={toNumber(
+                    audience?.followers ?? overview?.followersCount ?? 0,
+                  )}
                   subtitle="Audience followers"
                   icon={<Users className="w-6 h-6" />}
                   variant="default"
@@ -290,27 +346,28 @@ export default function InstagramStatsDashboard() {
 
                 {hasKeys(audience?.demographics) ? (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {Object.entries(audience.demographics as Record<string, any>).map(
-                      ([key, value]) => (
-                        <div
-                          key={key}
-                          className="rounded-2xl border border-white/50 bg-white/70 p-4"
-                        >
-                          <div className="text-[11px] font-black uppercase tracking-widest text-slate-500">
-                            {key.replaceAll("_", " ")}
-                          </div>
-                          <div className="mt-2 text-sm text-slate-900 font-semibold break-words">
-                            {typeof value === "string" || typeof value === "number"
-                              ? String(value)
-                              : Array.isArray(value)
-                                ? `${value.length} items`
-                                : value && typeof value === "object"
-                                  ? `${Object.keys(value).length} fields`
-                                  : "—"}
-                          </div>
+                    {Object.entries(
+                      audience.demographics as Record<string, any>,
+                    ).map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="rounded-2xl border border-white/50 bg-white/70 p-4"
+                      >
+                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-500">
+                          {key.replaceAll("_", " ")}
                         </div>
-                      ),
-                    )}
+                        <div className="mt-2 text-sm text-slate-900 font-semibold break-words">
+                          {typeof value === "string" ||
+                          typeof value === "number"
+                            ? String(value)
+                            : Array.isArray(value)
+                              ? `${value.length} items`
+                              : value && typeof value === "object"
+                                ? `${Object.keys(value).length} fields`
+                                : "—"}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-white/60 bg-white/60 p-10 text-center">
@@ -318,7 +375,8 @@ export default function InstagramStatsDashboard() {
                       No demographics available
                     </div>
                     <div className="text-slate-500 text-sm mt-1">
-                      Instagram didn’t return demographic breakdown for this account.
+                      Instagram didn’t return demographic breakdown for this
+                      account.
                     </div>
                   </div>
                 )}
@@ -337,7 +395,9 @@ export default function InstagramStatsDashboard() {
                       <div className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
                         {insights?.interactions?.total == null
                           ? "—"
-                          : formatCompactNumber(toNumber(insights?.interactions?.total))}
+                          : formatCompactNumber(
+                              toNumber(insights?.interactions?.total),
+                            )}
                       </div>
                       <div className="text-sm font-semibold text-slate-600">
                         Total interactions (recent)
@@ -350,7 +410,9 @@ export default function InstagramStatsDashboard() {
                           Followers
                         </div>
                         <div className="mt-2 text-2xl font-black text-slate-900 tracking-tight">
-                          {formatPercent(insights?.interactions?.followersPercentage)}
+                          {formatPercent(
+                            insights?.interactions?.followersPercentage,
+                          )}
                         </div>
                       </div>
                       <div className="rounded-2xl border border-white/60 bg-white/70 p-5">
@@ -358,7 +420,9 @@ export default function InstagramStatsDashboard() {
                           Non-followers
                         </div>
                         <div className="mt-2 text-2xl font-black text-slate-900 tracking-tight">
-                          {formatPercent(insights?.interactions?.nonFollowersPercentage)}
+                          {formatPercent(
+                            insights?.interactions?.nonFollowersPercentage,
+                          )}
                         </div>
                       </div>
                     </div>
@@ -377,9 +441,18 @@ export default function InstagramStatsDashboard() {
                     <div className="mt-6 space-y-5">
                       {(
                         [
-                          { label: "Posts", value: insights?.interactionsByContentType?.posts },
-                          { label: "Reels", value: insights?.interactionsByContentType?.reels },
-                          { label: "Stories", value: insights?.interactionsByContentType?.stories },
+                          {
+                            label: "Posts",
+                            value: insights?.interactionsByContentType?.posts,
+                          },
+                          {
+                            label: "Reels",
+                            value: insights?.interactionsByContentType?.reels,
+                          },
+                          {
+                            label: "Stories",
+                            value: insights?.interactionsByContentType?.stories,
+                          },
                         ] as const
                       ).map((row) => {
                         const percentRaw = Number(row.value);
@@ -421,7 +494,9 @@ export default function InstagramStatsDashboard() {
                   variant="default"
                   disabled={insights?.views?.total == null}
                   formatter={(v) =>
-                    insights?.views?.total == null ? "---" : formatCompactNumber(v)
+                    insights?.views?.total == null
+                      ? "---"
+                      : formatCompactNumber(v)
                   }
                 />
                 <FBStatCard
@@ -432,7 +507,9 @@ export default function InstagramStatsDashboard() {
                   variant="default"
                   disabled={insights?.accountsReached == null}
                   formatter={(v) =>
-                    insights?.accountsReached == null ? "---" : formatCompactNumber(v)
+                    insights?.accountsReached == null
+                      ? "---"
+                      : formatCompactNumber(v)
                   }
                 />
               </div>
@@ -483,7 +560,9 @@ export default function InstagramStatsDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   <FBStatCard
                     title="Profile Visits"
-                    value={toNumber(insights?.profileActivity?.profileVisits ?? 0)}
+                    value={toNumber(
+                      insights?.profileActivity?.profileVisits ?? 0,
+                    )}
                     subtitle="From profile activity"
                     icon={<Users className="w-6 h-6" />}
                     variant="default"
@@ -496,11 +575,15 @@ export default function InstagramStatsDashboard() {
                   />
                   <FBStatCard
                     title="External Link Taps"
-                    value={toNumber(insights?.profileActivity?.externalLinkTaps ?? 0)}
+                    value={toNumber(
+                      insights?.profileActivity?.externalLinkTaps ?? 0,
+                    )}
                     subtitle="From profile activity"
                     icon={<Users className="w-6 h-6" />}
                     variant="default"
-                    disabled={insights?.profileActivity?.externalLinkTaps == null}
+                    disabled={
+                      insights?.profileActivity?.externalLinkTaps == null
+                    }
                     formatter={(v) =>
                       insights?.profileActivity?.externalLinkTaps == null
                         ? "---"
@@ -510,10 +593,14 @@ export default function InstagramStatsDashboard() {
                   <FBStatCard
                     title="Response Rate"
                     value={0}
-                    subtitle={insights?.responsiveness?.dailyResponseRate || "—"}
+                    subtitle={
+                      insights?.responsiveness?.dailyResponseRate || "—"
+                    }
                     icon={<Users className="w-6 h-6" />}
                     variant="default"
-                    formatter={() => insights?.responsiveness?.dailyResponseRate || "—"}
+                    formatter={() =>
+                      insights?.responsiveness?.dailyResponseRate || "—"
+                    }
                   />
                 </div>
 
@@ -534,7 +621,8 @@ export default function InstagramStatsDashboard() {
                     },
                     {
                       label: "Returning Contacts",
-                      value: insights?.conversations?.returningMessagingContacts,
+                      value:
+                        insights?.conversations?.returningMessagingContacts,
                     },
                   ].map((item) => (
                     <div
@@ -545,7 +633,9 @@ export default function InstagramStatsDashboard() {
                         {item.label}
                       </div>
                       <div className="mt-2 text-2xl font-black text-slate-900 tracking-tight">
-                        {item.value == null ? "—" : formatCompactNumber(toNumber(item.value))}
+                        {item.value == null
+                          ? "—"
+                          : formatCompactNumber(toNumber(item.value))}
                       </div>
                     </div>
                   ))}
@@ -554,7 +644,10 @@ export default function InstagramStatsDashboard() {
             </div>
           ) : activeTab === "top-content" ? (
             <div className="space-y-10">
-              <InstagramPostsTable posts={topByViews} title="Top Content By Views" />
+              <InstagramPostsTable
+                posts={topByViews}
+                title="Top Content By Views"
+              />
               <InstagramPostsTable
                 posts={topByInteractions}
                 title="Top Content By Interactions"
@@ -563,6 +656,16 @@ export default function InstagramStatsDashboard() {
           ) : null}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={showDisconnectModal}
+        onClose={() => setShowDisconnectModal(false)}
+        onConfirm={confirmDisconnect}
+        title="Disconnect Instagram?"
+        description="Are you sure you want to disconnect your Instagram account? You can reconnect at any time to resume analytics tracking."
+        confirmText="Disconnect Now"
+        type="danger"
+        isLoading={isDisconnecting}
+      />
     </Layout>
   );
 }
