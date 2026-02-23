@@ -19,6 +19,7 @@ import AuthContext from "@/contexts/authContext/authContext";
 import { toast } from "react-toastify";
 import { uploadYoutubeVideo } from "@/service/youtube/youtube.service";
 import { postFacebookContent } from "@/service/facebook/facebook.service";
+import { postInstagramContent } from "@/service/instagram/instagram.service";
 import { postXContent } from "@/service/x/x.service";
 import {
   schedulePost,
@@ -55,8 +56,11 @@ export default function CreatePostPage() {
   const [postContent, setPostContent] = useState("");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [video, setVideo] = useState<UploadedVideo | null>(null);
-  const [youtubeThumbnail, setYoutubeThumbnail] = useState<UploadedImage | null>(null);
-  const [youtubeThumbnailDataUrl, setYoutubeThumbnailDataUrl] = useState<string | null>(null);
+  const [youtubeThumbnail, setYoutubeThumbnail] =
+    useState<UploadedImage | null>(null);
+  const [youtubeThumbnailDataUrl, setYoutubeThumbnailDataUrl] = useState<
+    string | null
+  >(null);
   const [hashtags, setHashtags] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isPosting, setIsPosting] = useState(false);
@@ -70,12 +74,25 @@ export default function CreatePostPage() {
     const platforms: string[] = [];
     const userData = user as any;
 
-    if (userData.instagram?.id || userData.instagram?.name || userData.instagram?.access_token)
+    if (
+      userData.instagram?.id ||
+      userData.instagram?.name ||
+      userData.instagram?.access_token
+    )
       platforms.push("instagram");
-    if (userData.facebook?.page_id || userData.facebook?.name || userData.facebook?.access_token)
+    if (
+      userData.facebook?.page_id ||
+      userData.facebook?.name ||
+      userData.facebook?.access_token
+    )
       platforms.push("facebook");
-    if (userData.x?.id || userData.x?.name || userData.x?.access_token) platforms.push("X");
-    if (userData.youtube?.id || userData.youtube?.name || userData.youtube?.access_token)
+    if (userData.x?.id || userData.x?.name || userData.x?.access_token)
+      platforms.push("X");
+    if (
+      userData.youtube?.id ||
+      userData.youtube?.name ||
+      userData.youtube?.access_token
+    )
       platforms.push("youtube");
 
     // If no platforms detected but user exists, show all platforms as options
@@ -102,7 +119,8 @@ export default function CreatePostPage() {
   }, [selectedPlatforms]);
 
   const getPreviewCandidates = (): PreviewPlatform[] => {
-    const source = selectedPlatforms.length > 0 ? selectedPlatforms : connectedPlatforms;
+    const source =
+      selectedPlatforms.length > 0 ? selectedPlatforms : connectedPlatforms;
     const platformMap: Record<string, PreviewPlatform | undefined> = {
       instagram: "instagram",
       facebook: "facebook",
@@ -226,7 +244,7 @@ export default function CreatePostPage() {
     setSelectedPlatforms((prev) =>
       prev.includes(platform)
         ? prev.filter((p) => p !== platform)
-        : [...prev, platform]
+        : [...prev, platform],
     );
   };
 
@@ -244,7 +262,9 @@ export default function CreatePostPage() {
   const togglePlatformFromHeader = (platform: string) => {
     setSelectedPlatforms((prev) => {
       const isSelected = prev.includes(platform);
-      const next = isSelected ? prev.filter((p) => p !== platform) : [...prev, platform];
+      const next = isSelected
+        ? prev.filter((p) => p !== platform)
+        : [...prev, platform];
 
       if (!isSelected) {
         setPreviewByPlatform(platform);
@@ -263,7 +283,8 @@ export default function CreatePostPage() {
     });
   };
 
-  const handlePost = async () => {
+  const handlePost = async (e?: React.MouseEvent | React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!postContent.trim() && images.length === 0 && !video) return;
     if (selectedPlatforms.length === 0) return;
 
@@ -275,7 +296,7 @@ export default function CreatePostPage() {
 
       if (isScheduled) {
         const scheduledDateTime = new Date(
-          `${scheduleDate}T${scheduleTime}`
+          `${scheduleDate}T${scheduleTime}`,
         ).toISOString();
         const mediaUrls = images.map((img) => img.preview);
 
@@ -308,10 +329,10 @@ export default function CreatePostPage() {
             platform_specific_data:
               mappedPlatform === "youtube"
                 ? {
-                  title: postContent.slice(0, 100) || "Untitled Video",
-                  privacyStatus: "public",
-                  thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
-                }
+                    title: postContent.slice(0, 100) || "Untitled Video",
+                    privacyStatus: "public",
+                    thumbnailDataUrl: youtubeThumbnailDataUrl || undefined,
+                  }
                 : undefined,
           };
 
@@ -334,7 +355,7 @@ export default function CreatePostPage() {
           let youtubeScheduleAt;
           if (showScheduler && scheduleDate && scheduleTime) {
             youtubeScheduleAt = new Date(
-              `${scheduleDate}T${scheduleTime}`
+              `${scheduleDate}T${scheduleTime}`,
             ).toISOString();
           }
 
@@ -342,13 +363,18 @@ export default function CreatePostPage() {
           if (video.file) {
             const ytFormData = new FormData();
             ytFormData.append("user_id", user?.id || (user as any)?._id || "");
-            ytFormData.append("title", postContent.slice(0, 100) || "Untitled Video");
+            ytFormData.append(
+              "title",
+              postContent.slice(0, 100) || "Untitled Video",
+            );
             ytFormData.append("description", postContent);
             ytFormData.append("tags", hashtags.join(","));
             ytFormData.append("privacyStatus", "public");
             ytFormData.append("video", video.file);
-            if (youtubeScheduleAt) ytFormData.append("scheduleAt", youtubeScheduleAt);
-            if (youtubeThumbnailDataUrl) ytFormData.append("thumbnailDataUrl", youtubeThumbnailDataUrl);
+            if (youtubeScheduleAt)
+              ytFormData.append("scheduleAt", youtubeScheduleAt);
+            if (youtubeThumbnailDataUrl)
+              ytFormData.append("thumbnailDataUrl", youtubeThumbnailDataUrl);
 
             ytResponse = await uploadYoutubeVideo(ytFormData);
           } else {
@@ -365,10 +391,16 @@ export default function CreatePostPage() {
           }
 
           const thumbnailSet =
-            (ytResponse as any)?.thumbnailSet ?? (ytResponse as any)?.details?.thumbnailSet;
+            (ytResponse as any)?.thumbnailSet ??
+            (ytResponse as any)?.details?.thumbnailSet;
           const thumbnailError =
-            (ytResponse as any)?.thumbnailError ?? (ytResponse as any)?.details?.thumbnailError;
-          if (youtubeThumbnailDataUrl && thumbnailSet === false && thumbnailError) {
+            (ytResponse as any)?.thumbnailError ??
+            (ytResponse as any)?.details?.thumbnailError;
+          if (
+            youtubeThumbnailDataUrl &&
+            thumbnailSet === false &&
+            thumbnailError
+          ) {
             toast.warn(
               "Video uploaded, but YouTube thumbnail couldn't be set (channel may not be eligible for custom thumbnails).",
             );
@@ -377,17 +409,14 @@ export default function CreatePostPage() {
           toast.success(
             youtubeScheduleAt
               ? "YouTube video scheduled!"
-              : "YouTube video upload started!"
+              : "YouTube video upload started!",
           );
         }
 
         if (selectedPlatforms.includes("facebook")) {
           const fbFormData = new FormData();
           fbFormData.append("userId", user?.id || (user as any)?._id || "");
-          fbFormData.append(
-            "pageId",
-            (user as any).facebook?.project_id || ""
-          );
+          fbFormData.append("pageId", (user as any).facebook?.project_id || "");
           fbFormData.append("message", postContent);
 
           if (images.length > 0) {
@@ -423,6 +452,24 @@ export default function CreatePostPage() {
 
           await postXContent(xFormData);
           toast.success("Posted to X!");
+        }
+
+        if (selectedPlatforms.includes("instagram")) {
+          const igFormData = new FormData();
+          igFormData.append("userId", user?.id || (user as any)?._id || "");
+          igFormData.append("message", postContent);
+
+          if (images.length > 0) {
+            igFormData.append("image", images[0].file!);
+          }
+          if (video?.file) {
+            igFormData.append("video", video.file);
+          } else if (video?.url) {
+            igFormData.append("videoURL", video.url);
+          }
+
+          await postInstagramContent(igFormData);
+          toast.success("Posted to Instagram!");
         }
 
         // Navigate back
@@ -485,12 +532,14 @@ export default function CreatePostPage() {
                 const config = platformIcons[platform];
                 return (
                   <button
+                    type="button"
                     key={platform}
                     onClick={() => togglePlatformFromHeader(platform)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${isSelected
-                      ? `${config.bgColor} text-white shadow-sm`
-                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                      }`}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
+                      isSelected
+                        ? `${config.bgColor} text-white shadow-sm`
+                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    }`}
                     title={`Select ${config.name}`}
                   >
                     {config.icon}
@@ -501,18 +550,20 @@ export default function CreatePostPage() {
             </div>
 
             <button
+              type="button"
               onClick={handlePost}
               disabled={
                 isPosting ||
                 (!postContent.trim() && images.length === 0 && !video) ||
                 selectedPlatforms.length === 0
               }
-              className={`px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${isPosting ||
+              className={`px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                isPosting ||
                 (!postContent.trim() && images.length === 0 && !video) ||
                 selectedPlatforms.length === 0
-                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
-                }`}
+                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                  : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
+              }`}
             >
               {isPosting ? (
                 <>
@@ -549,9 +600,7 @@ export default function CreatePostPage() {
                 </div>
                 Compose
               </h2>
-              <div className="text-xs text-slate-400">
-                Step 1 of 2
-              </div>
+              <div className="text-xs text-slate-400">Step 1 of 2</div>
             </div>
 
             <div className="p-6 space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto hidescroll">
@@ -594,7 +643,9 @@ export default function CreatePostPage() {
                           />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-slate-700">Thumbnail selected</p>
+                          <p className="text-sm font-medium text-slate-700">
+                            Thumbnail selected
+                          </p>
                           <p className="text-xs text-slate-500 mt-1">
                             Recommended 1280×720, ≤ 2MB
                           </p>
@@ -612,8 +663,12 @@ export default function CreatePostPage() {
                       <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl">
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <p className="text-sm font-medium text-slate-700">Add a custom thumbnail</p>
-                            <p className="text-xs text-slate-500 mt-1">JPG/PNG, ≤ 2MB</p>
+                            <p className="text-sm font-medium text-slate-700">
+                              Add a custom thumbnail
+                            </p>
+                            <p className="text-xs text-slate-500 mt-1">
+                              JPG/PNG, ≤ 2MB
+                            </p>
                           </div>
                           <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors text-sm font-medium">
                             <FiImage className="w-4 h-4" />
@@ -624,7 +679,8 @@ export default function CreatePostPage() {
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
-                                if (file) void handleYoutubeThumbnailUpload(file);
+                                if (file)
+                                  void handleYoutubeThumbnailUpload(file);
                                 e.currentTarget.value = "";
                               }}
                             />
@@ -640,24 +696,29 @@ export default function CreatePostPage() {
               <div className="relative">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-                  {selectedPlatforms.includes("youtube") ? "Title & Description" : "Post Content"}
+                  {selectedPlatforms.includes("youtube")
+                    ? "Title & Description"
+                    : "Post Content"}
                 </label>
                 <div className="relative">
                   <textarea
                     value={postContent}
                     onChange={(e) => setPostContent(e.target.value)}
-                    placeholder={selectedPlatforms.includes("youtube")
-                      ? "Enter your video title and description..."
-                      : "What's on your mind? Write your post here..."}
+                    placeholder={
+                      selectedPlatforms.includes("youtube")
+                        ? "Enter your video title and description..."
+                        : "What's on your mind? Write your post here..."
+                    }
                     className="w-full min-h-[160px] p-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-300 transition-all resize-none text-sm leading-relaxed"
                     maxLength={maxCharacters}
                   />
                   <div className="absolute bottom-3 right-3">
                     <div
-                      className={`text-xs font-medium px-2 py-1 rounded-md ${characterCount > maxCharacters * 0.9
-                        ? "bg-amber-100 text-amber-600"
-                        : "bg-white text-slate-400 border border-slate-200"
-                        }`}
+                      className={`text-xs font-medium px-2 py-1 rounded-md ${
+                        characterCount > maxCharacters * 0.9
+                          ? "bg-amber-100 text-amber-600"
+                          : "bg-white text-slate-400 border border-slate-200"
+                      }`}
                     >
                       {characterCount}/{maxCharacters}
                     </div>
@@ -675,7 +736,8 @@ export default function CreatePostPage() {
               {/* Media Section for Instagram/Facebook/X (not YouTube) */}
               {(selectedPlatforms.includes("instagram") ||
                 selectedPlatforms.includes("facebook") ||
-                selectedPlatforms.includes("X")) && !selectedPlatforms.includes("youtube") && (
+                selectedPlatforms.includes("X")) &&
+                !selectedPlatforms.includes("youtube") && (
                   <div className="space-y-4">
                     <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
@@ -695,7 +757,8 @@ export default function CreatePostPage() {
                     />
 
                     {/* Video Upload for Facebook/X */}
-                    {(selectedPlatforms.includes("facebook") || selectedPlatforms.includes("X")) && (
+                    {(selectedPlatforms.includes("facebook") ||
+                      selectedPlatforms.includes("X")) && (
                       <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
@@ -754,10 +817,11 @@ export default function CreatePostPage() {
               <div>
                 <button
                   onClick={() => setShowScheduler(!showScheduler)}
-                  className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all ${showScheduler
-                    ? "bg-slate-900 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
+                  className={`flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-xl transition-all ${
+                    showScheduler
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
                 >
                   <FiClock className="w-4 h-4" />
                   {showScheduler ? "Scheduled" : "Schedule for later"}
@@ -780,22 +844,20 @@ export default function CreatePostPage() {
                   Cancel
                 </Link>
                 <button
+                  type="button"
                   onClick={handlePost}
                   disabled={
                     isPosting ||
-                    (!postContent.trim() &&
-                      images.length === 0 &&
-                      !video) ||
+                    (!postContent.trim() && images.length === 0 && !video) ||
                     selectedPlatforms.length === 0
                   }
-                  className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${isPosting ||
-                    (!postContent.trim() &&
-                      images.length === 0 &&
-                      !video) ||
+                  className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${
+                    isPosting ||
+                    (!postContent.trim() && images.length === 0 && !video) ||
                     selectedPlatforms.length === 0
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
-                    }`}
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
+                  }`}
                 >
                   {isPosting ? (
                     <>
@@ -838,7 +900,8 @@ export default function CreatePostPage() {
                     ? "X"
                     : previewPlatform === "youtube"
                       ? "YouTube"
-                      : previewPlatform.charAt(0).toUpperCase() + previewPlatform.slice(1)}
+                      : previewPlatform.charAt(0).toUpperCase() +
+                        previewPlatform.slice(1)}
                 </div>
               </div>
 
@@ -875,7 +938,10 @@ export default function CreatePostPage() {
                     )}
                     {previewPlatform === "youtube" && (
                       <YouTubePreview
-                        title={postContent.split('\n')[0].slice(0, 100) || "New video"}
+                        title={
+                          postContent.split("\n")[0].slice(0, 100) ||
+                          "New video"
+                        }
                         description={getFullContent()}
                         video={video}
                         thumbnailPreview={youtubeThumbnail?.preview}
@@ -891,7 +957,9 @@ export default function CreatePostPage() {
                       <FiEye className="w-7 h-7 text-slate-300" />
                     </div>
                     <p className="font-medium text-slate-500">No preview yet</p>
-                    <p className="text-sm mt-1">Start composing to see a live preview</p>
+                    <p className="text-sm mt-1">
+                      Start composing to see a live preview
+                    </p>
                   </div>
                 )}
               </div>
@@ -901,7 +969,11 @@ export default function CreatePostPage() {
                 <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>
-                      Previewing as {previewPlatform === 'x' ? 'X (Twitter)' : previewPlatform.charAt(0).toUpperCase() + previewPlatform.slice(1)}
+                      Previewing as{" "}
+                      {previewPlatform === "x"
+                        ? "X (Twitter)"
+                        : previewPlatform.charAt(0).toUpperCase() +
+                          previewPlatform.slice(1)}
                     </span>
                     <span className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-emerald-500" />
