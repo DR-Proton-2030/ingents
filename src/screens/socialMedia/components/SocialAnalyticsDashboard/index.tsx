@@ -11,7 +11,11 @@ import AudienceGrowthChart from "./AudienceGrowthChart";
 import PlatformGrowthChart from "./PlatformGrowthChart";
 import PerformanceMetrics, { PerformanceMetric } from "./PerformanceMetrics";
 import DateRangeSelector from "./DateRangeSelector";
-import { syncFacebook, syncYoutube } from "@/utils/api/social/social.api";
+import {
+  syncFacebook,
+  syncYoutube,
+  syncInstagram,
+} from "@/utils/api/social/social.api";
 
 // Constants & Utilities
 import {
@@ -198,6 +202,9 @@ export default function SocialAnalyticsDashboard({
             );
           }
           await syncFacebook(userId, pageId);
+          break;
+        case "instagram":
+          await syncInstagram(userId);
           break;
         default:
           toast.info(

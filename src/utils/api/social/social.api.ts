@@ -40,6 +40,24 @@ export const syncFacebook = async (
 };
 
 /**
+ * Synchronizes Instagram data for a specific user.
+ */
+export const syncInstagram = async (userId: string): Promise<any> => {
+  try {
+    const response = await API.get("/social/sync/instagram", {
+      params: { user_id: userId },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "❌ Instagram Sync failed:",
+      error.response?.data || error.message,
+    );
+    throw error;
+  }
+};
+
+/**
  * Centralized function to trigger synchronization based on platform type.
  * This is used by the dashboard button.
  */
