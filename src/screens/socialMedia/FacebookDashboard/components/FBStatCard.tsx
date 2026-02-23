@@ -45,7 +45,7 @@ const FBStatCard: React.FC<FBStatCardProps> = ({
 
   return (
     <div
-      className={`group p-8 rounded-[40px] shadow-xl backdrop-blur-2xl border flex flex-col justify-between transition-all hover:shadow-2xl hover:-translate-y-1 ${variants[variant]} ${disabled ? "opacity-50 grayscale select-none" : ""}`}
+      className={`group p-8 rounded-[40px] shadow-xl backdrop-blur-2xl border flex flex-col justify-between transition-all hover:shadow-2xl hover:-translate-y-1 ${variants[variant]} ${disabled ? "opacity-80 saturate-50 select-none border-dashed bg-slate-50/50 cursor-not-allowed" : ""}`}
     >
       <div className="flex justify-between items-start mb-6">
         <div
