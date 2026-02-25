@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, X } from "lucide-react";
 
@@ -26,10 +27,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   type = "danger",
   isLoading = false,
 }) => {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -54,12 +63,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
             <button
               onClick={onClose}
-              className="absolute top-6 right-6 p-2 bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200/50 rounded-full transition-all shadow-sm hover:scale-110 active:scale-95"
+              className="absolute top-6 right-6 p-2 bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 border border-slate-200/50 rounded-full transition-all shadow-sm hover:scale-110 active:scale-95 z-10"
             >
               <X className="w-5 h-5 md:w-6 md:h-6" />
             </button>
 
-            <div className="p-10 text-center">
+            <div className="p-10 text-center relative z-0">
               <div
                 className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${type === "danger" ? "bg-red-50 text-red-500" : "bg-orange-50 text-orange-500"}`}
               >
@@ -101,7 +110,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
 

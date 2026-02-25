@@ -603,7 +603,7 @@ export default function CreatePostPage() {
               <div className="text-xs text-slate-400">Step 1 of 2</div>
             </div>
 
-            <div className="p-6 space-y-6 max-h-[calc(100vh-280px)] overflow-y-auto hidescroll">
+            <div className="p-6 space-y-6">
               {/* Platform selection moved to header */}
 
               {/* YouTube: Video + Thumbnail FIRST */}
@@ -744,7 +744,7 @@ export default function CreatePostPage() {
                       Media
                       <span className="text-[11px] font-normal normal-case text-slate-400">
                         {selectedPlatforms.includes("instagram")
-                          ? "(Up to 10 images for carousel)"
+                          ? "(Up to 10 images for carousel, or 1 video for Reels)"
                           : "(Images or Video)"}
                       </span>
                     </label>
@@ -756,9 +756,10 @@ export default function CreatePostPage() {
                       onRemove={removeImage}
                     />
 
-                    {/* Video Upload for Facebook/X */}
+                    {/* Video Upload for Facebook/X/Instagram */}
                     {(selectedPlatforms.includes("facebook") ||
-                      selectedPlatforms.includes("X")) && (
+                      selectedPlatforms.includes("X") ||
+                      selectedPlatforms.includes("instagram")) && (
                       <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 block flex items-center gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-purple-500" />
@@ -885,7 +886,7 @@ export default function CreatePostPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-5 lg:sticky lg:top-5 lg:h-fit"
+            className="lg:col-span-5 lg:sticky lg:top-[100px] lg:h-fit"
           >
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -951,7 +952,7 @@ export default function CreatePostPage() {
                 </AnimatePresence>
 
                 {/* Empty State */}
-                {!postContent && images.length === 0 && (
+                {!postContent && images.length === 0 && !video && (
                   <div className="text-center py-16 text-slate-400">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
                       <FiEye className="w-7 h-7 text-slate-300" />
@@ -965,7 +966,7 @@ export default function CreatePostPage() {
               </div>
 
               {/* Preview Footer */}
-              {(postContent || images.length > 0) && (
+              {(postContent || images.length > 0 || video) && (
                 <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50">
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>
