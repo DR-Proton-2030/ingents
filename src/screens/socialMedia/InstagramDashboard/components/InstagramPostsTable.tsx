@@ -36,6 +36,12 @@ function isVideoUrl(url?: string) {
   return url.includes(".mp4");
 }
 
+function getInsightValue(insights: any[], name: string) {
+  if (!insights || !Array.isArray(insights)) return 0;
+  const item = insights.find((i: any) => i.name === name);
+  return item?.values?.[0]?.value || 0;
+}
+
 export default function InstagramPostsTable({
   posts,
   title = "Published Content",
@@ -71,7 +77,7 @@ export default function InstagramPostsTable({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[52%]">
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[40%]">
                   Post
                 </th>
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -87,6 +93,12 @@ export default function InstagramPostsTable({
                   Comments
                 </th>
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                  Shares
+                </th>
+                <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                  Saved
+                </th>
+                <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
                   Open
                 </th>
               </tr>
@@ -99,6 +111,9 @@ export default function InstagramPostsTable({
                 const caption = post.caption || "";
                 const hasMultiple =
                   post.media_urls && post.media_urls.length > 1;
+
+                const shares = getInsightValue(post.insights, "shares");
+                const saved = getInsightValue(post.insights, "saved");
 
                 return (
                   <tr
@@ -133,6 +148,10 @@ export default function InstagramPostsTable({
                                 }
                                 className="w-32 h-[72px] object-cover"
                                 alt=""
+                                onError={(e) => {
+                                  (e.target as any).src =
+                                    "https://picsum.photos/seed/instagram-fail/400/225";
+                                }}
                               />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/thumb:bg-black/30 transition-colors">
                                 <Eye className="w-6 h-6 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity transform scale-75 group-hover/thumb:scale-100" />
@@ -155,7 +174,10 @@ export default function InstagramPostsTable({
                           </p>
                           <div className="text-xs text-gray-500 flex items-center gap-2">
                             <span>
-                              ID: <span className="font-mono">{post.id}</span>
+                              ID:{" "}
+                              <span className="font-mono">
+                                {post.id || "N/A"}
+                              </span>
                             </span>
                             <button
                               onClick={() => setSelectedPost(post)}
@@ -194,6 +216,18 @@ export default function InstagramPostsTable({
                     <td className="px-4 py-4 text-right whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900 block">
                         {formatCompactNumber(post.comments_count || 0)}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900 block">
+                        {formatCompactNumber(shares)}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900 block">
+                        {formatCompactNumber(saved)}
                       </span>
                     </td>
 

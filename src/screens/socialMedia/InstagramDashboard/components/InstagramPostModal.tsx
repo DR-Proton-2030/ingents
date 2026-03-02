@@ -39,6 +39,12 @@ function isVideoUrl(url?: string) {
   return url.includes(".mp4");
 }
 
+function getInsightValue(insights: any[], name: string) {
+  if (!insights || !Array.isArray(insights)) return 0;
+  const item = insights.find((i: any) => i.name === name);
+  return item?.values?.[0]?.value || 0;
+}
+
 export default function InstagramPostModal({
   selectedPost,
   onClose,
@@ -221,8 +227,8 @@ export default function InstagramPostModal({
             {/* Footer Stats */}
             <div className="p-6 bg-white shrink-0 border-t border-gray-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-between mb-6">
-                <div className="flex gap-8">
-                  <div className="flex flex-col">
+                <div className="flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto pb-2 scrollbar-hide">
+                  <div className="flex flex-col min-w-fit">
                     <span className="text-2xl font-black text-gray-900 tracking-tight">
                       {formatCompactNumber(selectedPost.like_count || 0)}
                     </span>
@@ -230,12 +236,32 @@ export default function InstagramPostModal({
                       Likes
                     </span>
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col min-w-fit">
                     <span className="text-2xl font-black text-gray-900 tracking-tight">
                       {formatCompactNumber(selectedPost.comments_count || 0)}
                     </span>
                     <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
                       Comments
+                    </span>
+                  </div>
+                  <div className="flex flex-col min-w-fit">
+                    <span className="text-2xl font-black text-gray-900 tracking-tight">
+                      {formatCompactNumber(
+                        getInsightValue(selectedPost.insights, "shares"),
+                      )}
+                    </span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                      Shares
+                    </span>
+                  </div>
+                  <div className="flex flex-col min-w-fit">
+                    <span className="text-2xl font-black text-gray-900 tracking-tight">
+                      {formatCompactNumber(
+                        getInsightValue(selectedPost.insights, "saved"),
+                      )}
+                    </span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                      Saved
                     </span>
                   </div>
                 </div>
