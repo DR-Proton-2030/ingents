@@ -32,6 +32,7 @@ interface PostedContentHistoryProps {
 const platformIcons: Record<string, React.ReactNode> = {
   facebook: <FaFacebook />,
   instagram: <FaInstagram />,
+  instagram_business: <FaInstagram />,
   youtube: <FaYoutube />,
   x: <FaXTwitter />,
 };
@@ -39,11 +40,14 @@ const platformIcons: Record<string, React.ReactNode> = {
 const platformBrandColors: Record<string, string> = {
   facebook: "text-blue-600 bg-blue-50",
   instagram: "text-pink-600 bg-pink-50",
+  instagram_business: "text-pink-600 bg-pink-50",
   youtube: "text-red-600 bg-red-50",
   x: "text-slate-900 bg-slate-50",
 };
 
-export default function PostedContentHistory({ limit }: PostedContentHistoryProps) {
+export default function PostedContentHistory({
+  limit,
+}: PostedContentHistoryProps) {
   const { user } = useContext(AuthContext);
   const [posts, setPosts] = useState<PostedContent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -69,7 +73,9 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
       }
     } catch (error: any) {
       console.error("Failed to fetch posted content:", error);
-      toast.error(error.response?.data?.message || "Failed to fetch posted content");
+      toast.error(
+        error.response?.data?.message || "Failed to fetch posted content",
+      );
     } finally {
       setLoading(false);
     }
@@ -139,9 +145,13 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
         <div>
           <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             Post History
-            {loading && <FiLoader className="w-4 h-4 animate-spin text-indigo-500" />}
+            {loading && (
+              <FiLoader className="w-4 h-4 animate-spin text-indigo-500" />
+            )}
           </h2>
-          <p className="text-sm text-slate-500">Manage and track your published content</p>
+          <p className="text-sm text-slate-500">
+            Manage and track your published content
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
@@ -149,7 +159,9 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
             <FiFilter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-hover:text-indigo-500 transition-colors" />
             <select
               value={filter.platform || ""}
-              onChange={(e) => setFilter({ ...filter, platform: e.target.value || undefined })}
+              onChange={(e) =>
+                setFilter({ ...filter, platform: e.target.value || undefined })
+              }
               className="pl-9 pr-8 py-2 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all cursor-pointer appearance-none shadow-sm hover:border-slate-300"
             >
               <option value="">All Platforms</option>
@@ -165,7 +177,9 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
             className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
             title="Refresh list"
           >
-            <FiRefreshCw className={`w-4 h-4 text-slate-600 ${loading ? "animate-spin" : ""}`} />
+            <FiRefreshCw
+              className={`w-4 h-4 text-slate-600 ${loading ? "animate-spin" : ""}`}
+            />
           </button>
         </div>
       </div>
@@ -177,14 +191,18 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
               <div className="w-16 h-16 rounded-full border-4 border-indigo-100 border-t-indigo-500 animate-spin" />
               <FiLoader className="absolute inset-0 m-auto w-6 h-6 text-indigo-600" />
             </div>
-            <p className="mt-4 text-slate-500 font-medium">Loading your content history...</p>
+            <p className="mt-4 text-slate-500 font-medium">
+              Loading your content history...
+            </p>
           </div>
         ) : posts.length === 0 ? (
           <div className="col-span-full py-20 flex flex-col items-center justify-center bg-white border border-dashed border-slate-300 rounded-3xl">
             <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
               <FiCalendar className="w-10 h-10 text-slate-300" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900">No published content found</h3>
+            <h3 className="text-lg font-semibold text-slate-900">
+              No published content found
+            </h3>
             <p className="text-slate-500 max-w-[280px] text-center mt-1">
               Start creating and publishing posts to see your history here.
             </p>
@@ -225,7 +243,8 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
                             alt="Media preview"
                             className="w-full h-full object-cover transition-transform duration-500 group-hover/media:scale-110"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${post.platform}&background=f1f5f9&color=64748b`;
+                              (e.target as HTMLImageElement).src =
+                                `https://ui-avatars.com/api/?name=${post.platform}&background=f1f5f9&color=64748b`;
                             }}
                           />
                         )
@@ -255,7 +274,9 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1.5">
                         <div className="flex items-center gap-2">
-                          <div className={`p-1.5 rounded-lg text-sm ${platformBrandColors[post.platform]}`}>
+                          <div
+                            className={`p-1.5 rounded-lg text-sm ${platformBrandColors[post.platform]}`}
+                          >
                             {platformIcons[post.platform]}
                           </div>
                           <span className="text-[11px] font-bold text-slate-400 tracking-widest uppercase">
@@ -336,4 +357,3 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
     </div>
   );
 }
-

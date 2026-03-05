@@ -94,7 +94,10 @@ export default function PlatformGrowthChart({
   dateRange = "Last 25 Days",
 }: PlatformGrowthChartProps) {
   const { user } = useContext(AuthContext);
-  const [hoveredBar, setHoveredBar] = useState<{ month: number; platform: string } | null>(null);
+  const [hoveredBar, setHoveredBar] = useState<{
+    month: number;
+    platform: string;
+  } | null>(null);
   const [monthlyData, setMonthlyData] = useState<PlatformMonthlyData[]>([]);
   const [allPosts, setAllPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,7 +107,8 @@ export default function PlatformGrowthChart({
     "instagram",
     "x",
   ]);
-  const [selectedMonth, setSelectedMonth] = useState<PlatformMonthlyData | null>(null);
+  const [selectedMonth, setSelectedMonth] =
+    useState<PlatformMonthlyData | null>(null);
   const [monthDetails, setMonthDetails] = useState<MonthlyPostDetail[]>([]);
 
   // Fetch posted content and aggregate by platform/month
@@ -117,18 +121,25 @@ export default function PlatformGrowthChart({
       }
 
       try {
-        const baseURL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
-        const response = await axios.get(`${baseURL}/api/v1/scheduler/posted/${userId}`);
-        
+        const baseURL =
+          process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
+        const response = await axios.get(
+          `${baseURL}/api/v1/scheduler/posted/${userId}`,
+        );
+
         const posts = response.data?.data || [];
         setAllPosts(posts);
         const months = getLast8Months();
         const now = new Date();
-        
+
         // Initialize monthly data
         const aggregated: Record<string, PlatformMonthlyData> = {};
         months.forEach((month, idx) => {
-          const date = new Date(now.getFullYear(), now.getMonth() - (7 - idx), 1);
+          const date = new Date(
+            now.getFullYear(),
+            now.getMonth() - (7 - idx),
+            1,
+          );
           aggregated[month] = {
             month,
             monthIndex: date.getMonth(),
@@ -144,11 +155,16 @@ export default function PlatformGrowthChart({
         posts.forEach((post: any) => {
           const postDate = new Date(post.posted_at || post.createdAt);
           const monthName = getMonthName(postDate);
-          
+
           if (aggregated[monthName] && post.platform) {
-            const platform = post.platform.toLowerCase() as keyof Omit<PlatformMonthlyData, "month" | "monthIndex" | "year">;
+            let platform = post.platform.toLowerCase();
+            // Normalize instagram_business to instagram
+            if (platform === "instagram_business") {
+              platform = "instagram";
+            }
+
             if (platform in aggregated[monthName]) {
-              aggregated[monthName][platform]++;
+              (aggregated[monthName] as any)[platform]++;
             }
           }
         });
@@ -157,19 +173,25 @@ export default function PlatformGrowthChart({
       } catch (error) {
         console.error("Error fetching posted content:", error);
         // Use mock data on error
-        setMonthlyData(getLast8Months().map((month, idx) => {
-          const now = new Date();
-          const date = new Date(now.getFullYear(), now.getMonth() - (7 - idx), 1);
-          return {
-            month,
-            monthIndex: date.getMonth(),
-            year: date.getFullYear(),
-            youtube: Math.floor(Math.random() * 15) + 2,
-            facebook: Math.floor(Math.random() * 12) + 3,
-            instagram: Math.floor(Math.random() * 20) + 5,
-            x: Math.floor(Math.random() * 10) + 1,
-          };
-        }));
+        setMonthlyData(
+          getLast8Months().map((month, idx) => {
+            const now = new Date();
+            const date = new Date(
+              now.getFullYear(),
+              now.getMonth() - (7 - idx),
+              1,
+            );
+            return {
+              month,
+              monthIndex: date.getMonth(),
+              year: date.getFullYear(),
+              youtube: Math.floor(Math.random() * 15) + 2,
+              facebook: Math.floor(Math.random() * 12) + 3,
+              instagram: Math.floor(Math.random() * 20) + 5,
+              x: Math.floor(Math.random() * 10) + 1,
+            };
+          }),
+        );
       } finally {
         setLoading(false);
       }
@@ -192,20 +214,27 @@ export default function PlatformGrowthChart({
 
   const togglePlatform = (platform: string) => {
     setActivePlatforms((prev) =>
-      prev.includes(platform) ? prev.filter((p) => p !== platform) : [...prev, platform]
+      prev.includes(platform)
+        ? prev.filter((p) => p !== platform)
+        : [...prev, platform],
     );
   };
 
   // Calculate Y-axis labels dynamically
   const yAxisLabels = useMemo(() => {
     const step = Math.ceil(maxValue / 4);
-    return [maxValue, Math.ceil(maxValue * 0.75), Math.ceil(maxValue * 0.5), Math.ceil(maxValue * 0.25)];
+    return [
+      maxValue,
+      Math.ceil(maxValue * 0.75),
+      Math.ceil(maxValue * 0.5),
+      Math.ceil(maxValue * 0.25),
+    ];
   }, [maxValue]);
 
   // Handle month click - show detailed breakdown
   const handleMonthClick = (data: PlatformMonthlyData) => {
     setSelectedMonth(data);
-    
+
     // Filter posts for the selected month
     const monthPosts = allPosts.filter((post: any) => {
       const postDate = new Date(post.posted_at || post.createdAt);
@@ -219,15 +248,19 @@ export default function PlatformGrowthChart({
     const platforms = ["youtube", "facebook", "instagram", "x"];
     const details: MonthlyPostDetail[] = platforms.map((platform) => {
       const platformPosts = monthPosts.filter(
-        (p: any) => p.platform?.toLowerCase() === platform
+        (p: any) => p.platform?.toLowerCase() === platform,
       );
       return {
         platform,
         posts: platformPosts,
         count: platformPosts.length,
-        videos: platformPosts.filter((p: any) => p.media_type === "video").length,
-        images: platformPosts.filter((p: any) => p.media_type === "image").length,
-        text: platformPosts.filter((p: any) => p.media_type === "text" || !p.media_type).length,
+        videos: platformPosts.filter((p: any) => p.media_type === "video")
+          .length,
+        images: platformPosts.filter((p: any) => p.media_type === "image")
+          .length,
+        text: platformPosts.filter(
+          (p: any) => p.media_type === "text" || !p.media_type,
+        ).length,
       };
     });
 
@@ -256,7 +289,9 @@ export default function PlatformGrowthChart({
       className="bg-white rounded-2xl border border-slate-100 p-6"
     >
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
-        <h3 className="text-lg font-semibold text-slate-800">Content by Platform</h3>
+        <h3 className="text-lg font-semibold text-slate-800">
+          Content by Platform
+        </h3>
         <div className="flex items-center gap-3 flex-wrap">
           {Object.entries(PLATFORM_COLORS).map(([key, value]) => (
             <button
@@ -292,18 +327,31 @@ export default function PlatformGrowthChart({
           {/* Horizontal grid lines */}
           <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
             {[0, 1, 2, 3].map((_, i) => (
-              <div key={i} className="border-b border-dashed border-slate-100" />
+              <div
+                key={i}
+                className="border-b border-dashed border-slate-100"
+              />
             ))}
           </div>
 
           {monthlyData.map((data, monthIndex) => {
             // Stack the platforms
-            const platformOrder = ["x", "instagram", "facebook", "youtube"].filter((p) =>
-              activePlatforms.includes(p)
-            );
+            const platformOrder = [
+              "x",
+              "instagram",
+              "facebook",
+              "youtube",
+            ].filter((p) => activePlatforms.includes(p));
             const totalPosts = platformOrder.reduce(
-              (sum, p) => sum + (data[p as keyof Omit<PlatformMonthlyData, "month" | "monthIndex" | "year">] || 0),
-              0
+              (sum, p) =>
+                sum +
+                (data[
+                  p as keyof Omit<
+                    PlatformMonthlyData,
+                    "month" | "monthIndex" | "year"
+                  >
+                ] || 0),
+              0,
             );
 
             return (
@@ -317,39 +365,60 @@ export default function PlatformGrowthChart({
                   <div className="w-full max-w-[40px] flex flex-col-reverse group-hover:scale-105 transition-transform">
                     {totalPosts === 0 ? (
                       /* Empty month - show grey placeholder bar */
-                      <div 
+                      <div
                         className="relative"
-                        onMouseEnter={() => setHoveredBar({ month: monthIndex, platform: "empty" })}
+                        onMouseEnter={() =>
+                          setHoveredBar({
+                            month: monthIndex,
+                            platform: "empty",
+                          })
+                        }
                         onMouseLeave={() => setHoveredBar(null)}
                       >
                         {/* No content tooltip */}
-                        {hoveredBar?.month === monthIndex && hoveredBar?.platform === "empty" && (
-                          <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20"
-                          >
-                            No content
-                            <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-slate-600" />
-                          </motion.div>
-                        )}
+                        {hoveredBar?.month === monthIndex &&
+                          hoveredBar?.platform === "empty" && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20"
+                            >
+                              No content
+                              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-slate-600" />
+                            </motion.div>
+                          )}
                         <motion.div
                           initial={{ height: 0 }}
                           animate={{ height: "40px" }}
-                          transition={{ delay: 0.3 + monthIndex * 0.05, duration: 0.5 }}
+                          transition={{
+                            delay: 0.3 + monthIndex * 0.05,
+                            duration: 0.5,
+                          }}
                           className="w-full bg-slate-100 rounded-lg cursor-pointer hover:bg-slate-200 transition-colors"
                         />
                       </div>
                     ) : (
                       /* Has posts - show stacked bars */
                       platformOrder.map((platform, platformIndex) => {
-                        const value = data[platform as keyof Omit<PlatformMonthlyData, "month" | "monthIndex" | "year">] || 0;
-                        const height = maxValue > 0 ? (value / maxValue) * 160 : 0;
-                        const colors = PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS];
+                        const value =
+                          data[
+                            platform as keyof Omit<
+                              PlatformMonthlyData,
+                              "month" | "monthIndex" | "year"
+                            >
+                          ] || 0;
+                        const height =
+                          maxValue > 0 ? (value / maxValue) * 160 : 0;
+                        const colors =
+                          PLATFORM_COLORS[
+                            platform as keyof typeof PLATFORM_COLORS
+                          ];
                         const isFirst = platformIndex === 0;
-                        const isLast = platformIndex === platformOrder.length - 1;
+                        const isLast =
+                          platformIndex === platformOrder.length - 1;
                         const isHovered =
-                          hoveredBar?.month === monthIndex && hoveredBar?.platform === platform;
+                          hoveredBar?.month === monthIndex &&
+                          hoveredBar?.platform === platform;
 
                         return (
                           <div key={platform} className="relative">
@@ -368,7 +437,10 @@ export default function PlatformGrowthChart({
                               initial={{ height: 0 }}
                               animate={{ height: `${height}px` }}
                               transition={{
-                                delay: 0.3 + monthIndex * 0.05 + platformIndex * 0.02,
+                                delay:
+                                  0.3 +
+                                  monthIndex * 0.05 +
+                                  platformIndex * 0.02,
                                 duration: 0.5,
                               }}
                               onMouseEnter={() =>
@@ -393,7 +465,9 @@ export default function PlatformGrowthChart({
                 {/* Click hint on hover */}
                 {totalPosts > 0 && (
                   <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="text-[10px] text-indigo-500 whitespace-nowrap">Click for details</div>
+                    <div className="text-[10px] text-indigo-500 whitespace-nowrap">
+                      Click for details
+                    </div>
                   </div>
                 )}
               </div>
@@ -407,16 +481,27 @@ export default function PlatformGrowthChart({
         <div className="grid grid-cols-4 gap-4">
           {Object.entries(PLATFORM_COLORS).map(([key, value]) => {
             const total = monthlyData.reduce(
-              (sum, data) => sum + (data[key as keyof Omit<PlatformMonthlyData, "month" | "monthIndex" | "year">] || 0),
-              0
+              (sum, data) =>
+                sum +
+                (data[
+                  key as keyof Omit<
+                    PlatformMonthlyData,
+                    "month" | "monthIndex" | "year"
+                  >
+                ] || 0),
+              0,
             );
             return (
               <div key={key} className="text-center">
-                <div className={`inline-flex items-center gap-1.5 ${
-                  activePlatforms.includes(key) ? "opacity-100" : "opacity-40"
-                }`}>
+                <div
+                  className={`inline-flex items-center gap-1.5 ${
+                    activePlatforms.includes(key) ? "opacity-100" : "opacity-40"
+                  }`}
+                >
                   <div className={`w-2 h-2 rounded-full ${value.dot}`} />
-                  <span className="text-lg font-bold text-slate-800">{total}</span>
+                  <span className="text-lg font-bold text-slate-800">
+                    {total}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">Total Posts</p>
               </div>
@@ -470,10 +555,16 @@ export default function PlatformGrowthChart({
                   </h4>
                   <div className="grid grid-cols-4 gap-3">
                     {monthDetails.map((detail) => {
-                      const colors = PLATFORM_COLORS[detail.platform as keyof typeof PLATFORM_COLORS];
-                      const maxCount = Math.max(...monthDetails.map(d => d.count), 1);
+                      const colors =
+                        PLATFORM_COLORS[
+                          detail.platform as keyof typeof PLATFORM_COLORS
+                        ];
+                      const maxCount = Math.max(
+                        ...monthDetails.map((d) => d.count),
+                        1,
+                      );
                       const barHeight = (detail.count / maxCount) * 100;
-                      
+
                       return (
                         <div key={detail.platform} className="text-center">
                           <div className="h-32 flex items-end justify-center mb-2">
@@ -487,8 +578,12 @@ export default function PlatformGrowthChart({
                           <div className={`${colors.text} mb-1`}>
                             {colors.icon}
                           </div>
-                          <div className="text-2xl font-bold text-slate-800">{detail.count}</div>
-                          <div className="text-xs text-slate-500">{colors.label}</div>
+                          <div className="text-2xl font-bold text-slate-800">
+                            {detail.count}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {colors.label}
+                          </div>
                         </div>
                       );
                     })}
@@ -505,14 +600,19 @@ export default function PlatformGrowthChart({
                     {monthDetails
                       .filter((d) => d.count > 0)
                       .map((detail) => {
-                        const colors = PLATFORM_COLORS[detail.platform as keyof typeof PLATFORM_COLORS];
+                        const colors =
+                          PLATFORM_COLORS[
+                            detail.platform as keyof typeof PLATFORM_COLORS
+                          ];
                         return (
                           <div
                             key={detail.platform}
                             className="bg-slate-50 rounded-xl p-4"
                           >
                             <div className="flex items-center gap-3 mb-3">
-                              <div className={`${colors.text}`}>{colors.icon}</div>
+                              <div className={`${colors.text}`}>
+                                {colors.icon}
+                              </div>
                               <span className="font-medium text-slate-800">
                                 {colors.label}
                               </span>
@@ -527,7 +627,9 @@ export default function PlatformGrowthChart({
                                   <div className="text-sm font-semibold text-slate-800">
                                     {detail.videos}
                                   </div>
-                                  <div className="text-xs text-slate-500">Videos</div>
+                                  <div className="text-xs text-slate-500">
+                                    Videos
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 bg-white rounded-lg p-2">
@@ -536,7 +638,9 @@ export default function PlatformGrowthChart({
                                   <div className="text-sm font-semibold text-slate-800">
                                     {detail.images}
                                   </div>
-                                  <div className="text-xs text-slate-500">Images</div>
+                                  <div className="text-xs text-slate-500">
+                                    Images
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 bg-white rounded-lg p-2">
@@ -545,7 +649,9 @@ export default function PlatformGrowthChart({
                                   <div className="text-sm font-semibold text-slate-800">
                                     {detail.text}
                                   </div>
-                                  <div className="text-xs text-slate-500">Text</div>
+                                  <div className="text-xs text-slate-500">
+                                    Text
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -555,7 +661,9 @@ export default function PlatformGrowthChart({
                     {monthDetails.every((d) => d.count === 0) && (
                       <div className="text-center py-8 text-slate-500">
                         <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                        <p>No posts in {selectedMonth.month} {selectedMonth.year}</p>
+                        <p>
+                          No posts in {selectedMonth.month} {selectedMonth.year}
+                        </p>
                       </div>
                     )}
                   </div>

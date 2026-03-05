@@ -31,11 +31,15 @@ interface ScheduledPostsProps {
 const platformIcons: Record<string, React.ReactNode> = {
   facebook: <FaFacebook className="text-blue-600" />,
   instagram: <FaInstagram className="text-pink-600" />,
+  instagram_business: <FaInstagram className="text-pink-600" />,
   youtube: <FaYoutube className="text-red-600" />,
   x: <FaXTwitter className="text-gray-900" />,
 };
 
-const statusColors: Record<string, { bg: string; text: string; icon: React.ReactNode }> = {
+const statusColors: Record<
+  string,
+  { bg: string; text: string; icon: React.ReactNode }
+> = {
   pending: {
     bg: "bg-yellow-100",
     text: "text-yellow-800",
@@ -67,7 +71,9 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
   const { user } = useContext(AuthContext);
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<{ status?: string; platform?: string }>({});
+  const [filter, setFilter] = useState<{ status?: string; platform?: string }>(
+    {},
+  );
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
   const [newScheduleDate, setNewScheduleDate] = useState("");
@@ -93,14 +99,17 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
       }
     } catch (error: any) {
       console.error("Failed to fetch scheduled posts:", error);
-      toast.error(error.response?.data?.message || "Failed to fetch scheduled posts");
+      toast.error(
+        error.response?.data?.message || "Failed to fetch scheduled posts",
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancelPost = async (postId: string) => {
-    if (!confirm("Are you sure you want to cancel this scheduled post?")) return;
+    if (!confirm("Are you sure you want to cancel this scheduled post?"))
+      return;
 
     try {
       const response = await cancelScheduledPost(postId);
@@ -120,7 +129,9 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
     }
 
     try {
-      const newScheduledAt = new Date(`${newScheduleDate}T${newScheduleTime}`).toISOString();
+      const newScheduledAt = new Date(
+        `${newScheduleDate}T${newScheduleTime}`,
+      ).toISOString();
       const response = await reschedulePost(selectedPost._id, newScheduledAt);
       if (response.success) {
         toast.success("Post rescheduled successfully");
@@ -175,15 +186,21 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
               <FiCalendar className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Scheduled Posts</h2>
-              <p className="text-sm text-slate-500">Manage your upcoming posts</p>
+              <h2 className="text-lg font-bold text-slate-800">
+                Scheduled Posts
+              </h2>
+              <p className="text-sm text-slate-500">
+                Manage your upcoming posts
+              </p>
             </div>
           </div>
           <button
             onClick={fetchScheduledPosts}
             className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
           >
-            <FiRefreshCw className={`w-4 h-4 text-slate-600 ${loading ? "animate-spin" : ""}`} />
+            <FiRefreshCw
+              className={`w-4 h-4 text-slate-600 ${loading ? "animate-spin" : ""}`}
+            />
           </button>
         </div>
 
@@ -191,7 +208,9 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
         <div className="flex gap-2 mt-4">
           <select
             value={filter.status || ""}
-            onChange={(e) => setFilter({ ...filter, status: e.target.value || undefined })}
+            onChange={(e) =>
+              setFilter({ ...filter, status: e.target.value || undefined })
+            }
             className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">All Status</option>
@@ -203,7 +222,9 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
           </select>
           <select
             value={filter.platform || ""}
-            onChange={(e) => setFilter({ ...filter, platform: e.target.value || undefined })}
+            onChange={(e) =>
+              setFilter({ ...filter, platform: e.target.value || undefined })
+            }
             className="px-3 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option value="">All Platforms</option>
@@ -249,11 +270,16 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
                           } ${statusColors[post.status].text}`}
                         >
                           {statusColors[post.status].icon}
-                          {post.status.charAt(0).toUpperCase() + post.status.slice(1)}
+                          {post.status.charAt(0).toUpperCase() +
+                            post.status.slice(1)}
                         </span>
-                        <span className="text-xs text-slate-500 capitalize">{post.platform}</span>
+                        <span className="text-xs text-slate-500 capitalize">
+                          {post.platform}
+                        </span>
                       </div>
-                      <p className="text-sm text-slate-800 line-clamp-2">{post.content}</p>
+                      <p className="text-sm text-slate-800 line-clamp-2">
+                        {post.content}
+                      </p>
                       <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
                           <FiCalendar className="w-3.5 h-3.5" />
@@ -267,7 +293,9 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
                       {post.error_message && (
                         <div className="mt-2 flex items-start gap-2 p-2 bg-red-50 rounded-lg">
                           <FiAlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                          <p className="text-xs text-red-600">{post.error_message}</p>
+                          <p className="text-xs text-red-600">
+                            {post.error_message}
+                          </p>
                         </div>
                       )}
                       {post.hashtags && post.hashtags.length > 0 && (
@@ -342,7 +370,9 @@ export default function ScheduledPosts({ onEditPost }: ScheduledPostsProps) {
               className="bg-white rounded-2xl p-6 w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-bold text-slate-800 mb-4">Reschedule Post</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-4">
+                Reschedule Post
+              </h3>
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-slate-600 mb-1.5 block">

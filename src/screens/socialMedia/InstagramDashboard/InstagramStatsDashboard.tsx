@@ -16,6 +16,8 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
+  Eye,
+  FileText,
 } from "lucide-react";
 
 import { toast } from "react-toastify";
@@ -26,6 +28,8 @@ import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 import { useInstagramDetails } from "@/hooks/useInstagramDetails";
 import InstagramHeader from "@/screens/socialMedia/InstagramDashboard/components/InstagramHeader";
 import InstagramPostsTable from "@/screens/socialMedia/InstagramDashboard/components/InstagramPostsTable";
+import InstagramDemographicsCharts from "@/screens/socialMedia/InstagramDashboard/components/InstagramDemographicsCharts";
+import InstagramPerformanceChart from "@/screens/socialMedia/InstagramDashboard/components/InstagramPerformanceChart";
 
 type InstagramMediaType = "IMAGE" | "VIDEO" | "CAROUSEL_ALBUM" | string;
 
@@ -115,6 +119,7 @@ export default function InstagramStatsDashboard() {
     contentBlock?.publishedContent || [];
   const audience = data?.audience ?? data?.data?.audience;
   const insights = data?.insights ?? data?.data?.insights;
+  const history = data?.insights_history ?? data?.data?.insights_history ?? [];
   const topByViews: InstagramPublishedContentItem[] =
     insights?.topContentByViews || [];
   const topByInteractions: InstagramPublishedContentItem[] =
@@ -291,17 +296,64 @@ export default function InstagramStatsDashboard() {
               />
               <FBStatCard
                 title="Reach"
-                value={Number(insights?.accountsReached || 0)}
+                value={Number(
+                  insights?.accountsReached || overview?.reach || 0,
+                )}
                 subtitle={
-                  insights?.accountsReached == null
+                  (insights?.accountsReached ?? overview?.reach) == null
                     ? "Not available from API"
                     : "Accounts reached"
                 }
                 icon={<Users className="w-6 h-6" />}
                 variant="default"
-                disabled={insights?.accountsReached == null}
+                disabled={
+                  (insights?.accountsReached ?? overview?.reach) == null
+                }
                 formatter={(v) =>
-                  insights?.accountsReached == null
+                  (insights?.accountsReached ?? overview?.reach) == null
+                    ? "---"
+                    : formatCompactNumber(v)
+                }
+              />
+              <FBStatCard
+                title="Impressions"
+                value={Number(insights?.views?.total || overview?.views || 0)}
+                subtitle={
+                  (insights?.views?.total ?? overview?.views) == null
+                    ? "Not available from API"
+                    : "Total impressions"
+                }
+                icon={<Eye className="w-6 h-6" />}
+                variant="default"
+                disabled={(insights?.views?.total ?? overview?.views) == null}
+                formatter={(v) =>
+                  (insights?.views?.total ?? overview?.views) == null
+                    ? "---"
+                    : formatCompactNumber(v)
+                }
+              />
+              <FBStatCard
+                title="Profile Views"
+                value={Number(
+                  insights?.profileActivity?.profileVisits ||
+                    overview?.profileViews ||
+                    0,
+                )}
+                subtitle={
+                  (insights?.profileActivity?.profileVisits ??
+                    overview?.profileViews) == null
+                    ? "Not available from API"
+                    : "Profile visits"
+                }
+                icon={<FileText className="w-6 h-6" />}
+                variant="default"
+                disabled={
+                  (insights?.profileActivity?.profileVisits ??
+                    overview?.profileViews) == null
+                }
+                formatter={(v) =>
+                  (insights?.profileActivity?.profileVisits ??
+                    overview?.profileViews) == null
                     ? "---"
                     : formatCompactNumber(v)
                 }
@@ -339,44 +391,26 @@ export default function InstagramStatsDashboard() {
                 />
               </div>
 
-              <div className="bg-white/70 backdrop-blur-xl rounded-[32px] border border-white/50 shadow-sm p-6">
-                <div className="text-xs font-black uppercase tracking-widest text-slate-500 mb-5">
-                  Demographics
+              <div className="bg-transparent rounded-[32px] p-0">
+                <div className="text-xs font-black uppercase tracking-widest text-slate-500 mb-8 px-2">
+                  Audience Breakdown
                 </div>
 
                 {hasKeys(audience?.demographics) ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    {Object.entries(
-                      audience.demographics as Record<string, any>,
-                    ).map(([key, value]) => (
-                      <div
-                        key={key}
-                        className="rounded-2xl border border-white/50 bg-white/70 p-4"
-                      >
-                        <div className="text-[11px] font-black uppercase tracking-widest text-slate-500">
-                          {key.replaceAll("_", " ")}
-                        </div>
-                        <div className="mt-2 text-sm text-slate-900 font-semibold break-words">
-                          {typeof value === "string" ||
-                          typeof value === "number"
-                            ? String(value)
-                            : Array.isArray(value)
-                              ? `${value.length} items`
-                              : value && typeof value === "object"
-                                ? `${Object.keys(value).length} fields`
-                                : "—"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <InstagramDemographicsCharts
+                    demographics={audience.demographics}
+                  />
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-white/60 bg-white/60 p-10 text-center">
-                    <div className="text-slate-900 font-black tracking-tight">
+                  <div className="bg-white/70 backdrop-blur-xl rounded-[40px] border border-dashed border-slate-200 p-16 text-center shadow-sm">
+                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Users className="w-10 h-10 text-slate-300" />
+                    </div>
+                    <div className="text-slate-900 text-xl font-black tracking-tight">
                       No demographics available
                     </div>
-                    <div className="text-slate-500 text-sm mt-1">
+                    <div className="text-slate-500 font-medium mt-2 max-w-xs mx-auto">
                       Instagram didn’t return demographic breakdown for this
-                      account.
+                      account. Try syncing again later.
                     </div>
                   </div>
                 )}
@@ -384,6 +418,8 @@ export default function InstagramStatsDashboard() {
             </div>
           ) : activeTab === "insights" ? (
             <div className="space-y-10">
+              <InstagramPerformanceChart history={history} />
+
               <div className="relative overflow-hidden rounded-[32px] border border-white/50 bg-white/60 backdrop-blur-xl shadow-sm">
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-50/70 via-white/40 to-purple-50/70 pointer-events-none" />
                 <div className="relative p-8 lg:p-10">
