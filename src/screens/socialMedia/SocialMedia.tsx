@@ -35,6 +35,7 @@ export default function SocialMediaDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useContext(AuthContext);
+  console.log("<=====>", user);
   const [selectedCompany, setSelectedCompany] = useState(0);
   const [companyDetails, setCompanyDetails] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<
@@ -66,12 +67,25 @@ export default function SocialMediaDashboard() {
 
     const platformParam = searchParams.get("platform");
     const tokenParam = searchParams.get("token");
+    const errorParam = searchParams.get("error");
+
+    if (errorParam) {
+      alert(`Error connecting ${platformParam}: ${errorParam}`);
+      clearAuthQuery();
+      return;
+    }
 
     if (platformParam && tokenParam) {
-      if (platformParam.toLowerCase() === "facebook") {
+      const normalizedPlatform = platformParam.toLowerCase();
+      if (normalizedPlatform === "facebook") {
         setPlatform(platformParam);
         setToken(tokenParam);
         setIsModalOpen(true);
+      } else if (normalizedPlatform === "instagram") {
+        // For Instagram, the backend already saved the business account
+        // We just need to clear the query params and potentially refresh data
+        clearAuthQuery();
+        refetchMetrics();
       }
     }
   }, [searchParams]);
@@ -94,14 +108,27 @@ export default function SocialMediaDashboard() {
   useEffect(() => {
     if (user) {
       const platforms: string[] = [];
-      if ((user as any)?.youtube?.access_token) platforms.push("youtube");
+      const u = user as any;
+
+      if (u.youtube?.access_token && u.youtube?.project_id) {
+        platforms.push("youtube");
+      }
+
       if (
-        (user as any)?.facebook?.access_token ||
-        (user as any)?.facebook?.page_id
-      )
+        u.facebook?.access_token &&
+        (u.facebook?.project_id || u.facebook?.page_id)
+      ) {
         platforms.push("facebook");
-      if ((user as any)?.instagram?.access_token) platforms.push("instagram");
-      if ((user as any)?.x?.access_token) platforms.push("x");
+      }
+
+      if (u.instagram?.access_token && u.instagram?.project_id) {
+        platforms.push("instagram");
+      }
+
+      if (u.x?.access_token && u.x?.project_id) {
+        platforms.push("x");
+      }
+
       setConnectedPlatforms(platforms);
     }
   }, [user]);

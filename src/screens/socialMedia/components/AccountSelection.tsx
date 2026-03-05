@@ -87,7 +87,7 @@ export default function AccountSelection() {
 
         break;
       case "instagram":
-        authURL = `https://a7b68de5a1df.ngrok-free.app/api/v1/ig/login-instagram?user_id=${user?._id}`;
+        authURL = `${baseURL}/api/v1/instagram/login-instagram?user_id=${user?._id}`;
         break;
       case "youtube":
         authURL = `${baseURL}/api/v1/youtube/auth?user_id=${user?._id}`;
@@ -112,7 +112,7 @@ export default function AccountSelection() {
     try {
       const uid = user_id ?? "";
       const res = await fetch(
-        `/api/facebook/profile?access_token=${access_token}&userId=${uid}`
+        `/api/facebook/profile?access_token=${access_token}&userId=${uid}`,
       );
       const data = await res.json();
 
@@ -131,13 +131,13 @@ export default function AccountSelection() {
 
   const fetchInstagramProfile = async (
     access_token: string,
-    user_id?: string
+    user_id?: string,
   ) => {
     console.log("Token", access_token);
     try {
       const uid = user_id ?? "";
       const res = await fetch(
-        `/api/instagram/profile?access_token=${access_token}&userId=${uid}`
+        `/api/instagram/profile?access_token=${access_token}&userId=${uid}`,
       );
       const data = await res.json();
 
@@ -156,13 +156,13 @@ export default function AccountSelection() {
 
   const fetchYoutubeChannel = async (
     access_token: string,
-    user_id?: string
+    user_id?: string,
   ) => {
     console.log("Token", access_token);
     try {
       const uid = user_id ?? "";
       const res = await fetch(
-        `/api/youtube/channel?access_token=${access_token}&userId=${uid}`
+        `/api/youtube/channel?access_token=${access_token}&userId=${uid}`,
       );
       const data = await res.json();
 
@@ -179,26 +179,22 @@ export default function AccountSelection() {
     }
   };
 
-  const fetchXProfile = async (
-    access_token: string,
-    user_id?: string
-  ) => {
+  const fetchXProfile = async (access_token: string, user_id?: string) => {
     console.log("Token", access_token);
     try {
       const uid = user_id ?? "";
       const res = await fetch(
-        `/api/x/profile?access_token=${access_token}&userId=${uid}`
+        `/api/x/profile?access_token=${access_token}&userId=${uid}`,
       );
       const data = await res.json();
 
       console.log("X RAW Data:", data);
 
       if (!res.ok) throw new Error(data.error || "Failed to fetch");
-      
+
       if (data.result) {
         setProfile(Array.isArray(data.result) ? data.result : [data.result]);
       }
-     
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("fetchXProfile Error:", msg);
@@ -206,11 +202,6 @@ export default function AccountSelection() {
   };
 
   useEffect(() => {
-    // Clean Facebook hash fragment
-    if (typeof window !== "undefined" && window.location.hash === "#_=_") {
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
-
     const platformParam = searchParams.get("platform");
     const tokenParam = searchParams.get("token");
 
@@ -258,12 +249,14 @@ export default function AccountSelection() {
         const key = s.id === "twitter" ? "x" : s.id; // normalize Twitter to 'x'
         const slot = (user as any)[key];
 
-        // Ensure slot exists and has both name & project_id/page_id/id
+        // Ensure slot exists and has name, an identifier (project_id/page_id/id), and an access_token
         if (!slot) return null;
         const hasId = !!(slot.project_id || slot.page_id || slot.id);
         const hasName =
           typeof slot.name === "string" && slot.name.trim() !== "";
-        return hasId && hasName ? s.id : null;
+        const hasToken = !!slot.access_token;
+
+        return hasId && hasName && hasToken ? s.id : null;
       })
       .filter(Boolean) as string[];
 
@@ -316,7 +309,9 @@ export default function AccountSelection() {
               description: social.description,
               logo: social.src,
               isConnected: connected.includes(social.id),
-              comingSoon: (social as any).comingSoon ? "Coming Soon" : undefined,
+              comingSoon: (social as any).comingSoon
+                ? "Coming Soon"
+                : undefined,
             }}
             index={index}
             onConnect={() => {
@@ -326,8 +321,12 @@ export default function AccountSelection() {
               if (integration.title === "YouTube") {
                 router.push(`${pathname}/youtube`);
               } else if (integration.title === "Facebook") {
-                const pageId = (user as any)?.facebook?.page_id || (user as any)?.facebook?.id;
-                router.push(`${pathname}/facebook${pageId ? `?pageId=${pageId}` : ""}`);
+                const pageId =
+                  (user as any)?.facebook?.page_id ||
+                  (user as any)?.facebook?.id;
+                router.push(
+                  `${pathname}/facebook${pageId ? `?pageId=${pageId}` : ""}`,
+                );
               } else {
                 console.log("View connection details for:", integration.title);
               }
@@ -335,7 +334,7 @@ export default function AccountSelection() {
             onDisconnect={(integration) => {
               console.log("Disconnect:", integration.title);
               // Add disconnect logic here
-              setConnected(prev => prev.filter(id => id !== social.id));
+              setConnected((prev) => prev.filter((id) => id !== social.id));
             }}
             onReconnect={(integration) => {
               handleConnect(social.id);

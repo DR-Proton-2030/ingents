@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-  console.log("🚀 Middleware executed for:", req.nextUrl.pathname);
-  console.log("🌐 Host:", req.headers.get("host"));
-  console.log("🍪 All Cookies:", req.cookies.getAll());
+  const { pathname, searchParams } = req.nextUrl;
+  const token = req.cookies.get("token")?.value;
+
+  console.log(`[Middleware] Path: ${pathname}, Platform: ${searchParams.get("platform")}, HasTokenParam: ${searchParams.has("token")}, HasCookie: ${!!token}`);
 
   // Skip authentication for public routes
   const publicRoutes = [
@@ -23,21 +24,19 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow OAuth callback routes (social media with platform & token params)
+  // Allow OAuth callback routes (social media with platform & token params or error)
   const isOAuthCallback =
     req.nextUrl.pathname.includes("/social-media") &&
     req.nextUrl.searchParams.has("platform") &&
-    req.nextUrl.searchParams.has("token");
+    (req.nextUrl.searchParams.has("token") || req.nextUrl.searchParams.has("error"));
 
   if (isOAuthCallback) {
     console.log("OAuth callback detected, allowing access...");
     return NextResponse.next();
   }
 
-  const token = req.cookies.get("token")?.value;
-
   if (!token) {
-    console.log("No token, redirecting to login...");
+    console.log("[Middleware] No token cookie, redirecting to login...");
     return NextResponse.redirect(new URL("/login", req.url));
   }
 

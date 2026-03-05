@@ -69,38 +69,45 @@ export default function SocialAnalyticsDashboard({
     return PLATFORMS.map((platform) => {
       const platformData = (user as any)?.[platform.id];
       let followers = "0";
-      let connected = connectedPlatforms.includes(platform.id);
+      let connected = false;
 
       // Check if we have dynamic metrics from the metrics prop
       const metricsList = Array.isArray(metrics) ? metrics : metrics?.metrics;
-      const metricData = metricsList?.find(
-        (m: any) =>
-          m.platform?.toLowerCase() === platform.id.toLowerCase() ||
-          (platform.id === "x" && m.platform?.toLowerCase() === "twitter"),
-      );
+      const metricData = metricsList?.find((m: any) => {
+        const platformId = m.platform?.toLowerCase();
+        const targetId = platform.id.toLowerCase();
+        return (
+          platformId === targetId ||
+          (targetId === "x" && platformId === "twitter") ||
+          (targetId === "instagram" && platformId === "instagram_business")
+        );
+      });
 
-      if (metricData) {
-        followers = formatNumber(Number(metricData.count || 0));
-        connected = true;
-      } else if (platformData) {
-        const followerValue =
-          platform.id === "youtube"
-            ? platformData.subscriberCount
-            : platformData.followers_count;
+      // Strictly require both access_token and project_id (or page_id for FB) to be considered connected
+      const hasId = !!(platformData?.project_id || platformData?.page_id);
+      const hasToken = !!platformData?.access_token;
+      connected = connectedPlatforms.includes(platform.id) && hasId && hasToken;
 
-        if (followerValue) {
-          followers = formatNumber(
-            typeof followerValue === "string"
-              ? parseInt(followerValue)
-              : followerValue,
-          );
-          connected = true;
+      // Only show metrics/followers if currently connected
+      if (connected) {
+        if (metricData) {
+          followers = formatNumber(Number(metricData.count || 0));
+        } else if (platformData) {
+          const followerValue =
+            platform.id === "youtube"
+              ? platformData.subscriberCount
+              : platformData.followers_count;
+
+          if (followerValue) {
+            followers = formatNumber(
+              typeof followerValue === "string"
+                ? parseInt(followerValue)
+                : followerValue,
+            );
+          }
         }
-      }
-
-      // Check for access token as backup connection indicator
-      if (platformData?.access_token || platformData?.page_id) {
-        connected = true;
+      } else {
+        followers = "0";
       }
 
       return {
@@ -198,7 +205,7 @@ export default function SocialAnalyticsDashboard({
           await syncYoutube(userId);
           break;
         case "facebook":
-          const pageId = platformData?.project_id;
+          const pageId = platformData?.project_id || platformData?.page_id;
           if (!pageId) {
             throw new Error(
               "Facebook Page ID not found. Please connect your account again.",
