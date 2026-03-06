@@ -38,6 +38,16 @@ const DemographicCard = ({
       if (label === "M") label = "Male";
       if (label === "U") label = "Unknown";
 
+      // Convert ISO Country Code to Full Name
+      if (labelKey === "country" && label?.length === 2) {
+        try {
+          const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+          label = regionNames.of(label.toUpperCase()) || label;
+        } catch (e) {
+          console.error("Error formatting country name:", e);
+        }
+      }
+
       return {
         ...item,
         displayLabel: label,

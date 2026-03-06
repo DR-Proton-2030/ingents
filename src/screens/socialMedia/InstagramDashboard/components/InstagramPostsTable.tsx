@@ -6,6 +6,8 @@ import {
   Image as ImageIcon,
   PlayCircle,
   Eye,
+  BarChart3,
+  Users,
 } from "lucide-react";
 import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 import InstagramPostModal from "./InstagramPostModal";
@@ -77,7 +79,7 @@ export default function InstagramPostsTable({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[40%]">
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[35%]">
                   Post
                 </th>
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -87,19 +89,22 @@ export default function InstagramPostsTable({
                   Date
                 </th>
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                  Views
+                </th>
+                <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
+                  Reach
+                </th>
+                <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
                   Likes
                 </th>
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
                   Comments
                 </th>
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
-                  Shares
-                </th>
-                <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
                   Saved
                 </th>
                 <th className="px-4 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">
-                  Open
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -112,8 +117,12 @@ export default function InstagramPostsTable({
                 const hasMultiple =
                   post.media_urls && post.media_urls.length > 1;
 
-                const shares = getInsightValue(post.insights, "shares");
-                const saved = getInsightValue(post.insights, "saved");
+                const shares =
+                  post.shares_count ?? getInsightValue(post.insights, "shares");
+                const saved =
+                  post.save_count ?? getInsightValue(post.insights, "saved");
+                const views = post.overview?.views ?? 0;
+                const reach = post.overview?.accounts_reached ?? 0;
 
                 return (
                   <tr
@@ -126,45 +135,36 @@ export default function InstagramPostsTable({
                           className="relative flex-shrink-0 rounded-lg overflow-hidden shadow-sm ring-1 ring-black/5 w-32 h-[72px] bg-gray-100 cursor-pointer group/thumb"
                           onClick={() => setSelectedPost(post)}
                         >
-                          {isVideoType(mediaType) ? (
-                            <>
-                              <video
-                                src={mediaUrl}
-                                className="w-32 h-[72px] object-cover"
-                                muted
-                                playsInline
-                                preload="metadata"
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover/thumb:bg-black/40 transition-colors">
-                                <PlayCircle className="w-6 h-6 text-white" />
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <img
-                                src={
-                                  mediaUrl ||
-                                  "https://picsum.photos/seed/instagram-post/400/225"
-                                }
-                                className="w-32 h-[72px] object-cover"
-                                alt=""
-                                onError={(e) => {
-                                  (e.target as any).src =
-                                    "https://picsum.photos/seed/instagram-fail/400/225";
-                                }}
-                              />
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/thumb:bg-black/30 transition-colors">
-                                <Eye className="w-6 h-6 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity transform scale-75 group-hover/thumb:scale-100" />
-                              </div>
-                              {hasMultiple && (
-                                <div className="absolute top-1.5 right-1.5 bg-black/50 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-1">
-                                  <ImageIcon className="w-2.5 h-2.5 text-white" />
-                                  <span className="text-[9px] font-bold text-white leading-none">
-                                    +{post.media_urls.length - 1}
-                                  </span>
-                                </div>
-                              )}
-                            </>
+                          <img
+                            src={
+                              post.thumbnail_url ||
+                              mediaUrl ||
+                              "https://picsum.photos/seed/instagram-post/400/225"
+                            }
+                            className="w-32 h-[72px] object-cover"
+                            alt=""
+                            onError={(e) => {
+                              (e.target as any).src =
+                                "https://picsum.photos/seed/instagram-fail/400/225";
+                            }}
+                          />
+                          {isVideoType(mediaType) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover/thumb:bg-black/40 transition-colors">
+                              <PlayCircle className="w-6 h-6 text-white shadow-lg" />
+                            </div>
+                          )}
+                          {!isVideoType(mediaType) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/thumb:bg-black/30 transition-colors">
+                              <Eye className="w-6 h-6 text-white opacity-0 group-hover/thumb:opacity-100 transition-opacity transform scale-75 group-hover/thumb:scale-100" />
+                            </div>
+                          )}
+                          {hasMultiple && (
+                            <div className="absolute top-1.5 right-1.5 bg-black/50 backdrop-blur-sm rounded px-1.5 py-0.5 flex items-center gap-1">
+                              <ImageIcon className="w-2.5 h-2.5 text-white" />
+                              <span className="text-[9px] font-bold text-white leading-none">
+                                +{post.media_urls.length - 1}
+                              </span>
+                            </div>
                           )}
                         </div>
 
@@ -208,6 +208,18 @@ export default function InstagramPostsTable({
                     </td>
 
                     <td className="px-4 py-4 text-right whitespace-nowrap">
+                      <span className="text-sm font-semibold text-indigo-600 block">
+                        {formatCompactNumber(views)}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
+                      <span className="text-sm font-semibold text-blue-600 block">
+                        {formatCompactNumber(reach)}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4 text-right whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900 block">
                         {formatCompactNumber(post.like_count || 0)}
                       </span>
@@ -221,28 +233,32 @@ export default function InstagramPostsTable({
 
                     <td className="px-4 py-4 text-right whitespace-nowrap">
                       <span className="text-sm font-medium text-gray-900 block">
-                        {formatCompactNumber(shares)}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-4 text-right whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900 block">
                         {formatCompactNumber(saved)}
                       </span>
                     </td>
 
                     <td className="px-4 py-4 whitespace-nowrap text-right">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (permalink) window.open(permalink, "_blank");
-                        }}
-                        className="p-2 text-gray-400 cursor-pointer hover:text-pink-700 hover:bg-pink-50 rounded-lg transition-all inline-flex"
-                        title="Open on Instagram"
-                        disabled={!permalink}
-                      >
-                        <ExternalLink className="w-5 h-5" />
-                      </button>
+                      <div className="flex justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPost(post)}
+                          className="p-2 text-gray-400 cursor-pointer hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all inline-flex"
+                          title="View Insights"
+                        >
+                          <BarChart3 className="w-5 h-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (permalink) window.open(permalink, "_blank");
+                          }}
+                          className="p-2 text-gray-400 cursor-pointer hover:text-pink-700 hover:bg-pink-50 rounded-lg transition-all inline-flex"
+                          title="Open on Instagram"
+                          disabled={!permalink}
+                        >
+                          <ExternalLink className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

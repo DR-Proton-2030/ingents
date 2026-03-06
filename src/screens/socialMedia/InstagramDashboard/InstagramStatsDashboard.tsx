@@ -184,7 +184,7 @@ export default function InstagramStatsDashboard() {
     <Layout>
       <div className="min-h-screen bg-transparent pb-24 font-sans">
         <div className="max-w-[1700px] mx-auto px-4 lg:px-12 py-8">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 mb-20">
             <Header />
             <Link
               href={baseSocialPath}
@@ -363,7 +363,7 @@ export default function InstagramStatsDashboard() {
             <InstagramPostsTable posts={content} />
           ) : activeTab === "audience" ? (
             <div className="space-y-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <FBStatCard
                   title="Followers"
                   value={toNumber(
@@ -389,12 +389,12 @@ export default function InstagramStatsDashboard() {
                   variant="default"
                   formatter={() => overview?.id || "—"}
                 />
-              </div>
+              </div> */}
 
               <div className="bg-transparent rounded-[32px] p-0">
-                <div className="text-xs font-black uppercase tracking-widest text-slate-500 mb-8 px-2">
+                {/* <div className="text-xs font-black uppercase tracking-widest text-slate-500 mb-8 px-2">
                   Audience Breakdown
-                </div>
+                </div> */}
 
                 {hasKeys(audience?.demographics) ? (
                   <InstagramDemographicsCharts

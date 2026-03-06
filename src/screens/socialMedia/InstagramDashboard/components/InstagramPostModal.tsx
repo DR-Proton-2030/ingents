@@ -10,6 +10,16 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  BarChart3,
+  Users,
+  Eye,
+  Clock,
+  MousePointer2,
+  Repeat2,
+  Bookmark,
+  MessageCircle,
+  Heart,
+  Share2,
 } from "lucide-react";
 import { formatCompactNumber } from "@/utils/commonFunction/formatNumber";
 
@@ -211,60 +221,173 @@ export default function InstagramPostModal({
               </div>
             </div>
 
-            {/* Caption (Scrollable) */}
-            <div className="flex-1 p-6 overflow-y-auto bg-gray-50/50 relative">
-              {selectedPost.caption ? (
-                <p className="text-[15px] text-gray-700 whitespace-pre-wrap leading-relaxed">
-                  {selectedPost.caption}
-                </p>
-              ) : (
-                <p className="text-sm text-gray-400 italic font-medium">
-                  No caption provided.
-                </p>
-              )}
+            {/* Caption & Overview (Scrollable) */}
+            <div className="flex-1 overflow-y-auto bg-gray-50/50 relative">
+              <div className="p-6">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-3">
+                  Caption
+                </h4>
+                {selectedPost.caption ? (
+                  <p className="text-[14px] text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {selectedPost.caption}
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-400 italic font-medium">
+                    No caption provided.
+                  </p>
+                )}
+              </div>
+
+              {/* Performance Metrics Section */}
+              <div className="px-6 py-4 border-t border-gray-100 bg-white">
+                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[2px] mb-4">
+                  Performance Overview
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 transition-hover hover:border-indigo-100 hover:bg-indigo-50/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Eye className="w-3.5 h-3.5 text-indigo-500" />
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                        Views
+                      </span>
+                    </div>
+                    <div className="text-xl font-black text-gray-900">
+                      {formatCompactNumber(selectedPost.overview?.views || 0)}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 transition-hover hover:border-blue-100 hover:bg-blue-50/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="w-3.5 h-3.5 text-blue-500" />
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                        Reach
+                      </span>
+                    </div>
+                    <div className="text-xl font-black text-gray-900">
+                      {formatCompactNumber(
+                        selectedPost.overview?.accounts_reached || 0,
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 transition-hover hover:border-purple-100 hover:bg-purple-50/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MousePointer2 className="w-3.5 h-3.5 text-purple-500" />
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                        Interactions
+                      </span>
+                    </div>
+                    <div className="text-xl font-black text-gray-900">
+                      {formatCompactNumber(
+                        selectedPost.overview?.interactions || 0,
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 transition-hover hover:border-pink-100 hover:bg-pink-50/30">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-3.5 h-3.5 text-pink-500" />
+                      <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                        Avg. Watch Time
+                      </span>
+                    </div>
+                    <div className="text-xl font-black text-gray-900">
+                      {selectedPost.overview?.average_watch_time
+                        ? `${selectedPost.overview.average_watch_time}s`
+                        : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {selectedPost.overview?.watch_time_total && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-xs font-semibold text-gray-600">
+                        Total Watch Time
+                      </span>
+                    </div>
+                    <span className="text-sm font-black text-gray-900">
+                      {(selectedPost.overview.watch_time_total / 3600).toFixed(
+                        2,
+                      )}
+                      h
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Footer Stats */}
             <div className="p-6 bg-white shrink-0 border-t border-gray-100 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex gap-4 sm:gap-6 md:gap-8 overflow-x-auto pb-2 scrollbar-hide">
-                  <div className="flex flex-col min-w-fit">
-                    <span className="text-2xl font-black text-gray-900 tracking-tight">
-                      {formatCompactNumber(selectedPost.like_count || 0)}
-                    </span>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+              <div className="grid grid-cols-4 gap-2 mb-6">
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Heart className="w-3 h-3 text-pink-500 fill-pink-500" />
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
                       Likes
                     </span>
                   </div>
-                  <div className="flex flex-col min-w-fit">
-                    <span className="text-2xl font-black text-gray-900 tracking-tight">
-                      {formatCompactNumber(selectedPost.comments_count || 0)}
-                    </span>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                  <span className="text-lg font-black text-gray-900 tracking-tight">
+                    {formatCompactNumber(selectedPost.like_count || 0)}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <MessageCircle className="w-3 h-3 text-blue-500" />
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
                       Comments
                     </span>
                   </div>
-                  <div className="flex flex-col min-w-fit">
-                    <span className="text-2xl font-black text-gray-900 tracking-tight">
-                      {formatCompactNumber(
-                        getInsightValue(selectedPost.insights, "shares"),
-                      )}
-                    </span>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                  <span className="text-lg font-black text-gray-900 tracking-tight">
+                    {formatCompactNumber(selectedPost.comments_count || 0)}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Share2 className="w-3 h-3 text-green-500" />
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
                       Shares
                     </span>
                   </div>
-                  <div className="flex flex-col min-w-fit">
-                    <span className="text-2xl font-black text-gray-900 tracking-tight">
-                      {formatCompactNumber(
-                        getInsightValue(selectedPost.insights, "saved"),
-                      )}
-                    </span>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
+                  <span className="text-lg font-black text-gray-900 tracking-tight">
+                    {formatCompactNumber(
+                      selectedPost.shares_count ??
+                        getInsightValue(selectedPost.insights, "shares"),
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Bookmark className="w-3 h-3 text-purple-500" />
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
                       Saved
                     </span>
                   </div>
+                  <span className="text-lg font-black text-gray-900 tracking-tight">
+                    {formatCompactNumber(
+                      selectedPost.save_count ??
+                        getInsightValue(selectedPost.insights, "saved"),
+                    )}
+                  </span>
                 </div>
+
+                {selectedPost.reposts_count !== undefined && (
+                  <div className="flex flex-col items-center col-span-4 mt-2 pt-2 border-t border-gray-50">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Repeat2 className="w-3 h-3 text-gray-400" />
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
+                        Reposts
+                      </span>
+                      <span className="text-sm font-black text-gray-900 ml-2">
+                        {formatCompactNumber(selectedPost.reposts_count)}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {selectedPost.permalink && (
