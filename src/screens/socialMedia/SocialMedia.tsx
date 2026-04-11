@@ -30,6 +30,7 @@ import { api } from "@/utils/api";
 import { toast } from "react-toastify";
 
 import { useSocialMetrics } from "@/hooks/useSocialMetrics";
+import SocialSidebarStats from "./components/SocialSidebarStats";
 
 export default function SocialMediaDashboard() {
   const pathname = usePathname();
@@ -299,8 +300,8 @@ export default function SocialMediaDashboard() {
 
   return (
     <Layout>
-      <div className="mx-auto px-5 max-w-7xl font-sans gap-5 flex flex-col lg:flex-row grid grid-cols-1 lg:grid-cols-12">
-        <div className="flex-grow lg:col-span-8 h-[87vh] overflow-y-auto pb-10 hidescroll">
+      <div className="mx-auto t-4 font-sans gap-5 flex flex-col lg:flex-row w-full">
+        <div className="flex-grow lg:w-3/4 h-[87vh] overflow-y-auto pb-10 hidescroll">
           {/* Platform Stats Cards at Top */}
           <SocialAnalyticsDashboard
             connectedPlatforms={connectedPlatforms}
@@ -342,15 +343,7 @@ export default function SocialMediaDashboard() {
                   </button>
                 ))}
               </div>
-              <button
-                onClick={() => refetchMetrics()}
-                className="p-2.5 ml-1 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-50 transition-all shadow-sm"
-                title="Refresh Analytics"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${metricsLoading ? "animate-spin text-blue-500" : ""}`}
-                />
-              </button>
+              
             </div>
           </div>
 
@@ -376,9 +369,9 @@ export default function SocialMediaDashboard() {
             {activeTab === "history" && <PostedContentHistory />}
           </motion.div>
         </div>
-        {/* <div className="w-full flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
-          <AiSidebar aiUrl="social" context={companyDetails} />
-        </div> */}
+        <div className="w-full flex-shrink-0 px- mt-8 lg:mt-0 lg:w-1/4">
+          <SocialSidebarStats />
+        </div>
       </div>
 
       {/* Account Selection Modal */}
