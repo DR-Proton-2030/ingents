@@ -26,7 +26,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import AccountSelectionModal from "@/components/shared/AccountSelectionModal/AccountSelectionModal";
-import { updateUser } from "@/utils/api/user/user.api";
+import { api } from "@/utils/api";
+import { toast } from "react-toastify";
 
 import { useSocialMetrics } from "@/hooks/useSocialMetrics";
 
@@ -34,7 +35,7 @@ export default function SocialMediaDashboard() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
   const [selectedCompany, setSelectedCompany] = useState(0);
   const [companyDetails, setCompanyDetails] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<
@@ -42,6 +43,7 @@ export default function SocialMediaDashboard() {
   >("analytics");
   const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
   const scheduledPostsRef = useRef<{ refresh: () => void } | null>(null);
+  const handledAuthRef = useRef<string>("");
 
   const {
     metrics,
@@ -56,25 +58,68 @@ export default function SocialMediaDashboard() {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#_=_") {
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search,
-      );
-    }
+    const syncOAuthCallback = async () => {
+      if (typeof window !== "undefined" && window.location.hash === "#_=_") {
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
+      }
 
-    const platformParam = searchParams.get("platform");
-    const tokenParam = searchParams.get("token");
+      const platformParam = searchParams.get("platform");
+      const tokenParam = searchParams.get("token");
+      const normalized = platformParam?.toLowerCase();
 
-    if (platformParam && tokenParam) {
-      if (platformParam.toLowerCase() === "facebook") {
+      if (!normalized) return;
+
+      const authSignature = `${normalized}:${tokenParam || ""}:${searchParams.get("user_id") || ""}`;
+      if (handledAuthRef.current === authSignature) return;
+      handledAuthRef.current = authSignature;
+
+      if (normalized === "facebook" && tokenParam) {
         setPlatform(platformParam);
         setToken(tokenParam);
         setIsModalOpen(true);
+        return;
       }
-    }
-  }, [searchParams]);
+
+      const userId =
+        (user as any)?._id || (user as any)?.id || searchParams.get("user_id");
+
+      try {
+        if (normalized === "instagram" && tokenParam && userId) {
+          const res = await fetch(
+            `/api/instagram/profile?access_token=${encodeURIComponent(tokenParam)}&userId=${encodeURIComponent(userId)}`,
+          );
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error(
+              data?.error || data?.message || "Failed to connect Instagram",
+            );
+          }
+          if (data?.user) {
+            setUser(data.user);
+          }
+        } else if (normalized === "youtube" || normalized === "x") {
+          const verified = await api.auth.verifyToken();
+          if (verified?.data?.user) {
+            setUser(verified.data.user);
+          }
+        }
+
+        setConnectedPlatforms((prev) =>
+          prev.includes(normalized) ? prev : [...prev, normalized],
+        );
+      } catch (err: any) {
+        toast.error(err?.message || `Failed to complete ${normalized} connection`);
+      } finally {
+        clearAuthQuery();
+      }
+    };
+
+    syncOAuthCallback();
+  }, [searchParams, pathname, router, user, setUser]);
 
   useEffect(() => {
     const userId =
@@ -105,6 +150,74 @@ export default function SocialMediaDashboard() {
       setConnectedPlatforms(platforms);
     }
   }, [user]);
+
+  const handleDisconnectPlatform = async (platformId: string) => {
+    const routeMap: Record<string, string> = {
+      facebook: "/api/facebook/disconnect",
+      youtube: "/api/youtube/disconnect",
+      x: "/api/x/disconnect",
+      instagram: "/api/instagram/disconnect",
+    };
+
+    const route = routeMap[platformId];
+    if (!route) {
+      toast.info(`${platformId} disconnect is not available yet.`);
+      return;
+    }
+
+    const userId = (user as any)?.id || (user as any)?._id;
+    if (!userId) {
+      toast.error("Missing user id");
+      return;
+    }
+
+    const confirmed =
+      typeof window !== "undefined"
+        ? window.confirm(
+            `Disconnect ${platformId.charAt(0).toUpperCase() + platformId.slice(1)}? You can reconnect anytime.`,
+          )
+        : true;
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(route, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          payload?.error || payload?.message || `Failed to disconnect ${platformId}`,
+        );
+      }
+
+      if (payload?.user) {
+        setUser(payload.user);
+      } else {
+        setUser({
+          ...(user as any),
+          [platformId]: {
+            project_id: null,
+            name: null,
+            access_token: null,
+            ...(platformId === "x"
+              ? { refresh_token: null, pkce_verifier: null }
+              : {}),
+          },
+        } as any);
+      }
+
+      setConnectedPlatforms((prev) => prev.filter((p) => p !== platformId));
+      await refetchMetrics();
+      toast.success(
+        `${platformId.charAt(0).toUpperCase() + platformId.slice(1)} disconnected`,
+      );
+    } catch (err: any) {
+      toast.error(err?.message || `Failed to disconnect ${platformId}`);
+    }
+  };
 
   const handlePostScheduled = () => {
     setActiveTab("scheduled");
@@ -194,6 +307,7 @@ export default function SocialMediaDashboard() {
             showOnlyStats
             metrics={metrics}
             onRefreshAll={refetchMetrics}
+            onDisconnect={handleDisconnectPlatform}
           />
 
           {/* Enhanced Tab Navigation */}
@@ -254,6 +368,7 @@ export default function SocialMediaDashboard() {
                 showChartAndMetrics
                 metrics={metrics}
                 onRefreshAll={refetchMetrics}
+                onDisconnect={handleDisconnectPlatform}
               />
             )}
             {activeTab === "compose" && <CreatePostCTA />}
@@ -261,9 +376,9 @@ export default function SocialMediaDashboard() {
             {activeTab === "history" && <PostedContentHistory />}
           </motion.div>
         </div>
-        <div className="w-full flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
+        {/* <div className="w-full flex-shrink-0 mt-8 lg:mt-0 lg:col-span-4">
           <AiSidebar aiUrl="social" context={companyDetails} />
-        </div>
+        </div> */}
       </div>
 
       {/* Account Selection Modal */}

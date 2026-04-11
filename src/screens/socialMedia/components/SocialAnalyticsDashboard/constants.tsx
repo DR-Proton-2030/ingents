@@ -72,7 +72,7 @@ export const getAuthUrl = (platformId: string, userId: string, baseURL: string):
     case "facebook":
       return `${baseURL}/api/v1/facebook/login?user_id=${userId}`;
     case "instagram":
-      return `https://a7b68de5a1df.ngrok-free.app/api/v1/ig/login-instagram?user_id=${userId}`;
+      return `${baseURL}/api/v1/ig/login-instagram?user_id=${userId}`;
     case "youtube":
       return `${baseURL}/api/v1/youtube/auth?user_id=${userId}`;
     case "x":
