@@ -70,7 +70,7 @@ export default function CreatePostCTA() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative bg-white rounded-2xl border border-slate-100 p-6 hover:shadow-lg transition-all duration-300 overflow-hidden"
+        className="relative bg-white rounded-2xl border border-slate-100 p-6  transition-all duration-300 overflow-hidden"
       >
         {/* Subtle background accent */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-slate-50 to-transparent rounded-full transform translate-x-1/3 -translate-y-1/3" />
@@ -78,9 +78,7 @@ export default function CreatePostCTA() {
         <div className="relative">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl">
-                <PenSquare className="w-6 h-6 text-white" />
-              </div>
+              
               <div>
                 <h2 className="text-xl font-bold text-slate-800">Create New Post</h2>
                 <p className="text-slate-500 text-sm mt-0.5">
@@ -92,9 +90,8 @@ export default function CreatePostCTA() {
             {/* Quick action button */}
             <button
               onClick={handleCreatePost}
-              className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-orange-400 to-orange-500 text-white rounded-xl font-medium hover:bg-slate-800 transition-all group"
+              className="hidden sm:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-gray-100 to-gray-200 text-black rounded-xl font-medium hover:bg-slate-800 transition-all group"
             >
-              <Zap className="w-4 h-4" />
               Quick Post
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
