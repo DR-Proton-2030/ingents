@@ -82,3 +82,25 @@ export const triggerInsightsSync = async (userId: string): Promise<any> => {
     throw error;
   }
 };
+
+/**
+ * Fetches weekly engagement data per platform.
+ * YouTube → views, Facebook/Instagram/X → likes.
+ */
+export const getWeeklyEngagement = async (
+  userId: string,
+  weeks?: number
+): Promise<any> => {
+  try {
+    const response = await API.get("/insights/weekly-engagement", {
+      params: { userId, ...(weeks ? { weeks } : {}) },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error(
+      "Failed to fetch weekly engagement:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};

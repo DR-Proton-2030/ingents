@@ -1,6 +1,6 @@
 "use client";
-import React, { useMemo, useContext, useCallback, useEffect } from "react";
-import { FileText, Heart, Eye, RefreshCw } from "lucide-react";
+import React, { useMemo, useContext, useCallback } from "react";
+import { FileText, Heart, Eye } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthContext from "@/contexts/authContext/authContext";
 
@@ -9,9 +9,8 @@ import PlatformGrowthChart from "./PlatformGrowthChart";
 import PerformanceMetrics, { PerformanceMetric } from "./PerformanceMetrics";
 import DateRangeSelector from "./DateRangeSelector";
 import SocialAnalyticsStatsGrid from "./SocialAnalyticsStatsGrid";
-import { DEFAULT_MONTHLY_DATA } from "./constants";
 import { useSocialAnalyticsDashboard } from "./useSocialAnalyticsDashboard";
-import { useInsightsSummary, useTriggerSync } from "@/hooks/useInsights";
+import { useInsightsSummary } from "@/hooks/useInsights";
 import type { SocialAnalyticsDashboardProps } from "./types";
 
 export default function SocialAnalyticsDashboard({
@@ -20,7 +19,6 @@ export default function SocialAnalyticsDashboard({
   showChartAndMetrics = false,
   onConnect,
   onDisconnect,
-  chartData = DEFAULT_MONTHLY_DATA,
   metrics,
   onRefreshAll,
 }: SocialAnalyticsDashboardProps) {
@@ -29,8 +27,7 @@ export default function SocialAnalyticsDashboard({
   const pathname = usePathname();
 
   const userId = (user as any)?._id;
-  const { summary, refetch: refetchInsights } = useInsightsSummary(userId);
-  const { sync, syncing } = useTriggerSync();
+  const { summary } = useInsightsSummary(userId);
 
   const {
     stats,
@@ -85,12 +82,6 @@ export default function SocialAnalyticsDashboard({
     [summary],
   );
 
-  const handleSyncInsights = useCallback(async () => {
-    if (!userId || syncing) return;
-    await sync(userId);
-    refetchInsights();
-  }, [userId, syncing, sync, refetchInsights]);
-
   const handleViewDetails = useCallback(
     (platformId: string) => {
       const platformData = (user as any)?.[platformId];
@@ -125,7 +116,7 @@ export default function SocialAnalyticsDashboard({
   if (showChartAndMetrics) {
     return (
       <div className="space-y-6">
-        <PlatformGrowthChart dateRange={dateRange} />
+        <PlatformGrowthChart />
       </div>
     );
   }
@@ -143,7 +134,7 @@ export default function SocialAnalyticsDashboard({
         onRefresh={handleRefresh}
       />
 
-      <PlatformGrowthChart dateRange={dateRange} />
+      <PlatformGrowthChart />
       <PerformanceMetrics metrics={performanceMetrics} />
     </div>
   );
@@ -156,4 +147,3 @@ export {
   PerformanceMetrics,
   DateRangeSelector,
 };
-export { DEFAULT_MONTHLY_DATA } from "./constants";

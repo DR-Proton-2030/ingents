@@ -313,7 +313,7 @@ export default function SocialMediaDashboard() {
 
           {/* Enhanced Tab Navigation */}
           <div className="mt-6 mb-6">
-            <div className="flex bg-slate-50 rounded-2xl p-1.5 gap-1 shadow-sm items-center">
+            <div className="flex bg-white rounded-2xl p-1.5 gap-1 w-2/3 items-center">
               <div className="flex flex-1 gap-1">
                 {tabs.map((tab) => (
                   <button

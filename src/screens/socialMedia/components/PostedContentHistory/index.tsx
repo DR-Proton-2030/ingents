@@ -200,13 +200,7 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
                 transition={{ delay: idx * 0.05 }}
                 className="group relative bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-indigo-200 transition-all shadow"
               >
-                {/* Status Bar */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-slate-50 overflow-hidden">
-                  <div
-                    className={`h-full ${post.status === "published" ? "bg-emerald-500" : "bg-red-500"}`}
-                    style={{ width: "100%" }}
-                  />
-                </div>
+                
 
                 <div className="p-5">
                   <div className="flex items-start gap-4">
@@ -289,26 +283,7 @@ export default function PostedContentHistory({ limit }: PostedContentHistoryProp
                       </div>
 
                       {/* Engagement Bar */}
-                      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100">
-                        <div className="flex items-center gap-1.5 group/stat">
-                          <FiHeart className="w-3.5 h-3.5 text-slate-400 group-hover/stat:text-pink-500 transition-colors" />
-                          <span className="text-[11px] font-bold text-slate-600 tracking-tighter">
-                            {formatNumber(post.engagement?.likes)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 group/stat">
-                          <FiMessageCircle className="w-3.5 h-3.5 text-slate-400 group-hover/stat:text-blue-500 transition-colors" />
-                          <span className="text-[11px] font-bold text-slate-600 tracking-tighter">
-                            {formatNumber(post.engagement?.comments)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 group/stat">
-                          <FiEye className="w-3.5 h-3.5 text-slate-400 group-hover/stat:text-indigo-500 transition-colors" />
-                          <span className="text-[11px] font-bold text-slate-600 tracking-tighter">
-                            {formatNumber(post.engagement?.views)}
-                          </span>
-                        </div>
-                      </div>
+                      
                     </div>
                   </div>
 
