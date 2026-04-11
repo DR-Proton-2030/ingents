@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useContext, useMemo } from "react";
+import React, { useState, useEffect, useContext, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { FaFacebook, FaInstagram, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
@@ -106,13 +106,14 @@ export default function PlatformGrowthChart() {
   const { user } = useContext(AuthContext);
   const [data, setData] = useState<WeeklyDataPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [weeksWindow, setWeeksWindow] = useState(6);
   const [activePlatforms, setActivePlatforms] = useState<Set<PlatformKey>>(
     new Set(["youtube", "facebook", "instagram", "x"])
   );
 
   const userId = (user as any)?._id || (user as any)?.id;
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!userId) {
       setLoading(false);
       return;
@@ -121,20 +122,62 @@ export default function PlatformGrowthChart() {
     try {
       // Trigger a background sync so engagement data stays fresh
       triggerInsightsSync(userId).catch(() => {});
-      const res = await getWeeklyEngagement(userId, 6);
+      const baseWeeks = 6;
+      const fallbackWeeks = 12;
+
+      const hasNonZeroMetrics = (weeks: WeeklyDataPoint[]) =>
+        weeks.some(
+          (w) =>
+            (w.youtube || 0) > 0 ||
+            (w.facebook || 0) > 0 ||
+            (w.instagram || 0) > 0 ||
+            (w.x || 0) > 0
+        );
+
+      const res = await getWeeklyEngagement(userId, baseWeeks);
       if (res.success && res.result?.weeks) {
-        setData(res.result.weeks);
+        const baseWeeksData = res.result.weeks as WeeklyDataPoint[];
+        if (hasNonZeroMetrics(baseWeeksData)) {
+          setData(baseWeeksData);
+          setWeeksWindow(baseWeeks);
+        } else {
+          const fallbackRes = await getWeeklyEngagement(userId, fallbackWeeks);
+          if (fallbackRes.success && fallbackRes.result?.weeks) {
+            const fallbackData = fallbackRes.result.weeks as WeeklyDataPoint[];
+            setData(fallbackData);
+            setWeeksWindow(fallbackWeeks);
+          } else {
+            setData(baseWeeksData);
+            setWeeksWindow(baseWeeks);
+          }
+        }
       }
     } catch (err) {
       console.error("Failed to fetch weekly engagement:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   useEffect(() => {
     fetchData();
-  }, [userId]);
+  }, [fetchData]);
+
+  useEffect(() => {
+    const onManualSync = () => {
+      fetchData();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("insights:manual-sync", onManualSync);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("insights:manual-sync", onManualSync);
+      }
+    };
+  }, [fetchData]);
 
   const togglePlatform = (key: PlatformKey) => {
     setActivePlatforms((prev) => {
@@ -183,7 +226,7 @@ export default function PlatformGrowthChart() {
             Weekly Engagement
           </h3>
           <p className="text-xs text-slate-400 mt-0.5">
-            YT views &middot; FB / Insta / X likes &mdash; last 6 weeks
+            YT views &middot; FB / Insta / X likes &mdash; last {weeksWindow} weeks
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">

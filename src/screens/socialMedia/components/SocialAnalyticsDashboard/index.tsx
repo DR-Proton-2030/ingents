@@ -1,6 +1,6 @@
 "use client";
-import React, { useMemo, useContext, useCallback } from "react";
-import { FileText, Heart, Eye } from "lucide-react";
+import React, { useMemo, useContext, useCallback, useState } from "react";
+import { FileText, Heart, Eye, RefreshCw } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthContext from "@/contexts/authContext/authContext";
 
@@ -10,7 +10,7 @@ import PerformanceMetrics, { PerformanceMetric } from "./PerformanceMetrics";
 import DateRangeSelector from "./DateRangeSelector";
 import SocialAnalyticsStatsGrid from "./SocialAnalyticsStatsGrid";
 import { useSocialAnalyticsDashboard } from "./useSocialAnalyticsDashboard";
-import { useInsightsSummary } from "@/hooks/useInsights";
+import { useInsightsSummary, useTriggerSync } from "@/hooks/useInsights";
 import type { SocialAnalyticsDashboardProps } from "./types";
 
 export default function SocialAnalyticsDashboard({
@@ -25,9 +25,11 @@ export default function SocialAnalyticsDashboard({
   const { user } = useContext(AuthContext);
   const router = useRouter();
   const pathname = usePathname();
+  const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
 
   const userId = (user as any)?._id;
-  const { summary } = useInsightsSummary(userId);
+  const { summary, refetch: refetchInsights } = useInsightsSummary(userId);
+  const { sync, syncing } = useTriggerSync();
 
   const {
     stats,
@@ -98,6 +100,41 @@ export default function SocialAnalyticsDashboard({
     [pathname, router, user],
   );
 
+  const handleHardSync = useCallback(async () => {
+    if (!userId || syncing) return;
+
+    const result = await sync(userId);
+    if (!result?.success) return;
+
+    await refetchInsights();
+    await Promise.resolve(onRefreshAll?.());
+    setLastSyncAt(new Date().toLocaleTimeString());
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("insights:manual-sync"));
+    }
+  }, [userId, syncing, sync, refetchInsights, onRefreshAll]);
+
+  const syncButton = (
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <h3 className="text-sm font-semibold text-slate-800">Realtime Sync</h3>
+        <p className="text-xs text-slate-400">
+          Pull latest platform metrics and save to database
+          {lastSyncAt ? ` • Last sync ${lastSyncAt}` : ""}
+        </p>
+      </div>
+      <button
+        onClick={handleHardSync}
+        disabled={!userId || syncing}
+        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white text-xs font-medium hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        <RefreshCw className={`w-3.5 h-3.5 ${syncing ? "animate-spin" : ""}`} />
+        {syncing ? "Syncing..." : "Hard Sync Now"}
+      </button>
+    </div>
+  );
+
   if (showOnlyStats) {
     return (
       <div className="mt-5">
@@ -116,6 +153,7 @@ export default function SocialAnalyticsDashboard({
   if (showChartAndMetrics) {
     return (
       <div className="space-y-6">
+        {syncButton}
         <PlatformGrowthChart />
       </div>
     );
@@ -123,6 +161,7 @@ export default function SocialAnalyticsDashboard({
 
   return (
     <div className="space-y-6">
+      {syncButton}
       <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
 
       <SocialAnalyticsStatsGrid

@@ -49,7 +49,7 @@ export default function SocialSidebarStats() {
     if (!userId) return;
     setLoading(true);
     try {
-      const res = await getPostedContent(userId, { limit: 10 });
+      const res = await getPostedContent(userId, { limit: 20 });
       if (res.success && res.data) {
         setPosts(res.data);
       }
@@ -62,6 +62,22 @@ export default function SocialSidebarStats() {
 
   useEffect(() => {
     fetchPosts();
+  }, [fetchPosts]);
+
+  useEffect(() => {
+    const onManualSync = () => {
+      fetchPosts();
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("insights:manual-sync", onManualSync);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("insights:manual-sync", onManualSync);
+      }
+    };
   }, [fetchPosts]);
 
   return (

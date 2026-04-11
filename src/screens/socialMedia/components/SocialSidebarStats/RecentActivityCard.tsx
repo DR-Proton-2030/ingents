@@ -163,6 +163,8 @@ interface RecentActivityCardProps {
   loading: boolean;
 }
 
+const RECENT_POSTS_DISPLAY_COUNT = 12;
+
 export function RecentActivityCard({ posts, loading }: RecentActivityCardProps) {
   return (
     <div className="">
@@ -199,8 +201,8 @@ export function RecentActivityCard({ posts, loading }: RecentActivityCardProps) 
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {posts.slice(0, 6).map((post) => (
+        <div className="space-y-2.5 max-h-[920px] overflow-y-auto pr-1">
+          {posts.slice(0, RECENT_POSTS_DISPLAY_COUNT).map((post) => (
             <RecentPostCard key={post._id} post={post} />
           ))}
         </div>
