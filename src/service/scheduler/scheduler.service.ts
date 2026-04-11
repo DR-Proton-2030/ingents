@@ -71,14 +71,17 @@ export interface SchedulerApiResponse<T> {
 
 /**
  * Schedule a new social media post
+ * Accepts either JSON data or FormData (for file uploads)
  */
 export const schedulePost = async (
-  postData: SchedulePostData
+  postData: SchedulePostData | FormData
 ): Promise<SchedulerApiResponse<ScheduledPost>> => {
   try {
+    const isFormData = postData instanceof FormData;
     const response = await axios.post(
       `${API_BASE_URL}/api/v1/scheduler/schedule`,
-      postData
+      postData,
+      isFormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
     );
     return response.data;
   } catch (error: any) {
