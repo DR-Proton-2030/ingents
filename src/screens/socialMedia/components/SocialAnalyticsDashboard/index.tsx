@@ -1,6 +1,6 @@
 "use client";
-import React, { useMemo, useContext, useCallback } from "react";
-import { FileText, Heart, Eye } from "lucide-react";
+import React, { useMemo, useContext, useCallback, useEffect } from "react";
+import { FileText, Heart, Eye, RefreshCw } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import AuthContext from "@/contexts/authContext/authContext";
 
@@ -11,6 +11,7 @@ import DateRangeSelector from "./DateRangeSelector";
 import SocialAnalyticsStatsGrid from "./SocialAnalyticsStatsGrid";
 import { DEFAULT_MONTHLY_DATA } from "./constants";
 import { useSocialAnalyticsDashboard } from "./useSocialAnalyticsDashboard";
+import { useInsightsSummary, useTriggerSync } from "@/hooks/useInsights";
 import type { SocialAnalyticsDashboardProps } from "./types";
 
 export default function SocialAnalyticsDashboard({
@@ -26,6 +27,10 @@ export default function SocialAnalyticsDashboard({
   const { user } = useContext(AuthContext);
   const router = useRouter();
   const pathname = usePathname();
+
+  const userId = (user as any)?._id;
+  const { summary, refetch: refetchInsights } = useInsightsSummary(userId);
+  const { sync, syncing } = useTriggerSync();
 
   const {
     stats,
@@ -44,29 +49,47 @@ export default function SocialAnalyticsDashboard({
     onRefreshAll,
   });
 
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(2)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(2)}K`;
+    return num.toString();
+  };
+
   const performanceMetrics: PerformanceMetric[] = useMemo(
     () => [
       {
         label: "Posts",
-        value: "586",
-        change: -2.0,
+        value: summary?.totals?.total_followers
+          ? formatNumber(summary.totals.total_followers)
+          : "0",
+        change: 0,
         icon: <FileText className="w-5 h-5 text-slate-400" />,
       },
       {
         label: "Likes",
-        value: "12,701",
-        change: 90,
+        value: summary?.totals?.total_likes
+          ? formatNumber(summary.totals.total_likes)
+          : "0",
+        change: 0,
         icon: <Heart className="w-5 h-5 text-slate-400" />,
       },
       {
         label: "Views",
-        value: "25.05K",
-        change: 30,
+        value: summary?.totals?.total_views
+          ? formatNumber(summary.totals.total_views)
+          : "0",
+        change: 0,
         icon: <Eye className="w-5 h-5 text-slate-400" />,
       },
     ],
-    [],
+    [summary],
   );
+
+  const handleSyncInsights = useCallback(async () => {
+    if (!userId || syncing) return;
+    await sync(userId);
+    refetchInsights();
+  }, [userId, syncing, sync, refetchInsights]);
 
   const handleViewDetails = useCallback(
     (platformId: string) => {

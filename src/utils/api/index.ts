@@ -15,6 +15,7 @@ import { getUser, searchUsers } from "./user/user.api";
 import { getTaskPhases, createTaskPhase, clearTaskPhasesCache, updateTaskPhase } from "./taskPhase/taskPhase.api";
 import { getTaskTags, createTaskTag, clearTaskTagsCache } from "./taskTag/taskTag.api";
 import { getProjects, createProject, updateProject, deleteProject } from "./project/project.api";
+import { getInsightsSummary, getContentMetricsHistory, getUserContentWithMetrics, getAccountInsightsHistory, triggerInsightsSync } from "./insights/insights.api";
 
 export const api = {
   auth: {
@@ -57,5 +58,12 @@ export const api = {
     createProject,
     updateProject,
     deleteProject
+  },
+  insights: {
+    getInsightsSummary,
+    getContentMetricsHistory,
+    getUserContentWithMetrics,
+    getAccountInsightsHistory,
+    triggerInsightsSync
   }
 }
