@@ -1,20 +1,18 @@
 import React from "react";
 import Layout from "../layout/Layout";
-import { DashboardHeader } from "../../components/screens/dashboard/DashboardHeader";
-
-import { ProjectProgress } from "../../components/screens/dashboard/ProjectProgress";
-import { UpcomingEvent } from "../../components/screens/dashboard/UpcomingEvent";
 import { TimeSchedule } from "../../components/screens/dashboard/TimeSchedule";
 import { TeamControl } from "../../components/screens/dashboard/TeamControl";
-import AllUsers from "../../components/screens/dashboard/AllUsers";
 import LeftNavigation from "@/components/screens/dashboard/LeftNavigation";
 import { ProductivityScores } from "@/components/screens/dashboard/ProductivityScores";
 import { Activity } from "@/components/screens/dashboard/Activity";
+import { Meets } from "@/components/screens/dashboard/Meets";
+import { DashboardHeader } from "@/components/screens/dashboard/DashboardHeader";
+import Hero from "@/components/screens/dashboard/Hero";
 
 export const Dashboard = () => {
   return (
     <Layout showSidebar={true}>
-      <div className="mx-auto max-w-8xl  space-y-6 hidescroll">
+      <div className="mx-auto max-w-8xl  space-y-6 overflow-hidden">
         {/* Header */}
         {/* <DashboardHeader /> */}
 
@@ -26,22 +24,22 @@ export const Dashboard = () => {
           </div> */}
 
           {/* Center content */}
-          <section className="col-span-9 space-y-5">
-<div className="flex items-center justify-center gap-6">
-              <div className="w-1/2 gap-4 flex-col  justify-center lg:flex">
-            <ProductivityScores />
+          <section className="col-span-9 space-y-5 overflow-y-auto h-[82vh] hidescroll">
+              <Hero/>
+            <div className="flex  gap-6">
+              <div className="w-1/2 gap-4 flex-col  lg:flex">
+                <ProductivityScores />
                 <LeftNavigation />
+              </div>
+              <div className="w-1/2 pr-4 gap-4 flex-col lg:flex">
+                <Meets />
+                <Activity />
+              </div>
             </div>
-            <div className="w-1/2 pr-4">
-              <Activity />
-            </div>
-</div>
-            <UpcomingEvent />
-
           </section>
 
           {/* Right column */}
-          <aside className="lg:col-span-3 space-y-5">
+          <aside className="lg:col-span-3 space-y-5 ">
             <TimeSchedule />
             <TeamControl />
           </aside>

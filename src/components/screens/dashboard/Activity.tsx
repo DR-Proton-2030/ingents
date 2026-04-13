@@ -101,9 +101,9 @@ export const Activity = () => {
 
 			
 
-			<button className="mt-4 w-full rounded-full border border-slate-300 bg-white py-3 text-sm text-slate-800 hover:bg-slate-50">
+			{/* <button className="mt-4 w-full rounded-full border border-slate-300 bg-white py-3 text-sm text-slate-800 hover:bg-slate-50">
 				Show all activities
-			</button>
+			</button> */}
 		</div>
 	);
 };

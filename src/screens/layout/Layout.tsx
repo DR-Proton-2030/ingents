@@ -30,7 +30,7 @@ export default function Layout({ children, showSidebar = true }: LayoutProps) {
       {/* Main content wrapper */}
       <div
         className="relative w-full hidescroll h-full bg-white/50 backdrop-blur-2xl
-  rounded-3xl shadow-xl shadow-black/5 border border-white/30 overflow-y-auto"
+  rounded-3xl shadow-xl shadow-black/5 border border-white/30 "
       >
         <Navbar />
 
