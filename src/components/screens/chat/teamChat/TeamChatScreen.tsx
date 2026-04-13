@@ -212,7 +212,7 @@ const TeamChatScreen = () => {
     };
 
     return (
-        <div className="h-[80vh] w-full flex overflow-hidden">
+        <div className="h-[84vh] w-full flex overflow-hidden">
             <ChatSidebar
                 users={combinedUsers}
                 currentUserId={currentUser?.id}

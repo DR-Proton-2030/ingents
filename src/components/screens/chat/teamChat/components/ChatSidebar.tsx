@@ -101,12 +101,17 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
     };
 
     return (
+        <div className="relative rounded-[30px] bg-transparent pt-6 mt-2">
+             <div className="pointer-events-none absolute left-1/2 top-0 z-0 h-8 w-[78%] -translate-x-1/2 rounded-[24px] bg-[#e0dede] shadow-[0_1px_0_rgba(0,0,0,0.12)]" />
+          <div className="pointer-events-none absolute left-1/2 top-2 z-0 h-8 w-[88%] -translate-x-1/2 rounded-[24px] bg-[#bdbdbd] shadow-[0_2px_0_rgba(0,0,0,0.2)]" />
+
         <div className={cn(
-            "w-full lg:w-[380px] border-r border-white/20 rounded-2xl flex flex-col bg-white/90 backdrop-blur-md mr-4 shadow-xl overflow-hidden shadow-gray-200/50",
+            "w-full lg:w-[380px]  rounded-2xl h-[75vh] flex flex-col bg-black/80 backdrop-blur-md mr-4 shadow-xl overflow-hidden shadow-gray-200/50",
             activeChatId && "hidden lg:flex"
         )}>
+            
             {/* Tabs Header */}
-            <div className="flex px-8 pt-8 gap-10 border-b border-gray-100 italic-none">
+            <div className="flex px-8 pt-8 gap-10 border-b border-gray-800 italic-none">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -120,7 +125,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             "h-5 w-5 transition-all",
                             activeTab === tab.id ? "fill-current stroke-[2px]" : "stroke-2"
                         )} />
-                        <span className="text-sm">{tab.label}</span>
+                        <span className="text-sm text-white/70">{tab.label}</span>
                         {activeTab === tab.id && (
                             <motion.div
                                 layoutId="tab-underline"
@@ -133,7 +138,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
             </div>
 
             {/* Search and Action */}
-            <div className="px-2 py-2 space-y-4 my-3">
+            <div className="px-4 py-2 space-y-4 my-3">
                 <div className="flex items-center gap-2">
                     <div className="relative flex-1 group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
@@ -142,7 +147,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             placeholder={activeTab === 'groups' ? "Search groups..." : "Search messages or contact..."}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-gray-100/70 border-none rounded-2xl py-3.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-orange-500/20 focus:bg-white outline-none transition-all font-medium placeholder:text-gray-400"
+                            className="w-full bg-white/5 border-none rounded-2xl py-3.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-orange-500/20 focus:bg-white outline-none transition-all font-medium placeholder:text-gray-400"
                         />
                     </div>
                     {activeTab === 'groups' && (
@@ -180,7 +185,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             ))}
                             {sortedUsers.length === 0 && (
                                 <div className="text-center py-20">
-                                    <div className="h-16 w-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <div className="h-16 w-16 bg-black/5 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <MessageSquare className="h-8 w-8 text-gray-200" />
                                     </div>
                                     <p className="text-gray-400 text-sm font-medium">No conversations found</p>
@@ -258,7 +263,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 users={users}
                 currentUserId={currentUserId || ""}
             />
-        </div>
+        </div></div>
     );
 };
 
@@ -319,19 +324,19 @@ const GroupChatItem = ({ group, activeChatId, setActiveChatId, currentUserId }: 
         <button
             onClick={() => setActiveChatId(group.id)}
             className={cn(
-                "w-full flex items-center gap-4 p-4 rounded-3xl transition-all group relative",
-                activeChatId === group.id ? "bg-gray-100" : "hover:bg-gray-50/50"
+                "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group relative",
+                activeChatId === group.id ? "bg-white/5" : "hover:bg-white/10"
             )}
         >
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-purple-100 transition-transform group-hover:scale-105">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg  transition-transform group-hover:scale-105">
                 {group.name.charAt(0)}
             </div>
             <div className="flex-1 text-left">
                 <div className="flex justify-between items-center mb-0.5">
-                    <span className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors uppercase tracking-tight text-sm">{group.name}</span>
+                    <span className="font-bold text-white/70 group-hover:text-purple-600 transition-colors uppercase tracking-tight text-sm">{group.name}</span>
                     <span className={cn(
                         "text-[10px] font-bold uppercase tracking-wider",
-                        unreadCount > 0 ? "text-purple-600" : "text-gray-400"
+                        unreadCount > 0 ? "text-white/70" : "text-gray-100"
                     )}>
                         {lastMessage?.time || (group.lastMessageTime ? "Today" : "New")}
                     </span>
@@ -413,16 +418,16 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
         <button
             onClick={() => setActiveChatId(user.id)}
             className={cn(
-                "w-full flex items-center gap-4 p-2.5 rounded-2xl transition-all group relative",
-                activeChatId === user.id ? "bg-gray-100" : "hover:bg-gray-50/50"
+                "w-full flex items-center gap-4 p-4 rounded-2xl transition-all group relative",
+                activeChatId === user.id ? "bg-white/10 -100" : "hover:bg-white/5"
             )}
         >
             <div className="relative">
-                <div className="h-11 w-11 rounded-full bg-gray-200 overflow-hidden shadow-sm ring-2 ring-white group-hover:scale-105 transition-transform">
+                <div className="h-11 w-11 rounded-full  overflow-hidden group-hover:scale-105 transition-transform">
                     {user.profile_picture ? (
                         <Image src={user.profile_picture} alt="" width={48} height={48} />
                     ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 text-white font-bold">
+                        <div className="h-full w-full flex items-center justify-center bg-blue-500  rounded-full text-white/80 font-bold">
                             {user.full_name?.charAt(0)}
                         </div>
                     )}
@@ -437,7 +442,7 @@ const UserChatItem = ({ user, currentUserId, activeChatId, setActiveChatId, isPi
                 <div className="flex justify-between items-center mb-0.5">
                     <span className={cn(
                         "font-bold text-sm transition-colors",
-                        activeChatId === user.id ? "text-blue-600" : "text-gray-900 group-hover:text-blue-600"
+                        activeChatId === user.id ? "text-white/80" : "text-white/50 "
                     )}>{user.full_name}</span>
                     <span className={cn(
                         "text-[10px] font-bold uppercase tracking-wider",

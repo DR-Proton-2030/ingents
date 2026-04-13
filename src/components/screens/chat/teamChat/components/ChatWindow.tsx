@@ -66,9 +66,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         : `${activeGroup?.members.length || 0} members`;
 
     return (
-        <div className="flex-1 flex flex-col bg-white/10 rounded-xl">
+        <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-xl shadow-gray-300 mb-6 mr-4">
             {/* Chat Header */}
-            <div className="h-20 px-6 flex items-center justify-between border-b border-white/20 bg-white/40">
+            <div className="h-20  m-4 p-6 flex items-center justify-between border-b border-white/20 bg-gray-100 rounded-xl">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setActiveChatId(null)}
@@ -156,9 +156,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             msg.senderId === currentUserId ? "ml-auto items-end" : "items-start"
                         )}>
                             <div className={cn(
-                                "px-5 py-3.5 rounded-2xl text-sm font-medium shadow-sm backdrop-blur-sm transition-all",
+                                "px-5 py-3.5 rounded-[40px] text-sm font-medium shadow-sm backdrop-blur-sm transition-all",
                                 msg.senderId === currentUserId
-                                    ? "bg-gray-900 text-white rounded-tr-none shadow-gray-200/50"
+                                    ? "bg-blue-500 text-white rounded-tr-none shadow-gray-200/50"
                                     : "bg-white/70 text-gray-800 rounded-tl-none border border-white/50 shadow-white/20"
                             )}>
                                 {msg.text}
@@ -181,8 +181,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
 
             {/* Input Area */}
-            <div className="p-6 bg-white/20 backdrop-blur-lg border-t border-white/20 rounded-2xl">
-                <div className="flex items-center gap-3 bg-white/40 backdrop-blur-sm rounded-2xl p-2 pl-4 border border-white/40 shadow-inner">
+            <div className="p-6  backdrop-blur-lg border-t border-white/20 rounded-2xl">
+                <div className="flex items-center gap-3 bg-gray-100 backdrop-blur-sm rounded-2xl p-2 pl-4 border border-white/40 shadow-">
                     <button className="p-2 text-gray-400 hover:text-gray-600">
                         <ImageIcon className="h-5 w-5" />
                     </button>
@@ -202,7 +202,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         disabled={!messageText.trim()}
                         className={cn(
                             "h-10 w-10 rounded-xl flex items-center justify-center transition-all",
-                            messageText.trim() ? "bg-gray-900 text-white shadow-lg scale-100" : "bg-gray-100 text-gray-400 scale-95"
+                            messageText.trim() ? "bg-green-500 text-white shadow-lg scale-100" : "bg-gray-100 text-gray-400 scale-95"
                         )}
                     >
                         <Send className="h-5 w-5" />
