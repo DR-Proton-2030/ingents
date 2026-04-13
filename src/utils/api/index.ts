@@ -16,6 +16,7 @@ import { getTaskPhases, createTaskPhase, clearTaskPhasesCache, updateTaskPhase }
 import { getTaskTags, createTaskTag, clearTaskTagsCache } from "./taskTag/taskTag.api";
 import { getProjects, createProject, updateProject, deleteProject } from "./project/project.api";
 import { getInsightsSummary, getContentMetricsHistory, getUserContentWithMetrics, getAccountInsightsHistory, triggerInsightsSync } from "./insights/insights.api";
+import { getTodos, createTodo, updateTodo, deleteTodo } from "./todo/todo.api";
 
 export const api = {
   auth: {
@@ -65,5 +66,11 @@ export const api = {
     getUserContentWithMetrics,
     getAccountInsightsHistory,
     triggerInsightsSync
+  },
+  todo: {
+    getTodos,
+    createTodo,
+    updateTodo,
+    deleteTodo
   }
 }
