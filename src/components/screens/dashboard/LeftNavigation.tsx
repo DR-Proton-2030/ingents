@@ -24,6 +24,7 @@ export default function TodoUI() {
   const todayKey = dates.find(d => d.isToday)?.full ?? dates[0].full;
   const [activeDate, setActiveDate] = useState(todayKey);
   const [newTask, setNewTask] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { todos, loading, fetchTodos, handleCreateTodo, handleToggleTodo, handleDeleteTodo } = useTodos();
@@ -40,9 +41,10 @@ export default function TodoUI() {
     if (!text) return;
     await handleCreateTodo(text, activeDate);
     setNewTask("");
+    setIsAddModalOpen(false);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
+  const onModalKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") onAddTask();
   };
 
@@ -78,25 +80,15 @@ export default function TodoUI() {
       <div className="flex-1 bg-white p-5 rounded-2xl shadow-xl shadow-gray-100" >
 
         {/* HEADER */}
-        <div className="mb-4">
-          <h2 className="text-2xl font-semibold text-gray-800">To Do List</h2>
-          <p className="text-xs text-gray-400 mt-0.5">
-            {pending} tasks pending
-          </p>
-        </div>
-
-        {/* ADD TASK INPUT */}
-        <div className="flex items-center gap-2 mb-4">
-          <input
-            type="text"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="Add a new task…"
-            className="flex-1 text-[13px] border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-blue-400 transition-colors"
-          />
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-800">To Do List</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {pending} tasks pending
+            </p>
+          </div>
           <button
-            onClick={onAddTask}
+            onClick={() => setIsAddModalOpen(true)}
             className="text-[13px] bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors"
           >
             Add
@@ -110,7 +102,7 @@ export default function TodoUI() {
           ) : todos.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-4">No tasks for this day</p>
           ) : (
-            todos.map(task => (
+            !isAddModalOpen && todos.map(task => (
               <div key={task._id} className="flex items-center gap-2.5 group">
 
                 {/* CHECKBOX */}
@@ -153,6 +145,55 @@ export default function TodoUI() {
             ))
           )}
         </div>
+
+        {isAddModalOpen && (
+          <div className=" z-999 flex items-center justify-center ">
+            <div className="w-full ">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-500">Add Todo</h3>
+                <button
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setNewTask("");
+                  }}
+                  className="text-gray-400 hover:text-gray-700 bg-gray-100 p-1 rounded-md transition-colors"
+                >
+                  <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                    <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+
+              <input
+                autoFocus
+                type="text"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                onKeyDown={onModalKeyDown}
+                placeholder="Add a new task..."
+                className="w-full text-[14px]  rounded-lg px-3 py-2 outline-none bg-gray-100 focus:border-none transition-colors"
+              />
+
+              <div className="mt-4 flex items-center justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setIsAddModalOpen(false);
+                    setNewTask("");
+                  }}
+                  className="text-[13px] px-3 py-2 rounded-2xl border border-gray-200 text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onAddTask}
+                  className="text-[13px] bg-black/70 -500 text-white px-4 py-2 rounded-2xl hover:bg-blue-600 transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
