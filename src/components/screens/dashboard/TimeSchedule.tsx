@@ -11,6 +11,7 @@ export const TimeSchedule = () => {
   const { user } = useContext(AuthContext);
   const [upcomingMeeting, setUpcomingMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
+  const userProfileImage = (user as any)?.profile_picture;
 
   useEffect(() => {
     const fetchMeeting = async () => {
@@ -38,8 +39,41 @@ export const TimeSchedule = () => {
       </div>
     );
   }
+  
 
-  if (!upcomingMeeting) return null;
+  if (!upcomingMeeting) {
+    return (
+      <div className="relative group rounded-[32px] bg-slate-900 shadow-xl p-5 overflow-hidden min-h-[280px] flex flex-col">
+        {userProfileImage ? (
+          <Image
+            src={userProfileImage}
+            alt="User profile background"
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(148,163,184,0.25),transparent_45%),radial-gradient(circle_at_80%_80%,rgba(99,102,241,0.18),transparent_40%)]" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+        <div className="relative z-10 flex h-full flex-col">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-xl font-semibold text-white">Upcoming</h3>
+            <span className="rounded-full border border-white/25 bg-white/10 px-2 py-1 text-xs text-white/80">
+              No Meeting
+            </span>
+          </div>
+
+          <div className="mt-auto rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
+            <p className="text-sm font-medium text-white">No upcoming meetings scheduled</p>
+            <p className="mt-1 text-xs text-gray-300">
+              Create a meeting to see your next session here.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const currentUserId = user?.id || (user as any)?._id;
 
