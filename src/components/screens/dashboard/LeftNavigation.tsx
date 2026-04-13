@@ -5,7 +5,9 @@ import useTodos from "@/hooks/useTodos";
 function generateDates() {
   const today = new Date();
   const dates = [];
-  for (let i = -15; i <= 30; i++) {
+
+  // Keep today on top, then future dates, then past dates for easy backtracking.
+  for (let i = 0; i <= 30; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     dates.push({
@@ -16,6 +18,19 @@ function generateDates() {
       isToday: i === 0,
     });
   }
+
+  for (let i = -1; i >= -30; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    dates.push({
+      dayName: d.toLocaleDateString("en-US", { weekday: "short" }),
+      month: d.toLocaleDateString("en-US", { month: "short" }),
+      date: d.getDate(),
+      full: d.toISOString().split("T")[0],
+      isToday: false,
+    });
+  }
+
   return dates;
 }
 
@@ -89,7 +104,7 @@ export default function TodoUI() {
           </div>
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="text-[13px] bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            className="text-[13px] hover:bg-gray-50 text-black  border border-gray-200 px-4 py-1.5 rounded-full  transition-colors"
           >
             Add
           </button>
@@ -150,7 +165,7 @@ export default function TodoUI() {
           <div className=" z-999 flex items-center justify-center ">
             <div className="w-full ">
               <div className="mb-2 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-500">Add Todo</h3>
+                <h3 className="text-lg font-semibold text-gray-500">Add Todo</h3>
                 <button
                   onClick={() => {
                     setIsAddModalOpen(false);
