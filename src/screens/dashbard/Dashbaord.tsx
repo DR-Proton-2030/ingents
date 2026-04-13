@@ -9,6 +9,7 @@ import { TeamControl } from "../../components/screens/dashboard/TeamControl";
 import AllUsers from "../../components/screens/dashboard/AllUsers";
 import LeftNavigation from "@/components/screens/dashboard/LeftNavigation";
 import { ProductivityScores } from "@/components/screens/dashboard/ProductivityScores";
+import { Activity } from "@/components/screens/dashboard/Activity";
 
 export const Dashboard = () => {
   return (
@@ -26,10 +27,15 @@ export const Dashboard = () => {
 
           {/* Center content */}
           <section className="col-span-9 space-y-5">
-            <div className="w-[420px] gap-4 flex-col  justify-center lg:flex">
+<div className="flex items-center justify-center gap-6">
+              <div className="w-1/2 gap-4 flex-col  justify-center lg:flex">
             <ProductivityScores />
                 <LeftNavigation />
             </div>
+            <div className="w-1/2 pr-4">
+              <Activity />
+            </div>
+</div>
             <UpcomingEvent />
 
           </section>
