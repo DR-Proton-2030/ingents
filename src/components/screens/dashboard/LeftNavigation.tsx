@@ -97,12 +97,11 @@ export default function TodoUI() {
               {/* CHECKBOX */}
               <button
                 onClick={() => toggleTask(task.id)}
-                className={`w-5 h-5 flex-shrink-0 flex items-center justify-center border transition-all duration-150
+                className={`w-5 h-5 flex-shrink-0 flex items-center rounded-full justify-center border transition-all duration-150
                   ${task.completed
-                    ? "bg-black/80 border-black/80"
+                    ? "bg-black/60 border-gray-500"
                     : "border-gray-300 bg-transparent"
                   }`}
-                style={{ borderRadius: 4 }}
               >
                 {task.completed && (
                   <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
@@ -115,7 +114,7 @@ export default function TodoUI() {
               <span
                 className={`text-[13px] ${
                   task.completed
-                    ? "line-through text-black -400"
+                    ? "line-through text-black/40"
                     : "text-gray-700"
                 }`}
               >
