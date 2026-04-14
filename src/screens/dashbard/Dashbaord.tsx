@@ -8,6 +8,7 @@ import { Activity } from "@/components/screens/dashboard/Activity";
 import { Meets } from "@/components/screens/dashboard/Meets";
 import { DashboardHeader } from "@/components/screens/dashboard/DashboardHeader";
 import Hero from "@/components/screens/dashboard/Hero";
+import Attendence from "@/components/screens/dashboard/Attendence";
 
 export const Dashboard = () => {
   return (
@@ -25,11 +26,12 @@ export const Dashboard = () => {
 
           {/* Center content */}
           <section className="col-span-9 space-y-5 overflow-y-auto h-[82vh] hidescroll">
-              <Hero/>
+            <Hero />
             <div className="flex  gap-6">
               <div className="w-1/2 gap-4 flex-col  lg:flex">
                 <ProductivityScores />
                 <LeftNavigation />
+                <Attendence />
               </div>
               <div className="w-1/2 pr-4 gap-4 flex-col lg:flex">
                 <Meets />
