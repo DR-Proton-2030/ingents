@@ -62,3 +62,13 @@ export const getAttendanceStats = async (): Promise<any> => {
     throw new Error(error.response?.data?.message || "Get attendance stats failed");
   }
 }
+
+export const checkAttendance = async (): Promise<any> => {
+  try {
+    const response = await API.get(`/${initialRoute}/check-attendance`);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Check attendance failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Check attendance failed");
+  }
+}

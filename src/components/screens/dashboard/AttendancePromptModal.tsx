@@ -2,33 +2,30 @@
 
 import React, { useEffect, useState } from "react";
 import CommonModal from "@/components/shared/commonModal/CommonModal";
-import { markAttendance } from "@/utils/api/user/user.api";
+import { markAttendance, checkAttendance } from "@/utils/api/user/user.api";
 
 const AttendancePromptModal = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const checkAttendance = () => {
-      const today = new Date().toDateString();
-      const lastLogin = localStorage.getItem("lastLoginDate");
-
-      if (lastLogin !== today) {
-        // Show modal if the user hasn't logged in today
-        setIsOpen(true);
+    const initCheck = async () => {
+      try {
+        const response = await checkAttendance();
+        if (response && !response.hasAttended) {
+          setIsOpen(true);
+        }
+      } catch (error) {
+        console.error("Failed to check attendance state", error);
       }
     };
-
-    // Slight delay so the user sees the dashboard load before the prompt
-    const timeout = setTimeout(checkAttendance, 1000);
-    return () => clearTimeout(timeout);
+    initCheck();
   }, []);
 
   const handleLogin = async () => {
     try {
       await markAttendance();
-      const today = new Date().toDateString();
-      localStorage.setItem("lastLoginDate", today);
-      console.log("Logged in for the day:", today);
+      // Need to inform the user or refresh stats if they are actively looking at the attendance matrix!
+      // But page load handles most state updates
     } catch (error) {
       console.error("Failed to mark attendance", error);
     } finally {
