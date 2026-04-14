@@ -7,11 +7,11 @@ const Attendence = () => {
     const times = ["11:00", "10:00", "09:00", "08:00"];
 
     // Default empty data
-    const [gridData, setGridData] = useState<number[][]>([
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0],
+    const [gridData, setGridData] = useState<{ count: number; intensity: number }[][]>([
+        [{ count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }],
+        [{ count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }],
+        [{ count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }],
+        [{ count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }, { count: 0, intensity: 0 }],
     ]);
     const [overallPercentage, setOverallPercentage] = useState(0);
 
@@ -72,13 +72,19 @@ const Attendence = () => {
                 {/* Heatmap Squares */}
                 <div className="grid grid-rows-4 grid-cols-7 gap-1.5">
                     {gridData.map((row, rowIdx) =>
-                        row.map((intensity, colIdx) => (
+                        row.map((cell, colIdx) => (
                             <div
                                 key={`${rowIdx}-${colIdx}`}
-                                className={`w-full aspect-square rounded-xl transition-all duration-300 ${getIntensityClass(
-                                    intensity
-                                )} ${intensity > 0 ? 'shadow-[inset_0_0_8px_rgba(255,255,255,0.15)]' : ''}`}
-                            />
+                                className={`group relative w-full aspect-square rounded-xl transition-all duration-300 ${getIntensityClass(
+                                    cell.intensity
+                                )} ${cell.intensity > 0 ? 'shadow-[inset_0_0_8px_rgba(255,255,255,0.15)]' : ''}`}
+                            >
+                                {/* Tooltip */}
+                                <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-zinc-800 text-white text-xs rounded shadow-lg whitespace-nowrap z-10 pointer-events-none">
+                                    {cell.count} {cell.count === 1 ? 'employee' : 'employees'}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-zinc-800"></div>
+                                </div>
+                            </div>
                         ))
                     )}
                 </div>
