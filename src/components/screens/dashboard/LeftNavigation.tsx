@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import useTodos from "@/hooks/useTodos";
+import { Box, BoxMinimalistic } from "@solar-icons/react";
 
 function generateDates() {
   const today = new Date();
@@ -115,7 +116,10 @@ export default function TodoUI() {
           {loading ? (
             <p className="text-xs text-gray-400 text-center py-4">Loading…</p>
           ) : todos.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-4">No tasks for this day</p>
+            <div className="pt-10">
+              <BoxMinimalistic size={74} className="text-gray-400 mx-auto" />
+              <p className="text-sm text-gray-400 text-center py-4">No tasks for this day</p>
+            </div>
           ) : (
             !isAddModalOpen && todos.map(task => (
               <div key={task._id} className="flex items-center gap-2.5 group">
@@ -131,18 +135,17 @@ export default function TodoUI() {
                 >
                   {task.completed && (
                     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                      <path d="M2 5.5L4 7.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 5.5L4 7.5L8 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   )}
                 </button>
 
                 {/* TEXT */}
                 <span
-                  className={`text-[13px] flex-1 ${
-                    task.completed
-                      ? "line-through text-black/40"
-                      : "text-gray-700"
-                  }`}
+                  className={`text-[13px] flex-1 ${task.completed
+                    ? "line-through text-black/40"
+                    : "text-gray-700"
+                    }`}
                 >
                   {task.text}
                 </span>
@@ -153,7 +156,7 @@ export default function TodoUI() {
                   className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
                 >
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </button>
               </div>
@@ -174,7 +177,7 @@ export default function TodoUI() {
                   className="text-gray-400 hover:text-gray-700 bg-gray-100 p-1 rounded-md transition-colors"
                 >
                   <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                    <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </button>
               </div>

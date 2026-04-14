@@ -9,10 +9,12 @@ import { Meets } from "@/components/screens/dashboard/Meets";
 import { DashboardHeader } from "@/components/screens/dashboard/DashboardHeader";
 import Hero from "@/components/screens/dashboard/Hero";
 import Attendence from "@/components/screens/dashboard/Attendence";
+import AttendancePromptModal from "@/components/screens/dashboard/AttendancePromptModal";
 
 export const Dashboard = () => {
   return (
     <Layout showSidebar={true}>
+      <AttendancePromptModal />
       <div className="mx-auto max-w-8xl  space-y-6 overflow-hidden">
         {/* Header */}
         {/* <DashboardHeader /> */}

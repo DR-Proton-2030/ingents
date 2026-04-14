@@ -1,18 +1,19 @@
-import React from "react";
-import { ArrowUpRight } from "lucide-react";
+"use client";
+import React, { useEffect, useState } from "react";
+import { getAttendanceStats } from "@/utils/api/user/user.api";
 
 const Attendence = () => {
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const times = ["11:00", "10:00", "09:00", "08:00"];
 
-    // Heatmap Data (4 rows x 7 cols)
-    // 0: Gray, 1: Lightest Blue, 2: Light Blue, 3: Medium Blue, 4: Dark Blue
-    const gridData = [
-        [0, 1, 1, 3, 2, 0, 0], // 11:00
-        [0, 2, 2, 2, 1, 0, 0], // 10:00
-        [0, 2, 3, 1, 2, 0, 0], // 09:00
-        [0, 0, 4, 2, 3, 4, 0], // 08:00
-    ];
+    // Default empty data
+    const [gridData, setGridData] = useState<number[][]>([
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0],
+    ]);
+    const [overallPercentage, setOverallPercentage] = useState(0);
 
     const getIntensityClass = (intensity: number) => {
         switch (intensity) {
@@ -29,16 +30,30 @@ const Attendence = () => {
         }
     };
 
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const res = await getAttendanceStats();
+                if (res?.data) {
+                    setGridData(res.data.gridData);
+                    setOverallPercentage(res.data.overallPercentage);
+                }
+            } catch (err) {
+                console.error("Error fetching stats", err);
+            }
+        };
+        fetchStats();
+    }, []);
+
     return (
-        <div className="bg-white  rounded-[24px] pt-4 px-6  w-full transition-all duration-300">
+        <div className="bg-white rounded-[24px] pt-4 px-6 w-full transition-all duration-300">
             {/* Header Section */}
             <div>
                 <h2 className="text-2xl font-semibold text-gray-800">Attendence</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
-                    20% From last month
+                    {overallPercentage}% From last month
                 </p>
             </div>
-
 
             {/* Grid Table */}
             <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-4 items-center mt-5">
@@ -56,11 +71,11 @@ const Attendence = () => {
 
                 {/* Heatmap Squares */}
                 <div className="grid grid-rows-4 grid-cols-7 gap-1.5">
-                    {gridData.map((row) =>
+                    {gridData.map((row, rowIdx) =>
                         row.map((intensity, colIdx) => (
                             <div
-                                key={colIdx}
-                                className={`w-full aspect-square rounded-xl  transition-all duration-300 ${getIntensityClass(
+                                key={`${rowIdx}-${colIdx}`}
+                                className={`w-full aspect-square rounded-xl transition-all duration-300 ${getIntensityClass(
                                     intensity
                                 )} ${intensity > 0 ? 'shadow-[inset_0_0_8px_rgba(255,255,255,0.15)]' : ''}`}
                             />

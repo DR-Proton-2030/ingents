@@ -42,3 +42,23 @@ export const updateUser = async (payload : any): Promise<IUser[]> => {
     throw new Error(error.response?.data?.message || "Update failed");
   }
 }
+
+export const markAttendance = async (): Promise<any> => {
+  try {
+    const response = await API.post(`/${initialRoute}/mark-attendance`);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Mark attendance failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Mark attendance failed");
+  }
+}
+
+export const getAttendanceStats = async (): Promise<any> => {
+  try {
+    const response = await API.get(`/${initialRoute}/attendance-stats`);
+    return response.data;
+  } catch (error: any) {
+    console.error("❌ Get attendance stats failed:", error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || "Get attendance stats failed");
+  }
+}
