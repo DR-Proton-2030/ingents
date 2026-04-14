@@ -42,13 +42,13 @@ export const TeamControl = () => {
     <>
       <div className="rounded-[32px] ">
         <div className="relative rounded-[30px] bg-transparent pt-6">
-          <div className="pointer-events-none absolute left-1/2 top-0 z-0 h-8 w-[78%] -translate-x-1/2 rounded-[24px] bg-[#e0dede] shadow-[0_1px_0_rgba(0,0,0,0.12)]" />
-          <div className="pointer-events-none absolute left-1/2 top-2 z-0 h-8 w-[88%] -translate-x-1/2 rounded-[24px] bg-[#bdbdbd] shadow-[0_2px_0_rgba(0,0,0,0.2)]" />
+          <div className="pointer-events-none absolute left-1/2 top-0 z-0 h-8 w-[78%] -translate-x-1/2 rounded-[24px] bg-gray-200 shadow-[0_1px_0_rgba(0,0,0,0.12)]" />
+          <div className="pointer-events-none absolute left-1/2 top-2 z-0 h-8 w-[88%] -translate-x-1/2 rounded-[24px] bg-gray-300 shadow-[0_2px_0_rgba(0,0,0,0.2)]" />
 
           <div className="relative z-10 rounded-[26px] border border-[#5b5b5b] bg-[#2b2d31] px-5 pb-5 pt-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
             <div className="mb-5 flex items-center justify-between">
               <div className="text-2xl font-  text-white [text-shadow:0_2px_2px_rgba(0,0,0,0.45)]" >
-               Team members
+                Team members
               </div>
               <h3 className="text-lg leading-none font-normal  text-white/95 " >
                 {safeUsers.length}
@@ -71,11 +71,10 @@ export const TeamControl = () => {
                     onClick={() => handleOpenChat(user)}
                   >
                     <div
-                      className={`h-11 w-11 flex-shrink-0 rounded-full border flex items-center justify-center ${
-                        isJoined
-                          ? "bg-[#4a4d52] border-[#5e6167]"
-                          : "bg-[#f3f3f3] border-[#e7e7e7]"
-                      }`}
+                      className={`h-11 w-11 flex-shrink-0 rounded-full border flex items-center justify-center ${isJoined
+                        ? "bg-[#4a4d52] border-[#5e6167]"
+                        : "bg-[#f3f3f3] border-[#e7e7e7]"
+                        }`}
                     >
                       {user?.profile_picture ? (
                         <Image
@@ -87,9 +86,8 @@ export const TeamControl = () => {
                         />
                       ) : (
                         <span
-                          className={`text-base font-semibold ${
-                            isJoined ? "text-[#ececec]" : "text-[#1f2022]"
-                          }`}
+                          className={`text-base font-semibold ${isJoined ? "text-[#ececec]" : "text-[#1f2022]"
+                            }`}
                         >
                           {initial}
                         </span>
@@ -106,7 +104,7 @@ export const TeamControl = () => {
                     </div>
 
                     <div className="flex-shrink-0 bg-blue-500 hover:bg-blue-600 rounded-full text-white text-xs font-medium p-2 cursor-pointer">
-                     <MessageCircle size={18} className="text-blue-100"/>
+                      <MessageCircle size={18} className="text-blue-100" />
                     </div>
                   </div>
                 );

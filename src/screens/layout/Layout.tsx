@@ -1,6 +1,7 @@
 import Navbar from "@/components/shared/navbar/Navbar";
 import Sidebar from "@/components/shared/sidebar/Sidebar";
 import React from "react";
+import AttendancePromptModal from "@/components/screens/dashboard/AttendancePromptModal";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,8 @@ export default function Layout({ children, showSidebar = true }: LayoutProps) {
   return (
     // Set a base background and establish a relative container for the gradient blobs
     <div className="relative h-screen hidescroll flex overflow-hidden bg-gray-100 isolate py-5">
+      {/* 👇 THIS is where modals should live */}
+      <AttendancePromptModal />
       {/* 1. The Aurora Gradient Background */}
       {/* These are the blurred "blobs" that create the soft, multi-color effect. */}
       {/* They are positioned absolutely behind all other content. */}
@@ -34,7 +37,7 @@ export default function Layout({ children, showSidebar = true }: LayoutProps) {
       >
         <Navbar />
 
-        {/* 👇 THIS is where modals should live */}
+
         <main className="relative p-5 h-full">
           {children}
         </main>
