@@ -52,6 +52,13 @@ const socials = [
     alt: "YouTube",
     description: "Broadcast videos, grow subscribers and engage viewers",
   },
+  {
+    id: "whatsapp",
+    src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/512px-WhatsApp.svg.png",
+    href: "https://business.whatsapp.com",
+    alt: "WhatsApp",
+    description: "Connect WhatsApp Cloud API to broadcast targeted messages",
+  },
 ];
 
 type PlatformKey =
@@ -72,7 +79,13 @@ export default function AccountSelection() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [platform, setPlatform] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  // const [iuser, setUser] = useState<IUser>(null);
+  
+  // WhatsApp settings state
+  const [isWhatsappModalOpen, setIsWhatsappModalOpen] = useState(false);
+  const [waPhoneNumberId, setWaPhoneNumberId] = useState("");
+  const [waAccessToken, setWaAccessToken] = useState("");
+  const [waWabaId, setWaWabaId] = useState("");
+  const [connectingWa, setConnectingWa] = useState(false);
 
   console.log(profile);
   const handleConnect = async (socialId: string) => {
@@ -94,6 +107,9 @@ export default function AccountSelection() {
         break;
       case "x":
         authURL = `${baseURL}/api/v1/x/login?user_id=${user?._id}`;
+        break;
+      case "whatsapp":
+        setIsWhatsappModalOpen(true);
         break;
       default:
         console.log("Unsupported integration title:", socialId);
@@ -260,6 +276,10 @@ export default function AccountSelection() {
 
         // Ensure slot exists and has both name & project_id/page_id/id
         if (!slot) return null;
+        if (key === 'whatsapp') {
+           return slot.phone_number_id ? s.id : null;
+        }
+        
         const hasId = !!(slot.project_id || slot.page_id || slot.id);
         const hasName =
           typeof slot.name === "string" && slot.name.trim() !== "";
@@ -304,6 +324,26 @@ export default function AccountSelection() {
       : undefined;
   };
   const platformKey = toPlatformKey(platform);
+
+  const submitWhatsappConnection = async () => {
+    try {
+      setConnectingWa(true);
+      const res = await fetch("/api/v1/whatsapp/connect", { // using rewrite or full url if needed. assuming frontend rewrite handles this or full env url
+         method: "POST",
+         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem("token")}` },
+         body: JSON.stringify({ phone_number_id: waPhoneNumberId, access_token: waAccessToken, waba_id: waWabaId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to connect");
+      setConnected(prev => [...prev, "whatsapp"]);
+      setIsWhatsappModalOpen(false);
+      window.location.reload(); // Refresh to pull updated user context
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setConnectingWa(false);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -353,6 +393,35 @@ export default function AccountSelection() {
           accounts={profile || []}
           onSelect={handleAccountSelect}
         />
+      )}
+
+      {isWhatsappModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+           <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
+              <h2 className="text-xl font-bold mb-4">Connect WhatsApp Cloud API</h2>
+              <p className="text-sm text-gray-500 mb-6">Enter your Meta Developer app details to enable automated broadcasting.</p>
+              
+              <div className="space-y-4">
+                 <div>
+                    <label className="text-sm font-bold text-gray-700">Phone Number ID</label>
+                    <input type="text" value={waPhoneNumberId} onChange={e=>setWaPhoneNumberId(e.target.value)} className="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:border-green-500" placeholder="e.g. 102394029340" />
+                 </div>
+                 <div>
+                    <label className="text-sm font-bold text-gray-700">Permanent Access Token</label>
+                    <input type="password" value={waAccessToken} onChange={e=>setWaAccessToken(e.target.value)} className="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:border-green-500" placeholder="EAAB..." />
+                 </div>
+                 <div>
+                    <label className="text-sm font-bold text-gray-700">WhatsApp Business Account ID (Optional)</label>
+                    <input type="text" value={waWabaId} onChange={e=>setWaWabaId(e.target.value)} className="w-full mt-1 px-4 py-2 bg-gray-50 border rounded-xl outline-none focus:border-green-500" />
+                 </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-8">
+                 <button onClick={() => setIsWhatsappModalOpen(false)} className="px-5 py-2 rounded-xl text-gray-600 hover:bg-gray-100 font-bold">Cancel</button>
+                 <button onClick={submitWhatsappConnection} disabled={connectingWa} className="px-5 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 font-bold">{connectingWa ? "Saving..." : "Connect"}</button>
+              </div>
+           </div>
+        </div>
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import { Send } from "lucide-react";
 import React from "react";
 
 interface CampaignPreviewProps {
@@ -57,7 +58,9 @@ const CampaignPreview: React.FC<CampaignPreviewProps> = ({ messageContent }) => 
           {/* Input Bar */}
           <div className="px-3 py-2 border-t border-gray-100 bg-white flex items-center gap-2">
             <div className="flex-1 h-8 bg-gray-100 rounded-full" />
-            <div className="w-8 h-8 bg-green-500 rounded-full" />
+            <div className="w-8 h-8 bg-green-500 rounded-full flex justify-content items-center" >
+              <Send size={15} className="mx-auto" />
+            </div>
           </div>
         </div>
       </div>

@@ -33,6 +33,9 @@ const Campaigns: React.FC = () => {
   const [frequency, setFrequency] = useState("once");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [scheduledTime, setScheduledTime] = useState("09:00");
+  const [targetNumbers, setTargetNumbers] = useState("");
+  const [useAi, setUseAi] = useState(false);
+  const [aiContext, setAiContext] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleDay = (day: string) => {
@@ -52,10 +55,13 @@ const Campaigns: React.FC = () => {
     setFrequency("once");
     setSelectedDays([]);
     setScheduledTime("09:00");
+    setTargetNumbers("");
+    setUseAi(false);
+    setAiContext("");
   };
 
   const handleSubmit = async () => {
-    if (!name || !messageContent) return;
+    if (!name || (!useAi && !messageContent)) return;
     setIsSubmitting(true);
     try {
       await handleCreateCampaign({
@@ -65,6 +71,9 @@ const Campaigns: React.FC = () => {
         frequency,
         recurring_days: frequency === "recurring" ? selectedDays : [],
         scheduled_time: frequency === "recurring" ? scheduledTime : undefined,
+        target_numbers: campaignType === 'whatsapp_messenger' ? targetNumbers.split(",").map(n => n.trim()).filter(Boolean) : undefined,
+        use_ai_generation: useAi,
+        ai_context: aiContext,
       });
       resetForm();
       setView("overview");
@@ -136,6 +145,12 @@ const Campaigns: React.FC = () => {
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
               campaignType={campaignType}
+              targetNumbers={targetNumbers}
+              setTargetNumbers={setTargetNumbers}
+              useAi={useAi}
+              setUseAi={setUseAi}
+              aiContext={aiContext}
+              setAiContext={setAiContext}
             />
             <CampaignPreview messageContent={messageContent} />
           </div>

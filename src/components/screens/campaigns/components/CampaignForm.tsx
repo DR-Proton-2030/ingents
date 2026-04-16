@@ -8,9 +8,11 @@ import {
   RoundAltArrowRight,
   RoundAltArrowLeft,
   ChatSquare,
-  Play
+  Play,
+  Stars
 } from "@solar-icons/react";
 import AuthContext from "@/contexts/authContext/authContext";
+import { Sparkle } from "lucide-react";
 
 interface CampaignFormProps {
   name: string;
@@ -26,6 +28,12 @@ interface CampaignFormProps {
   onSubmit: () => void;
   isSubmitting: boolean;
   campaignType: string;
+  targetNumbers: string;
+  setTargetNumbers: (v: string) => void;
+  useAi: boolean;
+  setUseAi: (v: boolean) => void;
+  aiContext: string;
+  setAiContext: (v: string) => void;
 }
 
 const CampaignForm: React.FC<CampaignFormProps> = ({
@@ -41,7 +49,13 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
   setScheduledTime,
   onSubmit,
   isSubmitting,
-  campaignType
+  campaignType,
+  targetNumbers,
+  setTargetNumbers,
+  useAi,
+  setUseAi,
+  aiContext,
+  setAiContext
 }) => {
   const { user } = useContext(AuthContext);
   const [step, setStep] = useState(1);
@@ -62,8 +76,8 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
     if (step > 1) setStep(step - 1);
   };
 
-  const isStep1Valid = name.trim().length > 0 && messageContent.trim().length > 0;
-  const isStep2Valid = campaignType === 'whatsapp_messenger' || connectedSocialsCount > 0;
+  const isStep1Valid = name.trim().length > 0 && (useAi ? aiContext.trim().length > 0 : messageContent.trim().length > 0);
+  const isStep2Valid = campaignType === 'whatsapp_messenger' ? targetNumbers.trim().length > 0 : connectedSocialsCount > 0;
   const isStep3Valid = frequency === 'once' || (frequency === 'recurring' && selectedDays.length > 0);
 
   return (
@@ -104,14 +118,37 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-500 mb-2  ml-1">Marketing Copy</label>
-              <textarea
-                rows={6}
-                value={messageContent}
-                onChange={(e) => setMessageContent(e.target.value)}
-                placeholder="Inject personality into your message..."
-                className="w-full px-6 py-3 rounded-2xl bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium resize-none "
-              />
+              <div className="flex items-center justify-between mb-2 ml-1">
+                <label className="block text-xs font-bold text-gray-500 ">Campaign Content</label>
+                <button
+                  onClick={() => setUseAi(!useAi)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-bold transition-all ${useAi ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-lg shadow-blue-500/30' : 'bg-gray-100 text-gray-400 border border-gray-200'}`}
+                >
+                  <Stars size={22} className={useAi ? 'animate-spin-slow' : ''} />
+                  {useAi ? "AI GENERATION ACTIVE" : "ENABLE AI MAGIC"}
+                </button>
+              </div>
+
+              {useAi ? (
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
+                  <p className="text-xs text-blue-600 font-bold bg-blue-50 p-3 rounded-xl border border-blue-100 leading-relaxed italic">
+                    "AI will generate a fresh, unique post every time this campaign triggers based on your brief below."
+                  </p>
+                  <textarea
+                    value={aiContext}
+                    onChange={(e) => setAiContext(e.target.value)}
+                    placeholder="Describe what this campaign is about... e.g. Write a friendly invitation to join our loyalty program, mention we have 50 new styles, and use a humorous tone."
+                    className="w-full h-36 px-6 py-4 bg-gray-50 border-2 border-dashed border-blue-200 rounded-2xl focus:outline-none focus:border-blue-500 transition-all font-medium text-sm leading-relaxed"
+                  />
+                </div>
+              ) : (
+                <textarea
+                  value={messageContent}
+                  onChange={(e) => setMessageContent(e.target.value)}
+                  placeholder="Enter the exact message to send..."
+                  className="w-full h-40 px-6 py-4 bg-gray-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium text-sm leading-relaxed"
+                />
+              )}
             </div>
           </div>
         )}
@@ -164,11 +201,24 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
                   )}
                 </>
               ) : (
-                <div className="p-3 bg-green-50 rounded-2xl border border-green-100 flex items-center gap-4 shadow-sm">
-                  <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white">
-                    <ChatSquare size={20} />
+                <div className="space-y-4">
+                  <div className="p-3 bg-green-50 rounded-2xl border border-green-100 flex items-center gap-4 shadow-sm">
+                    <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white">
+                      <ChatSquare size={20} />
+                    </div>
+                    <span className="text-base font-bold text-gray-700">Direct WhatsApp Inbox</span>
                   </div>
-                  <span className="text-base font-bold text-gray-700">Direct WhatsApp Inbox</span>
+
+                  <div>
+                    <label className="text-sm font-bold text-gray-700">Target Phone Numbers</label>
+                    <p className="text-[11px] text-gray-500 font-medium mb-2 mt-1">Enter comma-separated numbers with country code (e.g. +14155552671)</p>
+                    <textarea
+                      value={targetNumbers}
+                      onChange={(e) => setTargetNumbers(e.target.value)}
+                      placeholder="+1234567890, +0987654321..."
+                      className="w-full h-32 px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-sm font-medium resize-none shadow-sm"
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -230,8 +280,8 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
 
                 <div className="flex flex-col items-center gap-3 mt-6 pt-6 border-t border-gray-200">
                   <p className="text-sm font-bold text-gray-700">Broadcast Time</p>
-                  <input 
-                    type="time" 
+                  <input
+                    type="time"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
                     className="bg-white text-gray-900 px-4 py-2.5 rounded-xl border border-gray-300 outline-none focus:border-orange-500 font-bold"
