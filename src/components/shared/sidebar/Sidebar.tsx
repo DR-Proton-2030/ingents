@@ -7,6 +7,7 @@ import Profile from "./Profile";
 import { useSite } from "@/contexts/SiteContext";
 import {
   Checklist,
+  Flag,
   Folder,
   GraphUp,
   Home,
@@ -41,6 +42,11 @@ export default function Sidebar() {
       href: `/${site}/tasks`,
       label: "Task Management",
       icon: Checklist,
+    },
+    {
+      href: `/${site}/campaigns`,
+      label: "Campaigns",
+      icon: Flag,
     },
     {
       href: `/${site}/project-management`,
