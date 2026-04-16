@@ -14,14 +14,14 @@ import CampaignPreview from "./components/CampaignPreview";
 type ViewState = "overview" | "create_selection" | "create_details";
 
 const Campaigns: React.FC = () => {
-  const { 
-    campaigns, 
-    loading, 
-    handleCreateCampaign, 
-    handleDeleteCampaign, 
-    handleUpdateStatus 
+  const {
+    campaigns,
+    loading,
+    handleCreateCampaign,
+    handleDeleteCampaign,
+    handleUpdateStatus
   } = useCampaigns();
-  
+
   const [view, setView] = useState<ViewState>("overview");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -34,7 +34,7 @@ const Campaigns: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleDay = (day: string) => {
-    setSelectedDays(prev => 
+    setSelectedDays(prev =>
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
     );
   };
@@ -69,21 +69,21 @@ const Campaigns: React.FC = () => {
     }
   };
 
-  const filteredCampaigns = campaigns.filter(c => 
+  const filteredCampaigns = campaigns.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
     <Layout showSidebar={true}>
       <div className="mx-auto max-w-7xl px-4 space-y-8 animate-in fade-in duration-500 pb-20">
-        
-        <CampaignHeader 
+
+        {/* <CampaignHeader
           view={view}
           hasCampaigns={campaigns.length > 0}
           onBack={() => setView(view === "create_details" ? "create_selection" : "overview")}
           onSearch={setSearchQuery}
           onCreateClick={() => setView("create_selection")}
-        />
+        /> */}
 
         {/* --- VIEW: OVERVIEW --- */}
         {view === "overview" && (
@@ -98,9 +98,9 @@ const Campaigns: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredCampaigns.map((camp: any) => (
-                  <CampaignCard 
-                    key={camp._id} 
-                    campaign={camp} 
+                  <CampaignCard
+                    key={camp._id}
+                    campaign={camp}
                     onDelete={handleDeleteCampaign}
                     onStatusUpdate={handleUpdateStatus}
                   />
@@ -119,8 +119,8 @@ const Campaigns: React.FC = () => {
 
         {/* --- VIEW: CREATE DETAILS --- */}
         {view === "create_details" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 pt-4">
-            <CampaignForm 
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 pt-4 h-[80vh] overflow-y-auto">
+            <CampaignForm
               name={name}
               setName={setName}
               messageContent={messageContent}

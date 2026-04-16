@@ -1,8 +1,8 @@
 import React from "react";
-import { 
-  ClockCircle, 
-  Calendar, 
-  Settings, 
+import {
+  ClockCircle,
+  Calendar,
+  Settings,
   CheckRead,
   Share,
   Letter,
@@ -40,13 +40,13 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
 
   return (
     <div className="lg:col-span-2 space-y-6 flex flex-col h-full">
-      <div className="bg-white/60 backdrop-blur-xl border border-white/40 p-8 rounded-[2.5rem] space-y-8 flex-1 shadow-sm">
-        
+      <div className="bg-white/60 backdrop-blur-xl  p-10 rounded-2xl space-y-8 flex-1 ">
+
         {/* Campaign Info */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
-             <div className="w-1 h-4 bg-blue-500 rounded-full" />
-             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Basic Information</h4>
+            <div className="w-1 h-4 bg-blue-500 rounded-full" />
+            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Basic Information</h4>
           </div>
           <div>
             <label className="block text-xs font-bold text-gray-500 mb-2 uppercase ml-1">Campaign Title</label>
@@ -74,8 +74,8 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
         {/* Target Platforms / Profiles (Visual Only for now as requested) */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
-             <div className="w-1 h-4 bg-green-500 rounded-full" />
-             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Target Channels</h4>
+            <div className="w-1 h-4 bg-green-500 rounded-full" />
+            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Target Channels</h4>
           </div>
           <div className="flex gap-4">
             {campaignType === 'social_broadcaster' ? (
@@ -92,7 +92,7 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
             ) : (
               <div className="p-4 bg-green-50 rounded-2xl border border-green-100 flex items-center gap-3 flex-1">
                 <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center text-white">
-                   <Share size={18} />
+                  <Share size={18} />
                 </div>
                 <span className="text-sm font-bold text-gray-700">Direct WhatsApp</span>
               </div>
@@ -103,8 +103,8 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
         {/* Scheduling */}
         <div className="border-t border-gray-100 pt-8 space-y-4">
           <div className="flex items-center gap-2 mb-2">
-             <div className="w-1 h-4 bg-orange-500 rounded-full" />
-             <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Release Schedule</h4>
+            <div className="w-1 h-4 bg-orange-500 rounded-full" />
+            <h4 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Release Schedule</h4>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
