@@ -104,6 +104,9 @@ const Campaigns: React.FC = () => {
                 campaigns={filteredCampaigns} 
                 onDeleteCampaign={handleDeleteCampaign} 
                 onUpdateStatus={handleUpdateStatus} 
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                onCreateClick={() => setView("create_selection")}
               />
             )}
           </div>

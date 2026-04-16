@@ -9,9 +9,9 @@ export const useCampaigns = (filters: any = DEFAULT_FILTERS) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCampaigns = useCallback(async () => {
+  const fetchCampaigns = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
       const res = await api.campaign.getCampaigns(filters);
       setCampaigns(res?.data || []);
@@ -32,7 +32,7 @@ export const useCampaigns = (filters: any = DEFAULT_FILTERS) => {
     try {
       const res = await api.campaign.createCampaign(payload);
       toast.success("Campaign created successfully!");
-      fetchCampaigns();
+      fetchCampaigns(true);
       return res;
     } catch (err: any) {
       toast.error(err.message || "Failed to create campaign");
@@ -41,12 +41,17 @@ export const useCampaigns = (filters: any = DEFAULT_FILTERS) => {
   };
 
   const handleUpdateStatus = async (id: string, status: string) => {
+    // Optimistic UI Update
+    setCampaigns(prev => prev.map(c => c._id === id ? { ...c, status } : c));
+    
     try {
       const res = await api.campaign.updateCampaignStatus(id, status);
       toast.success(`Campaign marked as ${status}`);
-      fetchCampaigns();
+      // Background refetch to ensure sync without loader
+      fetchCampaigns(true);
       return res;
     } catch (err: any) {
+      fetchCampaigns(true); // Rollback
       toast.error(err.message || "Failed to update status");
       throw err;
     }
@@ -55,10 +60,15 @@ export const useCampaigns = (filters: any = DEFAULT_FILTERS) => {
   const handleDeleteCampaign = async (id: string) => {
     try {
       if (!window.confirm("Are you sure you want to delete this campaign?")) return;
+      
+      // Optimistic delete
+      setCampaigns(prev => prev.filter(c => c._id !== id));
+      
       await api.campaign.deleteCampaign(id);
       toast.success("Campaign deleted");
-      fetchCampaigns();
+      fetchCampaigns(true);
     } catch (err: any) {
+      fetchCampaigns(true); // Rollback
       toast.error(err.message || "Failed to delete campaign");
       throw err;
     }
