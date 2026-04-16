@@ -10,6 +10,7 @@ import CampaignCard from "./components/CampaignCard";
 import CampaignTypeSelection from "./components/CampaignTypeSelection";
 import CampaignForm from "./components/CampaignForm";
 import CampaignPreview from "./components/CampaignPreview";
+import CampaignGrid from "./components/CampaignGrid";
 
 type ViewState = "overview" | "create_selection" | "create_details";
 
@@ -31,6 +32,7 @@ const Campaigns: React.FC = () => {
   const [messageContent, setMessageContent] = useState("");
   const [frequency, setFrequency] = useState("once");
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [scheduledTime, setScheduledTime] = useState("09:00");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleDay = (day: string) => {
@@ -49,6 +51,7 @@ const Campaigns: React.FC = () => {
     setMessageContent("");
     setFrequency("once");
     setSelectedDays([]);
+    setScheduledTime("09:00");
   };
 
   const handleSubmit = async () => {
@@ -60,7 +63,8 @@ const Campaigns: React.FC = () => {
         type: campaignType,
         message_content: messageContent,
         frequency,
-        recurring_days: frequency === "recurring" ? selectedDays : []
+        recurring_days: frequency === "recurring" ? selectedDays : [],
+        scheduled_time: frequency === "recurring" ? scheduledTime : undefined,
       });
       resetForm();
       setView("overview");
@@ -96,16 +100,11 @@ const Campaigns: React.FC = () => {
             ) : campaigns.length === 0 ? (
               <CampaignEmptyState onCreateClick={() => setView("create_selection")} />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredCampaigns.map((camp: any) => (
-                  <CampaignCard
-                    key={camp._id}
-                    campaign={camp}
-                    onDelete={handleDeleteCampaign}
-                    onStatusUpdate={handleUpdateStatus}
-                  />
-                ))}
-              </div>
+              <CampaignGrid 
+                campaigns={filteredCampaigns} 
+                onDeleteCampaign={handleDeleteCampaign} 
+                onUpdateStatus={handleUpdateStatus} 
+              />
             )}
           </div>
         )}
@@ -129,6 +128,8 @@ const Campaigns: React.FC = () => {
               setFrequency={setFrequency}
               selectedDays={selectedDays}
               toggleDay={toggleDay}
+              scheduledTime={scheduledTime}
+              setScheduledTime={setScheduledTime}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
               campaignType={campaignType}

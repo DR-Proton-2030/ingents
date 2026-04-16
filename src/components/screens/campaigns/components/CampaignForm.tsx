@@ -21,6 +21,8 @@ interface CampaignFormProps {
   setFrequency: (v: string) => void;
   selectedDays: string[];
   toggleDay: (day: string) => void;
+  scheduledTime: string;
+  setScheduledTime: (v: string) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
   campaignType: string;
@@ -35,6 +37,8 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
   setFrequency,
   selectedDays,
   toggleDay,
+  scheduledTime,
+  setScheduledTime,
   onSubmit,
   isSubmitting,
   campaignType
@@ -222,6 +226,19 @@ const CampaignForm: React.FC<CampaignFormProps> = ({
                       {day}
                     </button>
                   ))}
+                </div>
+
+                <div className="flex flex-col items-center gap-3 mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-sm font-bold text-gray-700">Broadcast Time</p>
+                  <input 
+                    type="time" 
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    className="bg-white text-gray-900 px-4 py-2.5 rounded-xl border border-gray-300 outline-none focus:border-orange-500 font-bold"
+                  />
+                  <p className="text-xs text-gray-500 font-medium leading-relaxed mt-2 text-center w-full max-w-sm">
+                    This campaign will auto-deploy on {selectedDays.join(", ") || "the selected days"} at {scheduledTime}.
+                  </p>
                 </div>
 
               </div>
