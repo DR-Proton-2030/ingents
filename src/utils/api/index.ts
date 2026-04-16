@@ -18,6 +18,7 @@ import { getProjects, createProject, updateProject, deleteProject } from "./proj
 import { getInsightsSummary, getContentMetricsHistory, getUserContentWithMetrics, getAccountInsightsHistory, triggerInsightsSync } from "./insights/insights.api";
 import { getTodos, createTodo, updateTodo, deleteTodo } from "./todo/todo.api";
 import { getActivities } from "./activity/activity.api";
+import { getCampaigns, createCampaign, updateCampaignStatus, deleteCampaign } from "./campaign/campaign.api";
 
 export const api = {
   auth: {
@@ -76,5 +77,11 @@ export const api = {
   },
   activity: {
     getActivities
+  },
+  campaign: {
+    getCampaigns,
+    createCampaign,
+    updateCampaignStatus,
+    deleteCampaign
   }
 }

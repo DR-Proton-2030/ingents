@@ -26,7 +26,9 @@ export const normalizeTask = (task: any): Task => {
   };
 };
 
-export const useTasks = (filters: any = {}, searchQuery: string = "") => {
+const DEFAULT_FILTERS = {};
+
+export const useTasks = (filters: any = DEFAULT_FILTERS, searchQuery: string = "") => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sections, setSections] = useState<TaskSection[]>([]);
   const [phases, setPhases] = useState<any[]>([]);
