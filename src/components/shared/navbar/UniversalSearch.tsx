@@ -3,19 +3,23 @@
 import React, { useState, useEffect, useRef, useMemo, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Search as SearchIcon,
     X,
     ChevronRight,
-    Command,
     User,
     ShieldCheck,
-    Bell,
-    Briefcase,
-    Link as LinkIcon,
-    LayoutGrid,
-    Notebook,
-    FolderOpen
+    Search as SearchIcon,
 } from "lucide-react";
+import {
+    ArchiveMinimalistic,
+    ChatSquare,
+    Folder,
+    HashtagSquare,
+    Home,
+    Letter,
+    Wallet,
+    GraphUp,
+    Settings,
+} from "@solar-icons/react";
 import { useRouter } from "next/navigation";
 import { useSite } from "@/contexts/SiteContext";
 import API from "@/utils/api/api";
@@ -47,12 +51,31 @@ export const UniversalSearch = () => {
 
     // Features / Navigation items to search locally
     const staticItems: SearchResult[] = useMemo(() => [
-        { id: "dashboard", label: "Dashboard", type: "navigation", href: `/${site}`, icon: LayoutGrid, category: "Navigation" },
-        { id: "project-mgmt", label: "Projects", type: "navigation", href: `/${site}/project-management`, icon: FolderOpen, category: "Navigation" },
-        { id: "blueprints", label: "Blueprints", type: "navigation", href: `/${site}/tasks`, icon: Notebook, category: "Navigation" },
-        { id: "access", label: "Access Management", type: "navigation", href: `/${site}/settings`, icon: ShieldCheck, category: "Navigation" },
+        // Navigation & Dashboard
+        { id: "dashboard", label: "Dashboard", type: "navigation", href: `/${site}`, icon: Home, category: "Navigation" },
 
-        { id: "profile", label: "My Profile", type: "setting", href: `/${site}/profile-settings`, icon: User, category: "Settings" },
+        // Management
+        { id: "project-mgmt", label: "Project Management", type: "navigation", href: `/${site}/project-management`, icon: Folder, category: "Management" },
+        { id: "tasks", label: "Task Management", type: "navigation", href: `/${site}/tasks`, icon: ArchiveMinimalistic, category: "Management" },
+        { id: "campaigns", label: "Campaigns & Marketing", type: "navigation", href: `/${site}/campaigns`, icon: HashtagSquare, category: "Management" },
+        { id: "social", label: "Social Media Center", type: "navigation", href: `/${site}/social-media`, icon: ChatSquare, category: "Management" },
+
+
+        // Communication
+        { id: "team-chat", label: "Team Chat", type: "navigation", href: `/${site}/team-chat`, icon: ChatSquare, category: "Communication" },
+        { id: "support", label: "Help & Support", type: "navigation", href: `/${site}/support`, icon: User, category: "Communication" },
+
+        // Tools & Data
+        { id: "storage", label: "Cloud Storage", type: "navigation", href: `/${site}/storage`, icon: Folder, category: "Operations" },
+        { id: "users", label: "User Management", type: "navigation", href: `/${site}/all-users`, icon: User, category: "Operations" },
+
+        // Actions
+        { id: "create-post", label: "Create Social Post", type: "project", href: `/${site}/social-media/create-post`, icon: ChatSquare, category: "Quick Actions" },
+
+        // Settings
+        { id: "profile", label: "Personal Profile", type: "setting", href: `/${site}/profile-settings`, icon: User, category: "Settings" },
+        { id: "security", label: "Security & Safety", type: "setting", href: `/${site}/profile-settings`, icon: ShieldCheck, category: "Settings" },
+        { id: "subscription", label: "Billing & Subscription", type: "setting", href: `/${site}/subscription`, icon: Wallet, category: "Settings" },
     ], [site]);
 
     // Handle Keyboard Shortcuts
