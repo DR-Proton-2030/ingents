@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import MacModal from "../MacModal";
 import AuthContext from "@/contexts/authContext/authContext";
+import { UniversalSearch } from "./UniversalSearch";
 
 export default function Navbar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,50 +20,25 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="h-16 overflow-hidden z-[999] sticky top-0 bg-white/50 backdrop-blur-sm flex items-center gap-4 px-4 md:px-6 border-b border-gray-100">
+      <nav className="h-20 z-[99] sticky top-0 bg-white/70 backdrop-blur-md flex items-center gap-4 px-4 md:px-8 border-b border-gray-100">
         {/* Left: Avatar + greeting */}
 
         {/* Assistant label with mic */}
-        <div className="hidden md:flex items-center gap-2 pr-2 mr-2 border-r border-gray-200">
-          <div className="text-xl  font-semibold  text-gray-900 flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-2 pr-4 mr-2 border-r border-gray-100">
+          <div className="text-xl font-semibold text-gray-900 flex items-center gap-3">
             {user?.company_details?.logo && (
               <img
                 src={user.company_details.logo}
                 alt="Company Logo"
-                className="h-12"
+                className="h-10 w-auto"
               />
             )}
-            {/* {user?.company_details?.company_name || "Ingents"} */}
           </div>
-          {/* <button
-            onClick={() => setIsModalOpen(true)}
-            className="relative h-12 w-12 rounded-full flex items-center justify-center 
-             bg-gradient-to-br from-purple-500/70 via-indigo-500/60 to-blue-500/70 
-           
-             backdrop-blur-xl border border-white/20 
-             hover:scale-105 transition-transform duration-300"
-            aria-label="Open Assistant"
-          >
-            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-white/20 to-transparent blur-xl animate-pulse" />
-            <Mic className="relative h-6 w-6 text-white drop-shadow-lg" />
-          </button>
-
-          <span className="text-sm font-medium text-gray-700 mr-5">
-            Virtual Assistant
-          </span> */}
         </div>
 
-        {/* Center: Search */}
-        <div className="flex-1 flex justify-end">
-          <div className="relative w-full max-w-xl">
-            <input
-              className="w-full rounded-full border border-gray-200
-               bg-white/80 pl-11 pr-4 py-2.5 text-sm placeholder:text-gray-400  focus:outline-none focus:ring-2 
-               focus:ring-blue-100 focus:border-blue-300"
-              placeholder="Search"
-            />
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          </div>
+        {/* Center: Universal Search */}
+        <div className="flex-1 max-w-2xl mx-auto">
+          <UniversalSearch />
         </div>
 
         {/* Right: Actions */}
