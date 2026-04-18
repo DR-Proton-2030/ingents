@@ -56,7 +56,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
     <>
       <div className="space-y-6">
         {/* Row 1: View Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-gray-100/40 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] w-fit">
+        <div className="flex items-center gap-1 p-1 bg-white backdrop-blur-xl  rounded-2xl shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] w-fit">
           {viewTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeView === tab.id;
@@ -72,12 +72,12 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                 {isActive && (
                   <motion.div
                     layoutId="active-tab-bg"
-                    className="absolute inset-0 bg-white shadow-[0_2px_8px_-1px_rgba(0,0,0,0.08)] rounded-xl border border-gray-100/50"
+                    className="absolute inset-0 bg-gray-100  rounded-xl "
                     transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                   />
                 )}
                 {/* @ts-ignore */}
-                <Icon className={cn("relative z-10 w-5 h-5 transition-colors", isActive ? "text-orange-500" : "text-gray-400")} />
+                <Icon className={cn("relative z-10 w-5 h-5 transition-colors", isActive ? "text-gray-600" : "text-gray-400")} />
                 <span className={cn("relative z-10 hidden sm:inline-block transition-opacity duration-300", isActive ? "opacity-100" : "opacity-60")}>
                   {tab.label}
                 </span>
@@ -105,7 +105,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                 placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-11 pr-4 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm w-full lg:w-64 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500/40 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] transition-all placeholder:text-gray-400 font-semibold"
+                className="pl-11 pr-4 py-2.5 bg-white rounded-2xl text-sm w-full lg:w-64 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500/40 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] transition-all placeholder:text-gray-400 font-semibold"
               />
             </div>
 
@@ -114,7 +114,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               <button
                 onClick={onFilter}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 border rounded-2xl text-sm font-bold transition-all active:scale-95 shadow-sm",
+                  "flex items-center gap-2 px-4 py-2.5 bg-white  rounded-2xl text-sm font-bold transition-all ",
                   activeFilterCount > 0
                     ? "border-orange-200 text-orange-600 bg-orange-50"
                     : "bg-white border-gray-100 text-gray-700 hover:bg-gray-50 hover:border-gray-200"
@@ -138,7 +138,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               {/* Download */}
               <button
                 onClick={onDownloadReport}
-                className="group p-2.5 bg-blue-50 border border-blue-100 text-blue-600 rounded-2xl hover:bg-blue-100 hover:border-blue-200 transition-all active:scale-95 shadow-sm"
+                className="group p-2.5 bg-gray-200  text-gray-600 rounded-2xl hover:bg-gray-100 hover:border-gray-200 transition-all "
                 title="Download Report"
               >
                 <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
@@ -149,9 +149,9 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               {/* Create Task */}
               <button
                 onClick={onCreateTask}
-                className="group flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white border border-gray-800 rounded-2xl text-sm font-bold shadow-[0_10px_20px_-10px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_25px_-10px_rgba(0,0,0,0.4)] hover:bg-black transition-all active:scale-95 whitespace-nowrap"
+                className="group flex items-center gap-2 px-5 py-2.5 bg-black/80 text-white  rounded-full text-sm font-bold shadow-[0_10px_20px_-10px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_25px_-10px_rgba(0,0,0,0.4)] hover:bg-black transition-all active:scale-95 whitespace-nowrap"
               >
-                <div className="w-5 h-5 rounded-md bg-white/10 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
+                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
                   <AddCircle className="w-4 h-4 text-white" />
                 </div>
                 <span>Create Task</span>

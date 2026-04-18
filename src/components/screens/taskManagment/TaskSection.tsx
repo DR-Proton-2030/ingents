@@ -48,7 +48,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   // Use hex color from section if it's there, else fallback
   const isHex = section.color && section.color.startsWith('#');
-  const sectionColor = isHex ? section.color : "#6B7280";
+  const sectionColor = isHex ? section.color : "#8d8e91ff";
 
   // Group tasks by parent_object_id
   const parentTasks = section.tasks.filter((task) => !task.parent_task_object_id);
@@ -105,7 +105,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
 
       {/* Task Table */}
       {!isCollapsed && (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200 ">
               <tr>

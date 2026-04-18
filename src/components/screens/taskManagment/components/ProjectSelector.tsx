@@ -56,7 +56,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
         return (
             <button
                 onClick={onOpenCreateDrawer}
-                className="group flex items-center gap-3 py-2 px-4 bg-white/70 backdrop-blur-md border border-gray-100 rounded-2xl hover:bg-white hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] transition-all active:scale-95 shadow-sm"
+                className="group flex items-center gap-3 py-2 px-4 bg-white/70 backdrop-blur-md  rounded-2xl hover:bg-white hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] transition-all active:scale-95 shadow-sm"
             >
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 text-blue-500 group-hover:bg-blue-100 transition-colors">
                     <Document className="w-5 h-5" />
@@ -74,13 +74,11 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                 ref={triggerRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "group flex items-center gap-3 py-2 px-4 bg-white/70 backdrop-blur-md border border-gray-100 rounded-2xl hover:bg-white hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.1)] transition-all active:scale-95 shadow-sm",
+                    "group flex items-center gap-3 py-2 px-4 bg-white shadow-lg shadow-gray-100 backdrop-blur-md  rounded-2xl  ",
                     isOpen && "border-blue-200 bg-white ring-4 ring-blue-500/5 shadow-md"
                 )}
             >
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-blue-50 text-blue-500 group-hover:scale-110 transition-transform">
-                    <Document className="w-4.5 h-4.5" />
-                </div>
+
                 <div className="flex flex-col text-left min-w-[80px]">
                     <p className="text-[10px] text-gray-400 font-black uppercase tracking-wider leading-none mb-1">Project</p>
                     <p className="text-sm font-black text-gray-900 leading-none truncate max-w-[120px]">

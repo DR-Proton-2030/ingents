@@ -273,7 +273,7 @@ const TaskManagement: React.FC = () => {
 
   return (
     <Layout showSidebar={true}>
-      <div className="mx-auto max-w-7xl px-4 py-6 space-y-6 hidescroll">
+      <div className="mx-auto max-w-7xl px-4 py-6 space-y-6 hidescroll overflow-y-auto h-[80vh]">
         {/* Header with tabs and search */}
         <TaskHeader
           activeView={activeView}
