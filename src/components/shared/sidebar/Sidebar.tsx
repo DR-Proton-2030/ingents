@@ -27,6 +27,16 @@ export default function Sidebar() {
       label: "Dashboard",
       icon: Home,
     },
+    {
+      href: `/${site}/project-management`,
+      label: "Project Management",
+      icon: Folder,
+    },
+    {
+      href: `/${site}/social-media`,
+      label: "Social Media",
+      icon: Share,
+    },
 
     // {
     //   href: `/${site}/seo-management`,
@@ -48,16 +58,8 @@ export default function Sidebar() {
       label: "Campaigns",
       icon: Flag,
     },
-    {
-      href: `/${site}/project-management`,
-      label: "Project Management",
-      icon: Folder,
-    },
-    {
-      href: `/${site}/social-media`,
-      label: "Social Media",
-      icon: Share,
-    },
+
+
     {
       href: `/${site}/email-marketing`,
       label: "Email Marketing",
