@@ -15,7 +15,6 @@ export const Dashboard = () => {
     <Layout showSidebar={true}>
       <div className="mx-auto max-w-8xl  space-y-6 overflow-hidden">
         {/* Header */}
-        {/* <DashboardHeader /> */}
 
         {/* Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">

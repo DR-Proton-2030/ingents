@@ -1,7 +1,7 @@
 "use client";
 import React, { useContext } from "react";
 import Image from "next/image";
-import { Lock, Plus } from "lucide-react";
+import { Lock, Plus, Video } from "lucide-react";
 import AuthContext from "@/contexts/authContext/authContext";
 import CommonModal from "@/components/shared/commonModal/CommonModal";
 import InviteUsersModal from "@/components/shared/inviteUsersModal/InviteUsersModal";
@@ -31,31 +31,24 @@ export const DashboardHeader = () => {
 
   return (
     <>
-      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          {/* <p className="text-sm text-gray-500">
-          Manage and track your beloved project
-        </p> */}
-          <div className="mt-1 flex items-center gap-3">
 
-            {/* <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-2.5 py-1 text-xs font-medium text-white">
-            <Lock className="h-3.5 w-3.5" /> Private Access
-          </span> */}
+      <div className="flex items-center gap-4">
+        <button
+          onClick={handleScheduleClick}
+          className="mt-4 w-full rounded-2xl bg-[#f0f1f3] py-2.5 cursor-pointer px-5 text-slate-900 text-sm leading-none font-medium flex items-center justify-center gap-2 hover:bg-[#e8eaee] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <div className="p-1 rounded-md bg-green-500 text-white">
+
+            <Video className="h-5 w-5 text-white/70 " />
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="inline-flex items-center gap-2 rounded-full  
-        border-gray-200 bg-gradient-to-r from-orange-500 to-orange-400 hover:from-orange-500 hover:to-orange-500 transition-all duration-300 ease-in-out px-5 py-3 text-sm font-medium text-gray-100 shadow-md shadow-gray-300
-         hover:bg-gray-50 active:scale-95" onClick={handleScheduleClick}>
-            <Calendar className="h-5 w-5 text-gray-100" /> Schedule Meeting
-          </button>
-          <button className="inline-flex items-center gap-2 rounded-full  
+          Schedule Meeting
+        </button>
+        {/* <button className="inline-flex items-center gap-2 rounded-full  
         border-gray-200 bg-black/80 px-5 py-3 text-sm font-medium text-gray-100 shadow-md shadow-gray-400 hover:bg-black/90 active:scale-95 transition-transform" onClick={handleInviteClick}>
             <Plus className="h-5 w-5 text-gray-300" /> Invite User
-          </button>
+          </button> */}
 
-        </div>
-      </header>
+      </div>
       <InviteUsersModal
         isOpen={isInviteModalOpen}
         onClose={handleCloseModal}

@@ -8,6 +8,7 @@ import {
 } from "@/components/shared/upcomingEvent";
 import { Meeting } from "@/utils/api/meeting/meeting.api";
 import MeetingDrawer from "./MeetingDrawer";
+import { DashboardHeader } from "./DashboardHeader";
 
 const sameDay = (a: Date, b: Date) =>
 	a.getFullYear() === b.getFullYear() &&
@@ -91,18 +92,16 @@ export const Meets = () => {
 								className="flex flex-col items-center gap-1 "
 							>
 								<span
-									className={`text-sm ${
-										active ? "text-[#f48c52] font-semibold" : "text-slate-600"
-									}`}
+									className={`text-sm ${active ? "text-[#f48c52] font-semibold" : "text-slate-600"
+										}`}
 								>
 									{day.name}
 								</span>
 								<span
-									className={`p-3 rounded-full flex items-center justify-center text-sm leading-none ${
-										active
-											? "bg-[#f48c52] text-white"
-											: "bg-[#eaebef] text-slate-800"
-									}`}
+									className={`p-3 rounded-full flex items-center justify-center text-sm leading-none ${active
+										? "bg-[#f48c52] text-white"
+										: "bg-[#eaebef] text-slate-800"
+										}`}
 								>
 									{day.date}
 								</span>
@@ -133,7 +132,7 @@ export const Meets = () => {
 							<div>
 								<p className="text-xs leading-none text-slate-500">{"Meeting"}</p>
 								<h4 className="mt-1 text-xl leading-none  text-slate-900">
-								{quickMeeting.title}
+									{quickMeeting.title}
 								</h4>
 							</div>
 							<button className="text-slate-500 ">
@@ -188,16 +187,20 @@ export const Meets = () => {
 							className="mt-4 w-full rounded-2xl bg-[#f0f1f3] py-2.5 text-slate-900 text-sm leading-none font-medium flex items-center justify-center gap-2 hover:bg-[#e8eaee] disabled:opacity-60 disabled:cursor-not-allowed"
 							disabled={!quickMeeting.meeting_link}
 						>
-                            <div className="p-1 rounded-md bg-green-500 text-white">
+							<div className="p-1 rounded-md bg-green-500 text-white">
 
-							<Video className="h-5 w-5 text-white/70 " />
-                            </div>
+								<Video className="h-5 w-5 text-white/70 " />
+							</div>
 							Go to meeting link
 						</button>
 					</>
 				) : (
-					<div className="h-[170px] rounded-2xl bg-[#f8f9fb] border border-slate-100 flex items-center justify-center text-slate-500">
+					<div className="h-[170px] rounded-2xl bg-[#f8f9fb] border border-slate-100 flex flex-col gap-2 items-center justify-center text-slate-500">
 						No meetings for this day
+						<div className="">
+							<DashboardHeader />
+
+						</div>
 					</div>
 				)}
 			</div>
