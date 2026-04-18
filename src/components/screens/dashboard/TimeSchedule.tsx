@@ -34,16 +34,16 @@ export const TimeSchedule = () => {
 
   if (loading) {
     return (
-      <div className="rounded-[20px] bg-slate-900 shadow-xl p-5 min-h-[280px] flex items-center justify-center">
+      <div className="rounded-[20px] bg-slate-900 shadow-xl p-5 min-h-[260px] flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
   }
-  
+
 
   if (!upcomingMeeting) {
     return (
-      <div className="relative group rounded-[32px] bg-slate-900 shadow-xl p-5 overflow-hidden min-h-[280px] flex flex-col">
+      <div className="relative group rounded-[32px] bg-slate-900 shadow-xl p-5 overflow-hidden min-h-[260px] flex flex-col">
         {userProfileImage ? (
           <Image
             src={userProfileImage}
@@ -120,7 +120,7 @@ export const TimeSchedule = () => {
   const year = startTime.getFullYear();
 
   return (
-    <div className="relative group rounded-[20px] bg-slate-900 shadow-xl p-5 overflow-hidden min-h-[280px] flex flex-col">
+    <div className="relative group rounded-[20px] bg-slate-900 shadow-xl p-5 overflow-hidden min-h-[260px] flex flex-col">
       {backgroundImage ? (
         <Image
           src={backgroundImage}

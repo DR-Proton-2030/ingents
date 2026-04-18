@@ -20,7 +20,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="h-20 z-[99] sticky top-0 bg-white/70 backdrop-blur-md flex items-center gap-4 px-4 md:px-8 border-b border-gray-100">
+      <nav className="h-20 z-[99] rounded-t-3xl sticky top-0 bg-white/70 backdrop-blur-md flex items-center gap-4 px-4 md:px-8 border-b border-gray-100">
         {/* Left: Avatar + greeting */}
 
         {/* Assistant label with mic */}

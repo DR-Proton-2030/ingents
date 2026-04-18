@@ -25,7 +25,7 @@ export const Dashboard = () => {
           </div> */}
 
           {/* Center content */}
-          <section className="col-span-9 space-y-5 overflow-y-auto h-[82vh] hidescroll">
+          <section className="col-span-9 space-y-5 overflow-y-auto h-[79vh] hidescroll">
             <Hero />
             <div className="flex  gap-6">
               <div className="w-1/2 gap-4 flex-col  lg:flex">
