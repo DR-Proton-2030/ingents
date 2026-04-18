@@ -66,12 +66,14 @@ export const Activity = () => {
 	const [activities, setActivities] = useState<ActivityItem[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [refreshing, setRefreshing] = useState(false);
+	const [showAll, setShowAll] = useState(false);
 
 	const fetchActivities = useCallback(async (isRefresh = false) => {
 		try {
 			if (isRefresh) setRefreshing(true);
 			else setLoading(true);
-			const response = await api.activity.getActivities(10);
+			// Fetch up to 20 activities for now
+			const response = await api.activity.getActivities(20);
 			setActivities(response.data || []);
 		} catch (error) {
 			console.error("Failed to fetch activities:", error);
@@ -85,8 +87,10 @@ export const Activity = () => {
 		fetchActivities();
 	}, [fetchActivities]);
 
+	const displayedActivities = showAll ? activities : activities.slice(0, 4);
+
 	return (
-		<div className="rounded-[24px] bg-white p-4 sm:p-6">
+		<div className="rounded-[24px] bg-white p-4 sm:p-6 transition-all duration-300">
 			<div className="mb-4 flex items-center justify-between">
 				<h3 className="text-xl leading-none tracking-tight text-slate-900 font-medium">Activities</h3>
 				<button
@@ -107,7 +111,28 @@ export const Activity = () => {
 						No recent activities yet. Actions like creating tasks, scheduling meetings, or posting on social media will appear here.
 					</p>
 				) : (
-					activities.map((item) => <Row key={item._id} item={item} />)
+					<>
+						{displayedActivities.map((item) => (
+							<Row key={item._id} item={item} />
+						))}
+
+						{!showAll && activities.length > 5 && (
+							<button
+								onClick={() => setShowAll(true)}
+								className="mt-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors py-2 rounded-xl bg-blue-50/50 hover:bg-blue-50 text-center cursor-pointer"
+							>
+								View All
+							</button>
+						)}
+						{showAll && activities.length > 5 && (
+							<button
+								onClick={() => setShowAll(false)}
+								className="mt-2 text-sm font-semibold text-slate-500 hover:text-slate-600 transition-colors py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-center cursor-pointer"
+							>
+								Show Less
+							</button>
+						)}
+					</>
 				)}
 			</div>
 		</div>

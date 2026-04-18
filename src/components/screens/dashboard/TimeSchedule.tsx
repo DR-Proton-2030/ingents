@@ -84,7 +84,7 @@ export const TimeSchedule = () => {
   // Robust background selection with fallbacks
   const getBackgroundImage = () => {
     // If it's a team meeting or specifically mentioned "therapist team", try company logo first
-    if (isTeamMeeting && user?.company_details?.logo) return "https://imgs.search.brave.com/LK_7r8AJQ-k9hkni6TdLt1A9pQO0bOjM5Q1Kgv95HbU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/dmVjdG9yc3RvY2su/Y29tL2kvcHJldmll/dy0xeC8zOC8xMi9p/bmZvcm1hdGl2ZS1i/YW5uZXItbWVldGlu/Zy1sZWFkZXJzLWNh/cnRvb24tZmxhdC12/ZWN0b3ItMjY5ODM4/MTIuanBn";
+    if (isTeamMeeting && user?.company_details?.logo) return "https://images.ctfassets.net/prnz0r0d2myc/4jlRha96zpKB49ZDAZLeYA/1ff25e0d0c6799af0af88373c902b8ef/Zoom_Article_and_Downloads_1.png";
 
     // For 1-on-1 meetings, try to find the other person's profile picture
     if (upcomingMeeting.meeting_type === "one_on_one") {
@@ -160,7 +160,7 @@ export const TimeSchedule = () => {
           <div className="flex items-center gap-3 mt-4 rounded-xl border border-white/20 bg-white/10 backdrop-blur-md p-3 text-sm text-white">
             <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
             {isTeamMeeting
-              ? "Team Sync"
+              ? "Team Meeting"
               : `Meeting with ${upcomingMeeting.meeting_type === "one_on_one"
                 ? upcomingMeeting.participants.find((p) => p.user_details?._id !== currentUserId)?.user_details?.full_name || "Guest"
                 : upcomingMeeting.host_details?.full_name || "Team"
