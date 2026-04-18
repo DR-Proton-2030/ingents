@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, ChevronDown, Info, Trash2, Check, X, RefreshCw } from "lucide-react";
+import { Camera, ChevronDown, Info, Trash2, Check, X, RefreshCw, Save } from "lucide-react";
 import AuthContext from "@/contexts/authContext/authContext";
 import { updateUser } from "@/utils/api/user/user.api";
 import { toast } from "react-toastify";
@@ -70,7 +70,7 @@ export const PersonalInfo: React.FC = () => {
                     {isSaving ? (
                         <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
-                        <Check className="w-4 h-4" />
+                        <Save className="w-4 h-4" />
                     )}
                     <span>{isSaving ? "Saving..." : "Save Changes"}</span>
                 </button>

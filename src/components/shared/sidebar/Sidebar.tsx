@@ -6,10 +6,13 @@ import NavList from "./NavList";
 import Profile from "./Profile";
 import { useSite } from "@/contexts/SiteContext";
 import {
+  ArchiveMinimalistic,
+  ChatSquare,
   Checklist,
   Flag,
   Folder,
   GraphUp,
+  HashtagSquare,
   Home,
   Letter,
   Settings,
@@ -35,7 +38,7 @@ export default function Sidebar() {
     {
       href: `/${site}/social-media`,
       label: "Social Media",
-      icon: Share,
+      icon: ChatSquare,
     },
 
     // {
@@ -51,20 +54,20 @@ export default function Sidebar() {
     {
       href: `/${site}/tasks`,
       label: "Task Management",
-      icon: Checklist,
+      icon: ArchiveMinimalistic,
     },
     {
       href: `/${site}/campaigns`,
       label: "Campaigns",
-      icon: Flag,
+      icon: HashtagSquare,
     },
 
 
-    {
-      href: `/${site}/email-marketing`,
-      label: "Email Marketing",
-      icon: Letter,
-    },
+    // {
+    //   href: `/${site}/email-marketing`,
+    //   label: "Email Marketing",
+    //   icon: Letter,
+    // },
   ];
 
   const bottomItems = [

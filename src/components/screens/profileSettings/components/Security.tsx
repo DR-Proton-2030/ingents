@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import AuthContext from "@/contexts/authContext/authContext";
 import { updateUser } from "@/utils/api/user/user.api";
 
-import { Eye, EyeOff, RefreshCw, Check } from "lucide-react";
+import { Eye, EyeOff, RefreshCw, Check, Save } from "lucide-react";
 import { toast } from "react-toastify";
 
 export const Security: React.FC = () => {
@@ -93,9 +93,9 @@ export const Security: React.FC = () => {
                         <button
                             onClick={handleUpdatePassword}
                             disabled={isSaving}
-                            className="w-fit flex items-center space-x-2 px-10 py-4 bg-gray-900 text-white font-bold rounded-[1.5rem] hover:bg-black transition-all disabled:opacity-50 shadow-xl shadow-gray-200"
+                            className="flex items-center w-56 space-x-2 px-6 py-3 bg-green-600 text-white rounded-full text-sm hover:bg-black transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-gray-200"
                         >
-                            {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                            {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             <span>{isSaving ? "Updating..." : "Update Password"}</span>
                         </button>
                     </div>
