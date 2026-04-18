@@ -3,14 +3,16 @@ import React, { useContext } from "react";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import AuthContext from "@/contexts/authContext/authContext";
+import { useSite } from "@/contexts/SiteContext";
 
 export default function Profile() {
   const { user } = useContext(AuthContext);
+  const { site } = useSite();
   const avatarInitial = (user?.full_name?.[0] || "?").toUpperCase();
   const hasProfilePicture = Boolean(user?.profile_picture);
   return (
     <Link
-      href={""}
+      href={`/${site}/profile-settings`}
       className="flex items-center justify-between px-4 py-4 mt-5 rounded-2xl text-sm bg-gradient-to-r from-white/60 via-white/40 to-white/60 text-gray-800 backdrop-blur-xl border border-white/30 shadow-lg hover:shadow-xl transition-all duration-200"
     >
       <div className="flex items-center space-x-3">
