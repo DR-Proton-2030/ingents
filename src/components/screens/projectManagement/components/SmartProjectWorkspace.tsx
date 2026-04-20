@@ -14,330 +14,31 @@ import {
     Zap,
 } from "lucide-react";
 import { api } from "@/utils/api";
-
-type AppConnectionKey =
-    | "drive"
-    | "slack"
-    | "notion"
-    | "github"
-    | "trello"
-    | "jira"
-    | "asana"
-    | "todoist";
-type AutomationKey = "slackOnFile" | "taskOnPr" | "dailySummary";
-
-interface ProjectLite {
-    _id: string;
-    name: string;
-    detail?: string;
-}
-
-interface SmartProjectWorkspaceProps {
-    project: ProjectLite;
-    userName?: string;
-}
-
-interface WorkspaceSnapshot {
-    pendingTasks: number;
-    newFilesToday: number;
-    prNeedsReview: number;
-    tasks: string[];
-    files: Array<{ name: string; when: string }>;
-    activity: string[];
-}
-
-interface DriveFileRecord {
-    id?: string;
-    name: string;
-    modifiedTime?: string;
-    createdTime?: string;
-    webViewLink?: string;
-}
-
-interface TaskRecord {
-    _id?: string;
-    title?: string;
-    completed?: boolean;
-    parent_task_object_id?: string | null;
-    attachments?: Array<{ url?: string; description?: string }>;
-    createdAt?: string;
-    updatedAt?: string;
-}
-
-interface ActivityRecord {
-    message?: string;
-    activity_type?: string;
-}
-
-interface IntegrationRecord {
-    name: string;
-    isConnected?: boolean;
-    status?: string;
-}
-
-const APP_LABELS: Record<AppConnectionKey, { title: string; subtitle: string }> = {
-    drive: { title: "Google Drive", subtitle: "manage files" },
-    slack: { title: "Slack", subtitle: "team updates" },
-    notion: { title: "Notion", subtitle: "documentation sync" },
-    github: { title: "GitHub", subtitle: "repos and pull requests" },
-    trello: { title: "Trello", subtitle: "cards and boards" },
-    jira: { title: "Jira", subtitle: "issues and workflows" },
-    asana: { title: "Asana", subtitle: "projects and tasks" },
-    todoist: { title: "Todoist", subtitle: "personal task lists" },
-};
-
-const APP_TOOLKIT_SLUG: Record<AppConnectionKey, string> = {
-    drive: "googledrive",
-    slack: "slack",
-    notion: "notion",
-    github: "github",
-    trello: "trello",
-    jira: "jira",
-    asana: "asana",
-    todoist: "todoist",
-};
-
-const APP_TOOLKIT_ALIASES: Record<AppConnectionKey, string[]> = {
-    drive: ["googledrive", "google_drive", "drive"],
-    slack: ["slack"],
-    notion: ["notion"],
-    github: ["github"],
-    trello: ["trello"],
-    jira: ["jira", "atlassian"],
-    asana: ["asana"],
-    todoist: ["todoist"],
-};
-
-const AUTOMATION_PRESETS: Array<{
-    key: AutomationKey;
-    title: string;
-    description: string;
-    trigger: string;
-}> = [
-    {
-        key: "slackOnFile",
-        title: "Notify Slack when new file added",
-        description: "Posts update to your team channel instantly.",
-        trigger: "drive.file_added -> slack.send_message",
-    },
-    {
-        key: "taskOnPr",
-        title: "Create task when GitHub PR opened",
-        description: "Auto-creates follow-up tasks for reviewers.",
-        trigger: "github.pr_opened -> task.create",
-    },
-    {
-        key: "dailySummary",
-        title: "Daily summary at 9 PM",
-        description: "Sends project digest without manual check-ins.",
-        trigger: "scheduler.daily_21_00 -> summary.send",
-    },
-];
-
-const NON_EXECUTION_TOOL_PREFIXES = ["COMPOSIO_SEARCH_", "COMPOSIO_MANAGE_"];
-
-const isActionableTool = (toolName: string) =>
-    !NON_EXECUTION_TOOL_PREFIXES.some((prefix) => toolName.startsWith(prefix));
-
-const TASK_TOOL_KEYS: AppConnectionKey[] = ["trello", "jira", "asana", "todoist"];
-const DRIVE_LIST_ACTIONS = ["GOOGLEDRIVE_FIND_FILE", "GOOGLEDRIVE_LIST_FILES"];
-
-const EMPTY_SNAPSHOT: WorkspaceSnapshot = {
-    pendingTasks: 0,
-    newFilesToday: 0,
-    prNeedsReview: 0,
-    tasks: [],
-    files: [],
-    activity: [],
-};
-
-const timeGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-};
-
-const extractFirstName = (fullName?: string) => {
-    if (!fullName || !fullName.trim()) return "there";
-    return fullName.trim().split(" ")[0];
-};
-
-const filenameFromUrl = (url: string) => {
-    try {
-        const parsed = new URL(url);
-        const fileName = decodeURIComponent(parsed.pathname.split("/").pop() || "");
-        return fileName || "file";
-    } catch {
-        const fallback = decodeURIComponent(url.split("/").pop() || "");
-        return fallback || "file";
-    }
-};
-
-const formatWhen = (dateLike?: string) => {
-    if (!dateLike) return "recently";
-    const parsed = new Date(dateLike);
-    if (Number.isNaN(parsed.getTime())) return "recently";
-
-    return parsed.toLocaleString([], {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-    });
-};
-
-const parseJsonIfString = (value: unknown): unknown => {
-    if (typeof value !== "string") return value;
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return value;
-    }
-};
-
-const toDriveFiles = (candidate: unknown): DriveFileRecord[] => {
-    const value = parseJsonIfString(candidate) as any;
-    if (!value) return [];
-
-    if (Array.isArray(value)) {
-        return value
-            .map((item) => ({
-                id: item?.id || item?.fileId || item?.file_id,
-                name: item?.name || item?.title || item?.filename || item?.file_name,
-                modifiedTime:
-                    item?.modifiedTime || item?.modifiedDate || item?.modified_time || item?.updatedAt,
-                createdTime:
-                    item?.createdTime || item?.created_date || item?.createdAt || item?.created_at,
-                webViewLink: item?.webViewLink || item?.alternateLink || item?.url,
-            }))
-            .filter((file) => typeof file.name === "string" && file.name.trim().length > 0) as DriveFileRecord[];
-    }
-
-    if (typeof value !== "object") return [];
-
-    const objectValue = value as Record<string, unknown>;
-    const nextCandidates = [
-        objectValue.files,
-        objectValue.items,
-        objectValue.data,
-        (objectValue.data as any)?.files,
-        (objectValue.data as any)?.items,
-        (objectValue.data as any)?.data,
-    ];
-
-    for (const nextCandidate of nextCandidates) {
-        const files = toDriveFiles(nextCandidate);
-        if (files.length > 0) return files;
-    }
-
-    return [];
-};
-
-const buildSnapshotFromLiveData = (
-    allTasks: TaskRecord[],
-    allActivities: ActivityRecord[],
-    driveFiles: DriveFileRecord[] = []
-): WorkspaceSnapshot => {
-    const parentTasks = allTasks.filter((task) => !task.parent_task_object_id);
-    const pendingTasksList = parentTasks.filter((task) => !task.completed);
-
-    const tasks = pendingTasksList
-        .map((task) => task.title?.trim())
-        .filter((title): title is string => Boolean(title))
-        .slice(0, 4);
-
-    const attachments = parentTasks.flatMap((task) => {
-        const timestamp = task.updatedAt || task.createdAt;
-        return (task.attachments || [])
-            .filter((attachment) => typeof attachment.url === "string" && attachment.url.length > 0)
-            .map((attachment) => ({
-                name: filenameFromUrl(attachment.url as string),
-                whenRaw: timestamp,
-            }));
-    });
-
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-
-    const driveFilesSorted = [...driveFiles].sort((a, b) => {
-        const aTs = new Date(a.modifiedTime || a.createdTime || 0).getTime();
-        const bTs = new Date(b.modifiedTime || b.createdTime || 0).getTime();
-        return bTs - aTs;
-    });
-
-    const attachmentFilesToday = attachments.filter((attachment) => {
-        if (!attachment.whenRaw) return false;
-        const date = new Date(attachment.whenRaw);
-        if (Number.isNaN(date.getTime())) return false;
-        return date >= todayStart;
-    }).length;
-
-    const driveFilesToday = driveFilesSorted.filter((file) => {
-        const rawDate = file.modifiedTime || file.createdTime;
-        if (!rawDate) return false;
-        const date = new Date(rawDate);
-        if (Number.isNaN(date.getTime())) return false;
-        return date >= todayStart;
-    }).length;
-
-    const files =
-        driveFilesSorted.length > 0
-            ? driveFilesSorted.slice(0, 3).map((file) => ({
-                  name: file.name,
-                  when: formatWhen(file.modifiedTime || file.createdTime),
-              }))
-            : attachments.slice(0, 3).map((attachment) => ({
-                  name: attachment.name,
-                  when: formatWhen(attachment.whenRaw),
-              }));
-
-    const newFilesToday = driveFilesSorted.length > 0 ? driveFilesToday : attachmentFilesToday;
-
-    const activity = allActivities
-        .map((item) => item.message?.trim())
-        .filter((message): message is string => Boolean(message))
-        .slice(0, 3);
-
-    const prNeedsReview = allActivities.filter((item) => {
-        const row = `${item.activity_type || ""} ${item.message || ""}`.toLowerCase();
-        return row.includes("pull request") || row.includes(" github ") || /\bpr\b/.test(row);
-    }).length;
-
-    return {
-        pendingTasks: pendingTasksList.length,
-        newFilesToday,
-        prNeedsReview,
-        tasks,
-        files,
-        activity,
-    };
-};
-
-const deriveConnectionState = (
-    integrations: IntegrationRecord[]
-): Record<AppConnectionKey, boolean> => {
-    const isConnected = (aliases: string[]) =>
-        integrations.some((integration) => {
-            const name = integration.name?.toLowerCase();
-            if (!name || !aliases.includes(name)) return false;
-
-            if (integration.isConnected) return true;
-            return (integration.status || "").toUpperCase() === "ACTIVE";
-        });
-
-    return {
-        drive: isConnected(APP_TOOLKIT_ALIASES.drive),
-        slack: isConnected(APP_TOOLKIT_ALIASES.slack),
-        notion: isConnected(APP_TOOLKIT_ALIASES.notion),
-        github: isConnected(APP_TOOLKIT_ALIASES.github),
-        trello: isConnected(APP_TOOLKIT_ALIASES.trello),
-        jira: isConnected(APP_TOOLKIT_ALIASES.jira),
-        asana: isConnected(APP_TOOLKIT_ALIASES.asana),
-        todoist: isConnected(APP_TOOLKIT_ALIASES.todoist),
-    };
-};
+import {
+    APP_LABELS,
+    APP_TOOLKIT_SLUG,
+    AUTOMATION_PRESETS,
+    DRIVE_LIST_ACTIONS,
+    EMPTY_SNAPSHOT,
+    TASK_TOOL_KEYS,
+} from "./SmartProjectWorkspace.constants";
+import {
+    buildSnapshotFromLiveData,
+    deriveConnectionState,
+    extractFirstName,
+    isActionableTool,
+    timeGreeting,
+    toDriveFiles,
+} from "./SmartProjectWorkspace.helpers";
+import type {
+    ActivityRecord,
+    AppConnectionKey,
+    AutomationKey,
+    DriveFileRecord,
+    SmartProjectWorkspaceProps,
+    TaskRecord,
+    WorkspaceSnapshot,
+} from "./SmartProjectWorkspace.types";
 
 export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
     project,
@@ -1063,6 +764,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                         </div>
                     )}
                 </div>
+
             </div>
 
             <div className="rounded-2xl bg-white p-5 border border-[#DFE7F3] space-y-4">
