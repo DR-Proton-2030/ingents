@@ -58,3 +58,11 @@ export interface IntegrationRecord {
     isConnected?: boolean;
     status?: string;
 }
+
+export interface WorkspaceSuggestion {
+    id: string;
+    title: string;
+    detail: string;
+    actionText: string;
+    action: () => void | Promise<void>;
+}
