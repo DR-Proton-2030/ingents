@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { api } from "@/utils/api";
 
-type AppConnectionKey = "drive" | "slack" | "notion";
+type AppConnectionKey = "drive" | "slack" | "notion" | "github";
 type AutomationKey = "slackOnFile" | "taskOnPr" | "dailySummary";
 
 interface ProjectLite {
@@ -63,18 +63,21 @@ const APP_LABELS: Record<AppConnectionKey, { title: string; subtitle: string }> 
     drive: { title: "Google Drive", subtitle: "manage files" },
     slack: { title: "Slack", subtitle: "team updates" },
     notion: { title: "Notion", subtitle: "documentation sync" },
+    github: { title: "GitHub", subtitle: "repos and pull requests" },
 };
 
 const APP_TOOLKIT_SLUG: Record<AppConnectionKey, string> = {
     drive: "googledrive",
     slack: "slack",
     notion: "notion",
+    github: "github",
 };
 
 const APP_TOOLKIT_ALIASES: Record<AppConnectionKey, string[]> = {
     drive: ["googledrive", "google_drive", "drive"],
     slack: ["slack"],
     notion: ["notion"],
+    github: ["github"],
 };
 
 const AUTOMATION_PRESETS: Array<{
@@ -221,6 +224,7 @@ const deriveConnectionState = (
         drive: isConnected(APP_TOOLKIT_ALIASES.drive),
         slack: isConnected(APP_TOOLKIT_ALIASES.slack),
         notion: isConnected(APP_TOOLKIT_ALIASES.notion),
+        github: isConnected(APP_TOOLKIT_ALIASES.github),
     };
 };
 
@@ -232,6 +236,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
         drive: false,
         slack: false,
         notion: false,
+        github: false,
     });
     const [automations, setAutomations] = useState<Record<AutomationKey, boolean>>({
         slackOnFile: false,
@@ -254,6 +259,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             drive: false,
             slack: false,
             notion: false,
+            github: false,
         });
         setAutomations({
             slackOnFile: false,
@@ -283,7 +289,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                 if (!isCancelled) {
                     console.error("Failed to sync integrations:", error);
                     setIntegrationError("Could not refresh integration status.");
-                    setConnections({ drive: false, slack: false, notion: false });
+                    setConnections({ drive: false, slack: false, notion: false, github: false });
                 }
             } finally {
                 if (!isCancelled) {
