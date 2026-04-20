@@ -8,9 +8,16 @@ interface ProjectCardProps {
         detail?: string;
     };
     index: number;
+    isActive?: boolean;
+    onSelect?: (projectId: string) => void;
 }
 
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({
+    project,
+    index,
+    isActive = false,
+    onSelect,
+}) => {
     const logos = [
         "https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png",
         "https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg",
@@ -22,7 +29,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, index }) => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.1, duration: 0.3 }}
-            className="group flex flex-col items-center justify-center p-4 cursor-pointer hover:bg-black/10 rounded-2xl pt-6"
+            onClick={() => onSelect?.(project._id)}
+            className={`group flex flex-col items-center justify-center p-4 cursor-pointer rounded-2xl pt-6 transition-all ${
+                isActive ? "bg-[#E9F2FF] ring-1 ring-blue-300" : "hover:bg-black/10"
+            }`}
         >
             {/* Folder Shape Container */}
             <div className="relative w-40 h-32 mb-4 transition-transform duration-300 group-hover:-translate-y-1.5">

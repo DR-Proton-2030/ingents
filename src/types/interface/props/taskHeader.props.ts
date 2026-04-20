@@ -16,6 +16,7 @@ export interface TaskHeaderProps {
   selectedProjectId?: string;
   onProjectSelect: (project: IProject | null) => void;
   onDownloadReport?: () => void;
+  onIntegrationsOpen?: () => void;
 }
 
 export interface ViewTab {

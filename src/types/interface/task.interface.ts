@@ -5,7 +5,7 @@ export type TaskStatus =
   | "completed"
   | "backlog";
   
-export type ViewMode = "spreadsheet" | "timeline" | "calendar" | "board";
+export type ViewMode = "spreadsheet" | "timeline" | "calendar" | "board" | "assistant";
 
 export interface Assignee {
   _id: string;

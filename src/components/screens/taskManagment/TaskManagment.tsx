@@ -23,6 +23,8 @@ import { TaskDetailDrawer } from "@/components/shared/TaskDetailDrawer";
 import { useReactToPrint } from "react-to-print";
 import { TaskReport } from "./TaskReport";
 import { useRef } from "react";
+import VirtualAssistant from "../virtualAssistant/VirtualAssistant";
+import { IntegrationsDrawer } from "./components/IntegrationsDrawer";
 
 const TaskManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,6 +64,7 @@ const TaskManagement: React.FC = () => {
   const [isCreateSubtaskModalOpen, setIsCreateSubtaskModalOpen] =
     useState(false);
   const [selectedTask, setSelectedTask] = useState<any | null>(null);
+  const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
 
   const reportRef = useRef<HTMLDivElement>(null);
   const handlePrint = useReactToPrint({
@@ -298,6 +301,7 @@ const TaskManagement: React.FC = () => {
             }));
           }}
           onDownloadReport={() => handlePrint()}
+          onIntegrationsOpen={() => setIsIntegrationsOpen(true)}
         />
 
         {/* Task Views */}
@@ -375,6 +379,12 @@ const TaskManagement: React.FC = () => {
               onUnassignTask={handleUnassignTaskFromUser}
             />
           )}
+
+          {activeView === "assistant" && (
+            <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden h-[70vh]">
+              <VirtualAssistant isEmbedded={true} projectContext={filters.project_object_id || undefined} />
+            </div>
+          )}
         </div>
 
 
@@ -434,6 +444,10 @@ const TaskManagement: React.FC = () => {
             title={filters.project_object_id ? "Project Task Report" : "General Task Report"}
           />
         </div>
+        <IntegrationsDrawer 
+          isOpen={isIntegrationsOpen} 
+          onClose={() => setIsIntegrationsOpen(false)} 
+        />
       </div>
     </Layout>
   );

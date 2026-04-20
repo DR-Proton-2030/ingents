@@ -19,6 +19,8 @@ import { getInsightsSummary, getContentMetricsHistory, getUserContentWithMetrics
 import { getTodos, createTodo, updateTodo, deleteTodo } from "./todo/todo.api";
 import { getActivities } from "./activity/activity.api";
 import { getCampaigns, createCampaign, updateCampaignStatus, deleteCampaign } from "./campaign/campaign.api";
+import { getIntegrations, initiateConnection, executeAction } from "./integration/integration.api";
+import { chatWithAssistant } from "./virtualAssistant/virtualAssistant.api";
 
 export const api = {
   auth: {
@@ -83,5 +85,13 @@ export const api = {
     createCampaign,
     updateCampaignStatus,
     deleteCampaign
+  },
+  integration: {
+    getIntegrations,
+    initiateConnection,
+    executeAction
+  },
+  virtualAssistant: {
+    chatWithAssistant
   }
 }

@@ -1,18 +1,34 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Layout from "@/screens/layout/Layout";
 import useProjects from "@/hooks/useProjects";
 import { Loading } from "@/components/shared/loadingScreen/Loading";
 import { CreateProjectDrawer } from "@/components/screens/taskManagment/components";
+import { useParams, useRouter } from "next/navigation";
 import { ProjectHeader, ProjectCard, EmptyState } from "./components";
 
 const ProjectManagement: React.FC = () => {
+    const router = useRouter();
+    const params = useParams<{ site?: string | string[] }>();
     const { projects, loading, handleCreateProject } = useProjects();
     const [searchQuery, setSearchQuery] = useState("");
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+    const siteSlug = Array.isArray(params.site) ? params.site[0] : params.site;
 
-    const filteredProjects = projects.filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredProjects = useMemo(
+        () =>
+            projects.filter((p) =>
+                p.name.toLowerCase().includes(searchQuery.toLowerCase())
+            ),
+        [projects, searchQuery]
+    );
+
+    const handleOpenProject = useCallback(
+        (projectId: string) => {
+            const site = siteSlug || "dashboard";
+            router.push(`/${site}/project-management/${projectId}`);
+        },
+        [router, siteSlug]
     );
 
     if (loading) {
@@ -34,7 +50,12 @@ const ProjectManagement: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     {filteredProjects.map((project, index) => (
-                        <ProjectCard key={project._id} project={project} index={index} />
+                        <ProjectCard
+                            key={project._id}
+                            project={project}
+                            index={index}
+                            onSelect={handleOpenProject}
+                        />
                     ))}
 
                     {filteredProjects.length === 0 && (

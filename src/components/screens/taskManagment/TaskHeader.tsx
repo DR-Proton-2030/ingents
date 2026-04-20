@@ -27,6 +27,7 @@ const viewTabs: ViewTab[] = [
   { id: "timeline", label: "Timeline", icon: ClockCircle },
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "board", label: "Board", icon: Widget },
+  { id: "assistant", label: "Assistant", icon: ChatSquare },
 ];
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
@@ -43,6 +44,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
   selectedProjectId,
   onProjectSelect,
   onDownloadReport,
+  onIntegrationsOpen,
 }) => {
   const [isProjectDrawerOpen, setIsProjectDrawerOpen] = React.useState(false);
   const { handleCreateProject } = useProjects();
@@ -133,6 +135,15 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                   )}
                 </div>
                 <span className="hidden sm:inline">Filter</span>
+              </button>
+
+              {/* Integrations */}
+              <button
+                onClick={() => onIntegrationsOpen?.()}
+                className="group p-2.5 bg-gray-200 text-gray-600 rounded-2xl hover:bg-gray-100 hover:border-gray-200 transition-all"
+                title="Integrations & Apps"
+              >
+                <Share className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </button>
 
               {/* Download */}
