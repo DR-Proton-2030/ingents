@@ -46,6 +46,14 @@ interface WorkspaceSnapshot {
     activity: string[];
 }
 
+interface DriveFileRecord {
+    id?: string;
+    name: string;
+    modifiedTime?: string;
+    createdTime?: string;
+    webViewLink?: string;
+}
+
 interface TaskRecord {
     _id?: string;
     title?: string;
@@ -132,6 +140,7 @@ const isActionableTool = (toolName: string) =>
     !NON_EXECUTION_TOOL_PREFIXES.some((prefix) => toolName.startsWith(prefix));
 
 const TASK_TOOL_KEYS: AppConnectionKey[] = ["trello", "jira", "asana", "todoist"];
+const DRIVE_LIST_ACTIONS = ["GOOGLEDRIVE_FIND_FILE", "GOOGLEDRIVE_LIST_FILES"];
 
 const EMPTY_SNAPSHOT: WorkspaceSnapshot = {
     pendingTasks: 0,
@@ -178,9 +187,58 @@ const formatWhen = (dateLike?: string) => {
     });
 };
 
+const parseJsonIfString = (value: unknown): unknown => {
+    if (typeof value !== "string") return value;
+
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+};
+
+const toDriveFiles = (candidate: unknown): DriveFileRecord[] => {
+    const value = parseJsonIfString(candidate) as any;
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+        return value
+            .map((item) => ({
+                id: item?.id || item?.fileId || item?.file_id,
+                name: item?.name || item?.title || item?.filename || item?.file_name,
+                modifiedTime:
+                    item?.modifiedTime || item?.modifiedDate || item?.modified_time || item?.updatedAt,
+                createdTime:
+                    item?.createdTime || item?.created_date || item?.createdAt || item?.created_at,
+                webViewLink: item?.webViewLink || item?.alternateLink || item?.url,
+            }))
+            .filter((file) => typeof file.name === "string" && file.name.trim().length > 0) as DriveFileRecord[];
+    }
+
+    if (typeof value !== "object") return [];
+
+    const objectValue = value as Record<string, unknown>;
+    const nextCandidates = [
+        objectValue.files,
+        objectValue.items,
+        objectValue.data,
+        (objectValue.data as any)?.files,
+        (objectValue.data as any)?.items,
+        (objectValue.data as any)?.data,
+    ];
+
+    for (const nextCandidate of nextCandidates) {
+        const files = toDriveFiles(nextCandidate);
+        if (files.length > 0) return files;
+    }
+
+    return [];
+};
+
 const buildSnapshotFromLiveData = (
     allTasks: TaskRecord[],
-    allActivities: ActivityRecord[]
+    allActivities: ActivityRecord[],
+    driveFiles: DriveFileRecord[] = []
 ): WorkspaceSnapshot => {
     const parentTasks = allTasks.filter((task) => !task.parent_task_object_id);
     const pendingTasksList = parentTasks.filter((task) => !task.completed);
@@ -203,17 +261,39 @@ const buildSnapshotFromLiveData = (
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const newFilesToday = attachments.filter((attachment) => {
+    const driveFilesSorted = [...driveFiles].sort((a, b) => {
+        const aTs = new Date(a.modifiedTime || a.createdTime || 0).getTime();
+        const bTs = new Date(b.modifiedTime || b.createdTime || 0).getTime();
+        return bTs - aTs;
+    });
+
+    const attachmentFilesToday = attachments.filter((attachment) => {
         if (!attachment.whenRaw) return false;
         const date = new Date(attachment.whenRaw);
         if (Number.isNaN(date.getTime())) return false;
         return date >= todayStart;
     }).length;
 
-    const files = attachments.slice(0, 3).map((attachment) => ({
-        name: attachment.name,
-        when: formatWhen(attachment.whenRaw),
-    }));
+    const driveFilesToday = driveFilesSorted.filter((file) => {
+        const rawDate = file.modifiedTime || file.createdTime;
+        if (!rawDate) return false;
+        const date = new Date(rawDate);
+        if (Number.isNaN(date.getTime())) return false;
+        return date >= todayStart;
+    }).length;
+
+    const files =
+        driveFilesSorted.length > 0
+            ? driveFilesSorted.slice(0, 3).map((file) => ({
+                  name: file.name,
+                  when: formatWhen(file.modifiedTime || file.createdTime),
+              }))
+            : attachments.slice(0, 3).map((attachment) => ({
+                  name: attachment.name,
+                  when: formatWhen(attachment.whenRaw),
+              }));
+
+    const newFilesToday = driveFilesSorted.length > 0 ? driveFilesToday : attachmentFilesToday;
 
     const activity = allActivities
         .map((item) => item.message?.trim())
@@ -289,6 +369,40 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
     const [snapshotError, setSnapshotError] = useState<string | null>(null);
     const [snapshot, setSnapshot] = useState<WorkspaceSnapshot>(EMPTY_SNAPSHOT);
 
+    const fetchRecentDriveFiles = useCallback(async (): Promise<DriveFileRecord[]> => {
+        for (const actionName of DRIVE_LIST_ACTIONS) {
+            try {
+                const raw = await api.integration.executeAction(
+                    actionName,
+                    {
+                        q: "trashed = false",
+                        orderBy: "modifiedTime desc",
+                        pageSize: 10,
+                        supportsAllDrives: true,
+                        includeItemsFromAllDrives: true,
+                    },
+                    project._id
+                );
+
+                const files = toDriveFiles(raw);
+                if (files.length > 0) {
+                    const unique = new Map<string, DriveFileRecord>();
+                    files.forEach((file) => {
+                        const key = file.id || `${file.name}-${file.modifiedTime || file.createdTime || ""}`;
+                        if (!unique.has(key)) {
+                            unique.set(key, file);
+                        }
+                    });
+                    return Array.from(unique.values());
+                }
+            } catch (error) {
+                console.error(`Drive action ${actionName} failed:`, error);
+            }
+        }
+
+        return [];
+    }, [project._id]);
+
     useEffect(() => {
         setConnections({
             drive: false,
@@ -314,45 +428,51 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
         );
 
         let isCancelled = false;
+        let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
-        const fetchIntegrations = async () => {
+        const refreshWorkspace = async () => {
+            let currentConnections: Record<AppConnectionKey, boolean> = {
+                drive: false,
+                slack: false,
+                notion: false,
+                github: false,
+                trello: false,
+                jira: false,
+                asana: false,
+                todoist: false,
+            };
+
             setIsIntegrationsLoading(true);
             try {
                 const response = await api.integration.getIntegrations(project._id);
                 const items = Array.isArray(response) ? response : [];
+                currentConnections = deriveConnectionState(items);
 
                 if (!isCancelled) {
-                    setConnections(deriveConnectionState(items));
+                    setConnections(currentConnections);
+                    setIntegrationError(null);
                 }
             } catch (error) {
                 if (!isCancelled) {
                     console.error("Failed to sync integrations:", error);
                     setIntegrationError("Could not refresh integration status.");
-                    setConnections({
-                        drive: false,
-                        slack: false,
-                        notion: false,
-                        github: false,
-                        trello: false,
-                        jira: false,
-                        asana: false,
-                        todoist: false,
-                    });
+                    setConnections(currentConnections);
                 }
             } finally {
                 if (!isCancelled) {
                     setIsIntegrationsLoading(false);
                 }
             }
-        };
 
-        const fetchWorkspaceSnapshot = async () => {
             setIsSnapshotLoading(true);
             try {
-                const [tasksResult, activitiesResult] = await Promise.allSettled([
+                const snapshotPromises: Array<Promise<any>> = [
                     api.task.getTasks({ project_object_id: project._id, limit: 100 }),
                     api.activity.getActivities(30),
-                ]);
+                    currentConnections.drive ? fetchRecentDriveFiles() : Promise.resolve([]),
+                ];
+
+                const [tasksResult, activitiesResult, driveResult] = await Promise.allSettled(snapshotPromises);
 
                 if (isCancelled) return;
 
@@ -370,13 +490,23 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                             : []
                         : [];
 
-                if (tasksResult.status === "rejected" && activitiesResult.status === "rejected") {
+                const driveFiles =
+                    driveResult.status === "fulfilled" && Array.isArray(driveResult.value)
+                        ? (driveResult.value as DriveFileRecord[])
+                        : [];
+
+                if (
+                    tasksResult.status === "rejected" &&
+                    activitiesResult.status === "rejected" &&
+                    driveFiles.length === 0
+                ) {
                     setSnapshotError("Could not load project metrics right now.");
                     setSnapshot(EMPTY_SNAPSHOT);
                     return;
                 }
 
-                setSnapshot(buildSnapshotFromLiveData(tasksData, activityData));
+                setSnapshot(buildSnapshotFromLiveData(tasksData, activityData, driveFiles));
+                setSnapshotError(null);
             } catch (error) {
                 if (!isCancelled) {
                     console.error("Failed to load project workspace snapshot:", error);
@@ -390,13 +520,18 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             }
         };
 
-        void fetchIntegrations();
-        void fetchWorkspaceSnapshot();
+        void refreshWorkspace();
+        refreshTimer = setInterval(() => {
+            void refreshWorkspace();
+        }, 30000);
 
         return () => {
             isCancelled = true;
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+            }
         };
-    }, [project._id, project.name]);
+    }, [fetchRecentDriveFiles, project._id, project.name]);
 
     const automationCount = useMemo(
         () => Object.values(automations).filter(Boolean).length,

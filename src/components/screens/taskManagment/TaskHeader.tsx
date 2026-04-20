@@ -14,7 +14,7 @@ import {
 } from "@solar-icons/react";
 import { ViewMode } from "@/types/interface/task.interface";
 import { motion } from "framer-motion";
-import { Download, Table } from "lucide-react";
+import { Download, Share, Sparkle, Table } from "lucide-react";
 import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import { ProjectSelector, CreateProjectDrawer } from "./components";
 import { IProject } from "@/types/interface/project.interface";
@@ -27,7 +27,7 @@ const viewTabs: ViewTab[] = [
   { id: "timeline", label: "Timeline", icon: ClockCircle },
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "board", label: "Board", icon: Widget },
-  { id: "assistant", label: "Assistant", icon: ChatSquare },
+  { id: "assistant", label: "Assistant", icon: Sparkle },
 ];
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
