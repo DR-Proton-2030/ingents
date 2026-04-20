@@ -446,7 +446,8 @@ const TaskManagement: React.FC = () => {
         </div>
         <IntegrationsDrawer 
           isOpen={isIntegrationsOpen} 
-          onClose={() => setIsIntegrationsOpen(false)} 
+          onClose={() => setIsIntegrationsOpen(false)}
+          projectContext={filters.project_object_id || undefined}
         />
       </div>
     </Layout>

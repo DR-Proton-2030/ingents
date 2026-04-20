@@ -21,17 +21,36 @@ export interface Integration {
     status: string;
 }
 
-export const getIntegrations = async () => {
-    const response = await apiMethod.get("/integrations/list");
+export const getIntegrations = async (projectContext?: string) => {
+    const response = await apiMethod.get(
+        "/integrations/list",
+        projectContext ? { projectContext } : undefined
+    );
     return unwrapPayload<Integration[]>(response);
 };
 
-export const initiateConnection = async (toolkitName: string, redirectUrl?: string) => {
-    const response = await apiMethod.post("/integrations/connect", { toolkitName, redirectUrl });
+export const initiateConnection = async (
+    toolkitName: string,
+    redirectUrl?: string,
+    projectContext?: string
+) => {
+    const response = await apiMethod.post("/integrations/connect", {
+        toolkitName,
+        redirectUrl,
+        projectContext,
+    });
     return unwrapPayload<{ authUrl?: string }>(response);
 };
 
-export const executeAction = async (actionName: string, parameters: Record<string, any>) => {
-    const response = await apiMethod.post("/integrations/execute", { actionName, parameters });
+export const executeAction = async (
+    actionName: string,
+    parameters: Record<string, any>,
+    projectContext?: string
+) => {
+    const response = await apiMethod.post("/integrations/execute", {
+        actionName,
+        parameters,
+        projectContext,
+    });
     return unwrapPayload<any>(response);
 };

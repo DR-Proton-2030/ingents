@@ -8,11 +8,13 @@ import { IntegrationsScreen } from "../../integrations/IntegrationsScreen";
 interface IntegrationsDrawerProps {
     isOpen: boolean;
     onClose: () => void;
+    projectContext?: string;
 }
 
 export const IntegrationsDrawer: React.FC<IntegrationsDrawerProps> = ({ 
     isOpen, 
-    onClose 
+    onClose,
+    projectContext
 }) => {
     return (
         <AnimatePresence>
@@ -46,7 +48,11 @@ export const IntegrationsDrawer: React.FC<IntegrationsDrawerProps> = ({
                         </div>
                         
                         <div className="flex-1 overflow-hidden">
-                            <IntegrationsScreen isEmbedded={true} title="Apps & Automations" />
+                            <IntegrationsScreen
+                                isEmbedded={true}
+                                title="Apps & Automations"
+                                projectContext={projectContext}
+                            />
                         </div>
                     </motion.div>
                 </>

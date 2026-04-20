@@ -19,6 +19,7 @@ interface IntegrationApp {
 interface IntegrationsScreenProps {
     isEmbedded?: boolean;
     title?: string;
+    projectContext?: string;
 }
 
 const FEATURED_APPS = [
@@ -68,7 +69,8 @@ const FEATURED_APPS = [
 
 export const IntegrationsScreen: React.FC<IntegrationsScreenProps> = ({ 
     isEmbedded = false,
-    title = "Connected Tools"
+    title = "Connected Tools",
+    projectContext
 }) => {
     const [apps, setApps] = useState<IntegrationApp[]>([]);
     const [loading, setLoading] = useState(true);
@@ -77,10 +79,10 @@ export const IntegrationsScreen: React.FC<IntegrationsScreenProps> = ({
     useEffect(() => {
         const fetchIntegrations = async () => {
             try {
-                const res = await api.integration.getIntegrations();
-                if (Array.isArray(res)) {
+                const integrations = await api.integration.getIntegrations(projectContext);
+                if (Array.isArray(integrations)) {
                     const merged = FEATURED_APPS.map(featured => {
-                        const conn = res.find((c: any) => c.name === featured.name);
+                        const conn = integrations.find((c: any) => c.name === featured.name);
                         return {
                             ...featured,
                             isConnected: conn?.isConnected || false,
@@ -100,11 +102,11 @@ export const IntegrationsScreen: React.FC<IntegrationsScreenProps> = ({
         };
 
         fetchIntegrations();
-    }, []);
+    }, [projectContext]);
 
     const handleConnect = async (toolkitName: string) => {
         try {
-            const res = await api.integration.initiateConnection(toolkitName);
+            const res = await api.integration.initiateConnection(toolkitName, undefined, projectContext);
             if (res?.authUrl) {
                 window.location.href = res.authUrl;
             }

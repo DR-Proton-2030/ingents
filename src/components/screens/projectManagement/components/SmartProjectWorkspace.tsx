@@ -273,7 +273,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
         const fetchIntegrations = async () => {
             setIsIntegrationsLoading(true);
             try {
-                const response = await api.integration.getIntegrations();
+                const response = await api.integration.getIntegrations(project._id);
                 const items = Array.isArray(response) ? response : [];
 
                 if (!isCancelled) {
@@ -392,7 +392,8 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             const redirectUrl = typeof window !== "undefined" ? window.location.href : undefined;
             const response = await api.integration.initiateConnection(
                 APP_TOOLKIT_SLUG[key],
-                redirectUrl
+                redirectUrl,
+                project._id
             );
 
             const authUrl = response?.authUrl;
@@ -410,7 +411,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                 `Could not start ${APP_LABELS[key].title} connection. Please try again.`
             );
         }
-    }, [connections]);
+    }, [connections, project._id]);
 
     const runAutomationPreset = useCallback(
         async (preset: { key: AutomationKey; title: string; trigger: string }) => {
