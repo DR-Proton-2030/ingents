@@ -15,7 +15,15 @@ import {
 } from "lucide-react";
 import { api } from "@/utils/api";
 
-type AppConnectionKey = "drive" | "slack" | "notion" | "github";
+type AppConnectionKey =
+    | "drive"
+    | "slack"
+    | "notion"
+    | "github"
+    | "trello"
+    | "jira"
+    | "asana"
+    | "todoist";
 type AutomationKey = "slackOnFile" | "taskOnPr" | "dailySummary";
 
 interface ProjectLite {
@@ -64,6 +72,10 @@ const APP_LABELS: Record<AppConnectionKey, { title: string; subtitle: string }> 
     slack: { title: "Slack", subtitle: "team updates" },
     notion: { title: "Notion", subtitle: "documentation sync" },
     github: { title: "GitHub", subtitle: "repos and pull requests" },
+    trello: { title: "Trello", subtitle: "cards and boards" },
+    jira: { title: "Jira", subtitle: "issues and workflows" },
+    asana: { title: "Asana", subtitle: "projects and tasks" },
+    todoist: { title: "Todoist", subtitle: "personal task lists" },
 };
 
 const APP_TOOLKIT_SLUG: Record<AppConnectionKey, string> = {
@@ -71,6 +83,10 @@ const APP_TOOLKIT_SLUG: Record<AppConnectionKey, string> = {
     slack: "slack",
     notion: "notion",
     github: "github",
+    trello: "trello",
+    jira: "jira",
+    asana: "asana",
+    todoist: "todoist",
 };
 
 const APP_TOOLKIT_ALIASES: Record<AppConnectionKey, string[]> = {
@@ -78,6 +94,10 @@ const APP_TOOLKIT_ALIASES: Record<AppConnectionKey, string[]> = {
     slack: ["slack"],
     notion: ["notion"],
     github: ["github"],
+    trello: ["trello"],
+    jira: ["jira", "atlassian"],
+    asana: ["asana"],
+    todoist: ["todoist"],
 };
 
 const AUTOMATION_PRESETS: Array<{
@@ -105,6 +125,13 @@ const AUTOMATION_PRESETS: Array<{
         trigger: "scheduler.daily_21_00 -> summary.send",
     },
 ];
+
+const NON_EXECUTION_TOOL_PREFIXES = ["COMPOSIO_SEARCH_", "COMPOSIO_MANAGE_"];
+
+const isActionableTool = (toolName: string) =>
+    !NON_EXECUTION_TOOL_PREFIXES.some((prefix) => toolName.startsWith(prefix));
+
+const TASK_TOOL_KEYS: AppConnectionKey[] = ["trello", "jira", "asana", "todoist"];
 
 const EMPTY_SNAPSHOT: WorkspaceSnapshot = {
     pendingTasks: 0,
@@ -225,6 +252,10 @@ const deriveConnectionState = (
         slack: isConnected(APP_TOOLKIT_ALIASES.slack),
         notion: isConnected(APP_TOOLKIT_ALIASES.notion),
         github: isConnected(APP_TOOLKIT_ALIASES.github),
+        trello: isConnected(APP_TOOLKIT_ALIASES.trello),
+        jira: isConnected(APP_TOOLKIT_ALIASES.jira),
+        asana: isConnected(APP_TOOLKIT_ALIASES.asana),
+        todoist: isConnected(APP_TOOLKIT_ALIASES.todoist),
     };
 };
 
@@ -237,6 +268,10 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
         slack: false,
         notion: false,
         github: false,
+        trello: false,
+        jira: false,
+        asana: false,
+        todoist: false,
     });
     const [automations, setAutomations] = useState<Record<AutomationKey, boolean>>({
         slackOnFile: false,
@@ -260,6 +295,10 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             slack: false,
             notion: false,
             github: false,
+            trello: false,
+            jira: false,
+            asana: false,
+            todoist: false,
         });
         setAutomations({
             slackOnFile: false,
@@ -289,7 +328,16 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                 if (!isCancelled) {
                     console.error("Failed to sync integrations:", error);
                     setIntegrationError("Could not refresh integration status.");
-                    setConnections({ drive: false, slack: false, notion: false, github: false });
+                    setConnections({
+                        drive: false,
+                        slack: false,
+                        notion: false,
+                        github: false,
+                        trello: false,
+                        jira: false,
+                        asana: false,
+                        todoist: false,
+                    });
                 }
             } finally {
                 if (!isCancelled) {
@@ -373,7 +421,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                 );
                 return {
                     ok: true,
-                    usedToolCount: usedTools.length,
+                    usedTools,
                 };
             } catch (error) {
                 console.error("Assistant request failed:", error);
@@ -382,7 +430,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                 );
                 return {
                     ok: false,
-                    usedToolCount: 0,
+                    usedTools: [] as string[],
                 };
             } finally {
                 setIsAssistantLoading(false);
@@ -390,6 +438,57 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
         },
         [project._id]
     );
+
+    const setupGithubPrToTrelloAutomation = useCallback(async () => {
+        if (typeof window === "undefined") {
+            setAssistantReply("Cannot configure webhook outside browser context.");
+            return false;
+        }
+
+        const githubRepoOwner = window.prompt(
+            "Enter GitHub repository owner (example: octocat):"
+        );
+        if (!githubRepoOwner || !githubRepoOwner.trim()) {
+            setAssistantReply("Automation setup cancelled: GitHub owner is required.");
+            return false;
+        }
+
+        const githubRepoName = window.prompt(
+            "Enter GitHub repository name (example: awesome-repo):"
+        );
+        if (!githubRepoName || !githubRepoName.trim()) {
+            setAssistantReply("Automation setup cancelled: GitHub repository name is required.");
+            return false;
+        }
+
+        const trelloListId = window.prompt(
+            "Enter Trello list ID where PR tasks should be created:"
+        );
+        if (!trelloListId || !trelloListId.trim()) {
+            setAssistantReply("Automation setup cancelled: Trello list ID is required.");
+            return false;
+        }
+
+        try {
+            const setupResult = await api.automation.setupGithubPrToTrelloAutomation({
+                projectId: project._id,
+                githubRepoOwner: githubRepoOwner.trim(),
+                githubRepoName: githubRepoName.trim(),
+                trelloListId: trelloListId.trim(),
+            });
+
+            setAssistantReply(
+                `Automation setup created. In GitHub repo settings, add a webhook with this URL: ${setupResult.webhookUrl}. Use this secret: ${setupResult.webhookSecret}. Select pull_request events and JSON content type.`
+            );
+            return true;
+        } catch (error) {
+            console.error("Failed to configure GitHub PR to Trello automation:", error);
+            setAssistantReply(
+                "Automation setup failed. Verify repo owner/name and Trello list ID, then try again."
+            );
+            return false;
+        }
+    }, [project._id]);
 
     const handleConnectApp = useCallback(async (key: AppConnectionKey) => {
         if (connections[key]) return;
@@ -421,19 +520,51 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
 
     const runAutomationPreset = useCallback(
         async (preset: { key: AutomationKey; title: string; trigger: string }) => {
+            if (preset.key === "taskOnPr") {
+                const connectedTaskTool = TASK_TOOL_KEYS.find((tool) => connections[tool]);
+
+                if (connectedTaskTool === "trello") {
+                    if (!connections.github) {
+                        setAssistantReply(
+                            "Connect GitHub first, then enable PR -> Trello automation."
+                        );
+                        return;
+                    }
+
+                    const configured = await setupGithubPrToTrelloAutomation();
+                    if (configured) {
+                        setAutomations((prev) => ({ ...prev, [preset.key]: true }));
+                    }
+                    return;
+                }
+
+                if (!connectedTaskTool) {
+                    setAssistantReply(
+                        "To enable PR -> task automation, connect a task tool first (Trello, Jira, Asana, or Todoist)."
+                    );
+                }
+            }
+
+            const connectedApps = (Object.keys(connections) as AppConnectionKey[])
+                .filter((app) => connections[app])
+                .map((app) => APP_LABELS[app].title)
+                .join(", ");
+
             const result = await requestAssistant(
-                `Run this quick automation for project ${project.name}: ${preset.title}. Trigger definition: ${preset.trigger}. If any connection is missing, tell me exactly which app to connect.`
+                `Create and execute setup for this project automation in ${project.name}: ${preset.title}. Trigger definition: ${preset.trigger}. Use actionable tools only if available. Connected apps: ${connectedApps || "none"}. If setup cannot be completed, clearly state missing apps and do not pretend it is enabled.`
             );
 
-            if (result.ok && result.usedToolCount > 0) {
+            const actionableTools = result.usedTools.filter(isActionableTool);
+
+            if (result.ok && actionableTools.length > 0) {
                 setAutomations((prev) => ({ ...prev, [preset.key]: true }));
             } else if (result.ok) {
                 setAssistantReply(
-                    "No external tool action was executed for this preset yet. Connect required apps and try again."
+                    "Automation was not enabled because no executable tool action ran. Connect the required app mentioned above and try again."
                 );
             }
         },
-        [project.name, requestAssistant]
+        [connections, project.name, requestAssistant, setupGithubPrToTrelloAutomation]
     );
 
     const suggestions = useMemo(() => {
