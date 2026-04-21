@@ -58,17 +58,9 @@ const ProjectWorkspacePage: React.FC = () => {
 
     return (
         <Layout showSidebar={true}>
-            <div className="mx-auto max-w-7xl px-4 py-8 space-y-6 overflow-y-auto h-[84vh]">
-                <button
-                    onClick={handleBack}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#D3E0F2] bg-white px-4 py-2 text-sm font-medium text-[#254A7A] hover:bg-[#F5F9FF]"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Back to Project List
-                </button>
 
-                <SmartProjectWorkspace project={project} userName={user?.full_name} />
-            </div>
+
+            <SmartProjectWorkspace project={project} userName={user?.full_name} />
         </Layout>
     );
 };

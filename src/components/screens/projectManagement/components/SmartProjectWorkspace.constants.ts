@@ -4,6 +4,28 @@ import type {
     WorkspaceSnapshot,
 } from "./SmartProjectWorkspace.types";
 
+export const CONNECT_APP_LOGOS: Record<AppConnectionKey, string> = {
+    drive: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Google_Drive_icon_%282020%29.svg/1280px-Google_Drive_icon_%282020%29.svg.png?_=20221103153031",
+    slack: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Slack_icon_2019.svg/1280px-Slack_icon_2019.svg.png",
+    notion: "https://cdn.simpleicons.org/notion/111111",
+    github: "https://cdn.simpleicons.org/github/181717",
+    trello: "https://cdn.simpleicons.org/trello/0052CC",
+    jira: "https://cdn.simpleicons.org/jira/0052CC",
+    asana: "https://cdn.simpleicons.org/asana/F06A6A",
+    todoist: "https://cdn.simpleicons.org/todoist/E44332",
+};
+
+export const CONNECT_APP_ICON_STYLE: Record<AppConnectionKey, string> = {
+    drive: "bg-[#EAF1FF]",
+    slack: "bg-[#F3ECFF]",
+    notion: "bg-[#EEF1F5]",
+    github: "bg-[#EEF2F7]",
+    trello: "bg-[#E8F4FF]",
+    jira: "bg-[#EEF3FF]",
+    asana: "bg-[#FFEFF4]",
+    todoist: "bg-[#FFF1EE]",
+};
+
 export const APP_LABELS: Record<AppConnectionKey, { title: string; subtitle: string }> = {
     drive: { title: "Google Drive", subtitle: "manage files" },
     slack: { title: "Slack", subtitle: "team updates" },

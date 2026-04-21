@@ -26,6 +26,7 @@ import {
     WorkspaceOverview,
     WorkspaceTopBar,
 } from "./SmartProjectWorkspace.sections";
+import CommonModal from "@/components/shared/commonModal/CommonModal";
 import type {
     ActivityRecord,
     AppConnectionKey,
@@ -66,6 +67,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
     const [integrationError, setIntegrationError] = useState<string | null>(null);
     const [snapshotError, setSnapshotError] = useState<string | null>(null);
     const [snapshot, setSnapshot] = useState<WorkspaceSnapshot>(EMPTY_SNAPSHOT);
+    const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
 
     const fetchRecentDriveFiles = useCallback(async (): Promise<DriveFileRecord[]> => {
         for (const actionName of DRIVE_LIST_ACTIONS) {
@@ -524,34 +526,62 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="rounded-3xl border border-[#D8DFEA] bg-gradient-to-b from-[#FBFDFF] to-[#F5F8FE] p-6 md:p-8 space-y-6"
+            className=" p-4 space-y-6 "
         >
             <WorkspaceTopBar
                 projectName={project.name}
-                connectedAppsCount={Object.values(connections).filter(Boolean).length}
+                connections={connections}
                 automationCount={automationCount}
+                onConnectClick={() => setIsConnectionsModalOpen(true)}
             />
 
-            <WorkspaceOverview
-                projectName={project.name}
-                userName={userName}
-                snapshot={snapshot}
-                automationCount={automationCount}
-            />
+            <div className="flex gap-4">
 
-            <SuggestionsAndNotifications suggestions={suggestions} notifications={notifications} />
+                <div className="w-2/3 h-[82vh] overflow-y-auto hidescroll" >
+                    <WorkspaceOverview
+                        projectName={project.name}
+                        userName={userName}
+                        snapshot={snapshot}
+                        automationCount={automationCount}
+                    />
 
-            <LiveDashboard snapshot={snapshot} />
+                    {/* <SuggestionsAndNotifications suggestions={suggestions} notifications={notifications} /> */}
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <QuickAutomationsPanel
-                    automations={automations}
-                    isAssistantLoading={isAssistantLoading}
-                    onRunAutomation={(automation) => {
-                        void runAutomationPreset(automation);
-                    }}
-                />
+                    <LiveDashboard snapshot={snapshot} />
 
+                    <div className="grid grid-cols-1 gap-4">
+                        <QuickAutomationsPanel
+                            automations={automations}
+                            isAssistantLoading={isAssistantLoading}
+                            onRunAutomation={(automation) => {
+                                void runAutomationPreset(automation);
+                            }}
+                        />
+                    </div>
+                </div>
+
+                <div className="w-1/3">
+                    <AssistantPanel
+                        assistantPrompt={assistantPrompt}
+                        assistantReply={assistantReply}
+                        isAssistantLoading={isAssistantLoading}
+                        onSubmitAssistant={onSubmitAssistant}
+                        onPromptChange={setAssistantPrompt}
+                        onQuickPrompt={(prompt) => {
+                            setAssistantPrompt(prompt);
+                            void requestAssistant(prompt);
+                        }}
+                    />
+                </div>
+            </div>
+
+
+
+
+            <CommonModal
+                isOpen={isConnectionsModalOpen}
+                onClose={() => setIsConnectionsModalOpen(false)}
+            >
                 <ConnectAppsPanel
                     connections={connections}
                     isIntegrationsLoading={isIntegrationsLoading}
@@ -559,19 +589,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                         void handleConnectApp(appKey);
                     }}
                 />
-            </div>
-
-            <AssistantPanel
-                assistantPrompt={assistantPrompt}
-                assistantReply={assistantReply}
-                isAssistantLoading={isAssistantLoading}
-                onSubmitAssistant={onSubmitAssistant}
-                onPromptChange={setAssistantPrompt}
-                onQuickPrompt={(prompt) => {
-                    setAssistantPrompt(prompt);
-                    void requestAssistant(prompt);
-                }}
-            />
+            </CommonModal>
         </motion.section>
     );
 };
