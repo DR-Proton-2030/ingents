@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { api } from "@/utils/api";
 import {
@@ -26,6 +26,7 @@ import {
     WorkspaceOverview,
     WorkspaceTopBar,
 } from "./SmartProjectWorkspace.sections";
+import { useTasks } from "@/hooks/useTasks";
 import CommonModal from "@/components/shared/commonModal/CommonModal";
 import type {
     ActivityRecord,
@@ -103,7 +104,89 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
         return [];
     }, [project._id]);
 
+    const taskFilters = useMemo(() => ({
+        project_object_id: project._id,
+    }), [project._id]);
+
+    const { tasks: taskList, handleUpdateTask, refetchTasks } = useTasks(taskFilters);
+
+    const isCancelledRef = useRef(false);
+
+    const refreshWorkspace = useCallback(async () => {
+        let currentConnections: Record<AppConnectionKey, boolean> = {
+            drive: false,
+            slack: false,
+            notion: false,
+            github: false,
+            trello: false,
+            jira: false,
+            asana: false,
+            todoist: false,
+        };
+
+        setIsIntegrationsLoading(true);
+        try {
+            const response = await api.integration.getIntegrations(project._id);
+            const items = Array.isArray(response) ? response : [];
+            currentConnections = deriveConnectionState(items);
+
+            if (!isCancelledRef.current) {
+                setConnections(currentConnections);
+                setIntegrationError(null);
+            }
+        } catch (error) {
+            if (!isCancelledRef.current) {
+                console.error("Failed to sync integrations:", error);
+                setIntegrationError("Could not refresh integration status.");
+                setConnections(currentConnections);
+            }
+        } finally {
+            if (!isCancelledRef.current) {
+                setIsIntegrationsLoading(false);
+            }
+        }
+
+        setIsSnapshotLoading(true);
+        try {
+            const snapshotPromises: Array<Promise<any>> = [
+                api.activity.getActivities(30),
+                currentConnections.drive ? fetchRecentDriveFiles() : Promise.resolve([]),
+            ];
+
+            const [activitiesResult, driveResult] = await Promise.allSettled(snapshotPromises);
+
+            if (isCancelledRef.current) return;
+
+            const activityData =
+                activitiesResult.status === "fulfilled"
+                    ? Array.isArray(activitiesResult.value?.data)
+                        ? (activitiesResult.value.data as ActivityRecord[])
+                        : []
+                    : [];
+
+            const driveFiles =
+                driveResult.status === "fulfilled" && Array.isArray(driveResult.value)
+                    ? (driveResult.value as DriveFileRecord[])
+                    : [];
+
+            setSnapshot(buildSnapshotFromLiveData(taskList, activityData, driveFiles));
+            setSnapshotError(null);
+        } catch (error) {
+            if (!isCancelledRef.current) {
+                console.error("Failed to load project workspace snapshot:", error);
+                setSnapshotError("Could not load project metrics right now.");
+                setSnapshot(EMPTY_SNAPSHOT);
+            }
+        } finally {
+            if (!isCancelledRef.current) {
+                setIsSnapshotLoading(false);
+            }
+        }
+    }, [fetchRecentDriveFiles, project._id, taskList]);
+
     useEffect(() => {
+        isCancelledRef.current = false;
+        
         setConnections({
             drive: false,
             slack: false,
@@ -127,98 +210,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             `Workspace ready for ${project.name}. I can summarize progress or surface urgent issues.`
         );
 
-        let isCancelled = false;
         let refreshTimer: ReturnType<typeof setInterval> | null = null;
-
-        const refreshWorkspace = async () => {
-            let currentConnections: Record<AppConnectionKey, boolean> = {
-                drive: false,
-                slack: false,
-                notion: false,
-                github: false,
-                trello: false,
-                jira: false,
-                asana: false,
-                todoist: false,
-            };
-
-            setIsIntegrationsLoading(true);
-            try {
-                const response = await api.integration.getIntegrations(project._id);
-                const items = Array.isArray(response) ? response : [];
-                currentConnections = deriveConnectionState(items);
-
-                if (!isCancelled) {
-                    setConnections(currentConnections);
-                    setIntegrationError(null);
-                }
-            } catch (error) {
-                if (!isCancelled) {
-                    console.error("Failed to sync integrations:", error);
-                    setIntegrationError("Could not refresh integration status.");
-                    setConnections(currentConnections);
-                }
-            } finally {
-                if (!isCancelled) {
-                    setIsIntegrationsLoading(false);
-                }
-            }
-
-            setIsSnapshotLoading(true);
-            try {
-                const snapshotPromises: Array<Promise<any>> = [
-                    api.task.getTasks({ project_object_id: project._id, limit: 100 }),
-                    api.activity.getActivities(30),
-                    currentConnections.drive ? fetchRecentDriveFiles() : Promise.resolve([]),
-                ];
-
-                const [tasksResult, activitiesResult, driveResult] = await Promise.allSettled(snapshotPromises);
-
-                if (isCancelled) return;
-
-                const tasksData =
-                    tasksResult.status === "fulfilled"
-                        ? Array.isArray(tasksResult.value?.data)
-                            ? (tasksResult.value.data as TaskRecord[])
-                            : []
-                        : [];
-
-                const activityData =
-                    activitiesResult.status === "fulfilled"
-                        ? Array.isArray(activitiesResult.value?.data)
-                            ? (activitiesResult.value.data as ActivityRecord[])
-                            : []
-                        : [];
-
-                const driveFiles =
-                    driveResult.status === "fulfilled" && Array.isArray(driveResult.value)
-                        ? (driveResult.value as DriveFileRecord[])
-                        : [];
-
-                if (
-                    tasksResult.status === "rejected" &&
-                    activitiesResult.status === "rejected" &&
-                    driveFiles.length === 0
-                ) {
-                    setSnapshotError("Could not load project metrics right now.");
-                    setSnapshot(EMPTY_SNAPSHOT);
-                    return;
-                }
-
-                setSnapshot(buildSnapshotFromLiveData(tasksData, activityData, driveFiles));
-                setSnapshotError(null);
-            } catch (error) {
-                if (!isCancelled) {
-                    console.error("Failed to load project workspace snapshot:", error);
-                    setSnapshotError("Could not load project metrics right now.");
-                    setSnapshot(EMPTY_SNAPSHOT);
-                }
-            } finally {
-                if (!isCancelled) {
-                    setIsSnapshotLoading(false);
-                }
-            }
-        };
 
         void refreshWorkspace();
         refreshTimer = setInterval(() => {
@@ -226,12 +218,12 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
         }, 30000);
 
         return () => {
-            isCancelled = true;
+            isCancelledRef.current = true;
             if (refreshTimer) {
                 clearInterval(refreshTimer);
             }
         };
-    }, [fetchRecentDriveFiles, project._id, project.name]);
+    }, [refreshWorkspace, project.name]);
 
     const automationCount = useMemo(
         () => Object.values(automations).filter(Boolean).length,
@@ -526,7 +518,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className=" p-4 space-y-6 "
+            className=" p-4 space-y-4 "
         >
             <WorkspaceTopBar
                 projectName={project.name}
@@ -538,16 +530,23 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             <div className="flex gap-4">
 
                 <div className="w-2/3 h-[82vh] overflow-y-auto hidescroll" >
-                    <WorkspaceOverview
+                    {/* <WorkspaceOverview
                         projectName={project.name}
                         userName={userName}
                         snapshot={snapshot}
                         automationCount={automationCount}
-                    />
+                    /> */}
 
                     {/* <SuggestionsAndNotifications suggestions={suggestions} notifications={notifications} /> */}
 
-                    <LiveDashboard snapshot={snapshot} />
+                    <LiveDashboard
+                        snapshot={snapshot}
+                        projectId={project._id}
+                        onTaskUpdate={() => {
+                            void refreshWorkspace();
+                            void refetchTasks();
+                        }}
+                    />
 
                     <div className="grid grid-cols-1 gap-4">
                         <QuickAutomationsPanel

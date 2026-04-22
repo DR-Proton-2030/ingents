@@ -7,8 +7,9 @@ import type {
     AppConnectionKey,
     DriveFileRecord,
     IntegrationRecord,
-    TaskRecord,
+    Task,
     WorkspaceSnapshot,
+    WorkspaceTask,
 } from "./SmartProjectWorkspace.types";
 
 export const isActionableTool = (toolName: string) =>
@@ -37,7 +38,7 @@ const filenameFromUrl = (url: string) => {
     }
 };
 
-const formatWhen = (dateLike?: string) => {
+const formatWhen = (dateLike?: string | Date) => {
     if (!dateLike) return "recently";
     const parsed = new Date(dateLike);
     if (Number.isNaN(parsed.getTime())) return "recently";
@@ -82,12 +83,12 @@ export const toDriveFiles = (candidate: unknown): DriveFileRecord[] => {
 
     const objectValue = value as Record<string, unknown>;
     const nextCandidates = [
-        objectValue.files,
-        objectValue.items,
-        objectValue.data,
-        (objectValue.data as any)?.files,
-        (objectValue.data as any)?.items,
-        (objectValue.data as any)?.data,
+        objectValue["files"],
+        objectValue["items"],
+        objectValue["data"],
+        (objectValue["data"] as any)?.files,
+        (objectValue["data"] as any)?.items,
+        (objectValue["data"] as any)?.data,
     ];
 
     for (const nextCandidate of nextCandidates) {
@@ -98,21 +99,32 @@ export const toDriveFiles = (candidate: unknown): DriveFileRecord[] => {
     return [];
 };
 
+export const toWorkspaceTask = (task: Task): WorkspaceTask => ({
+    id: task._id || Math.random().toString(36).substr(2, 9),
+    title: task.title?.trim() || "Untitled Task",
+    description: task.phase_info?.name || task.status || "Pending",
+    completed: !!task.completed,
+});
+
 export const buildSnapshotFromLiveData = (
-    allTasks: TaskRecord[],
+    allTasks: Task[],
     allActivities: ActivityRecord[],
     driveFiles: DriveFileRecord[] = []
 ): WorkspaceSnapshot => {
     const parentTasks = allTasks.filter((task) => !task.parent_task_object_id);
-    const pendingTasksList = parentTasks.filter((task) => !task.completed);
+    
+    // Filter for tasks that are not completed
+    const pendingTasksList = parentTasks.filter((task) => {
+        const isCompleted = !!task.completed || task.status === "completed" || task.phase_info?.name?.toLowerCase() === "completed";
+        return !isCompleted;
+    });
 
-    const tasks = pendingTasksList
-        .map((task) => task.title?.trim())
-        .filter((title): title is string => Boolean(title))
-        .slice(0, 4);
+    const tasks: WorkspaceTask[] = pendingTasksList
+        .map(toWorkspaceTask)
+        .slice(0, 5); 
 
     const attachments = parentTasks.flatMap((task) => {
-        const timestamp = task.updatedAt || task.createdAt;
+        const timestamp = (task as any).completed_at || (task as any).updatedAt || (task as any).createdAt;
         return (task.attachments || [])
             .filter((attachment) => typeof attachment.url === "string" && attachment.url.length > 0)
             .map((attachment) => ({
@@ -130,7 +142,7 @@ export const buildSnapshotFromLiveData = (
         return bTs - aTs;
     });
 
-    const attachmentFilesToday = attachments.filter((attachment) => {
+    const attachmentFilesToday = attachments.filter((attachment: any) => {
         if (!attachment.whenRaw) return false;
         const date = new Date(attachment.whenRaw);
         if (Number.isNaN(date.getTime())) return false;
@@ -148,13 +160,13 @@ export const buildSnapshotFromLiveData = (
     const files =
         driveFilesSorted.length > 0
             ? driveFilesSorted.slice(0, 3).map((file) => ({
-                  name: file.name,
-                  when: formatWhen(file.modifiedTime || file.createdTime),
-              }))
-            : attachments.slice(0, 3).map((attachment) => ({
-                  name: attachment.name,
-                  when: formatWhen(attachment.whenRaw),
-              }));
+                name: file.name,
+                when: formatWhen(file.modifiedTime || file.createdTime),
+            }))
+            : attachments.slice(0, 3).map((attachment: any) => ({
+                name: attachment.name,
+                when: formatWhen(attachment.whenRaw),
+            }));
 
     const newFilesToday = driveFilesSorted.length > 0 ? driveFilesToday : attachmentFilesToday;
 

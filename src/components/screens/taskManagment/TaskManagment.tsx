@@ -444,8 +444,8 @@ const TaskManagement: React.FC = () => {
             title={filters.project_object_id ? "Project Task Report" : "General Task Report"}
           />
         </div>
-        <IntegrationsDrawer 
-          isOpen={isIntegrationsOpen} 
+        <IntegrationsDrawer
+          isOpen={isIntegrationsOpen}
           onClose={() => setIsIntegrationsOpen(false)}
           projectContext={filters.project_object_id || undefined}
         />

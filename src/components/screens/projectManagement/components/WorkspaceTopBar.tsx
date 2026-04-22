@@ -24,12 +24,12 @@ export const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
                 <div className="flex items-center gap-2 text-[10px] sm:text-xs text-[#5E738F]/70 mb-2">
-                    <Home className="w-4 h-4" />
-                    <AltArrowRight className="w-3 h-3 opacity-40" />
+                    <Home className="w-5 h-5" />
+                    <AltArrowRight className="w-4 h-4 opacity-80" />
                     <span>Project Workspace</span>
-                    <AltArrowRight className="w-3 h-3 opacity-40" />
-                    <span className="text-[#254A7A] flex gap-2"> 
-                        <Folder className="w-3 h-3 text-[#254A7A]" /> {projectName}
+                    <AltArrowRight className="w-4 h-4 opacity-80" />
+                    <span className="text-[#254A7A] flex gap-2">
+                        <Folder className="w-5 h-5 text-[#254A7A]" /> {projectName}
                     </span>
                 </div>
             </div>

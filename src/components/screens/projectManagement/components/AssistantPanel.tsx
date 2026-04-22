@@ -1,5 +1,5 @@
 import React from "react";
-import { Stars, Pen2 } from "@solar-icons/react";
+import { Stars, Pen2, Record, Donut } from "@solar-icons/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BsChatSquareDots } from "react-icons/bs";
 
@@ -41,7 +41,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
                                 className="flex items-start gap-3"
                             >
                                 <div className="w-10 h-10 rounded-full bg-[#4a4d52] border-[#5e6167] flex items-center justify-center flex-shrink-0 ">
-                                    <BsChatSquareDots className="w-4 h-4 text-white" />
+                                    <Donut className="w-6 h-6 text-white/60" />
                                 </div>
                                 <div className="flex-1 bg-white/20 rounded-2xl rounded-tl-none p-4 text-sm text-white/70 leading-relaxed ">
                                     {assistantReply}

@@ -1,3 +1,6 @@
+import { Task } from "@/types/interface/task.interface";
+export type { Task };
+
 export type AppConnectionKey =
     | "drive"
     | "slack"
@@ -21,11 +24,18 @@ export interface SmartProjectWorkspaceProps {
     userName?: string;
 }
 
+export interface WorkspaceTask {
+    id: string;
+    title: string;
+    description: string;
+    completed: boolean;
+}
+
 export interface WorkspaceSnapshot {
     pendingTasks: number;
     newFilesToday: number;
     prNeedsReview: number;
-    tasks: string[];
+    tasks: WorkspaceTask[];
     files: Array<{ name: string; when: string }>;
     activity: string[];
 }
@@ -38,14 +48,12 @@ export interface DriveFileRecord {
     webViewLink?: string;
 }
 
-export interface TaskRecord {
-    _id?: string;
-    title?: string;
-    completed?: boolean;
-    parent_task_object_id?: string | null;
-    attachments?: Array<{ url?: string; description?: string }>;
-    createdAt?: string;
-    updatedAt?: string;
+export interface DriveFileRecord {
+    id?: string;
+    name: string;
+    modifiedTime?: string;
+    createdTime?: string;
+    webViewLink?: string;
 }
 
 export interface ActivityRecord {
