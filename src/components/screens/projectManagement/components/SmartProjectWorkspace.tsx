@@ -34,7 +34,6 @@ import type {
     AutomationKey,
     DriveFileRecord,
     SmartProjectWorkspaceProps,
-    TaskRecord,
     WorkspaceSuggestion,
     WorkspaceSnapshot,
 } from "./SmartProjectWorkspace.types";
@@ -186,7 +185,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
 
     useEffect(() => {
         isCancelledRef.current = false;
-        
+
         setConnections({
             drive: false,
             slack: false,
