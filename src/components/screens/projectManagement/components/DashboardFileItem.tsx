@@ -1,83 +1,95 @@
 import React from "react";
 import { ExternalLink } from "lucide-react";
+import {
+    DocumentText,
+    Document,
+    FileText,
+    Gallery,
+    Videocamera,
+    MusicNote,
+    ZipFile,
+    Code,
+    FigmaFile,
+    File,
+} from "@solar-icons/react";
 
 // File category detection and icon/color mapping
 const FILE_CATEGORIES: Array<{
     match: RegExp;
     label: string;
-    icon: string;
+    Icon: React.ComponentType<any>;
     bgColor: string;
-    textColor: string;
+    iconColor: string;
 }> = [
     {
         match: /\.(doc|docx|txt|rtf|odt|pages)$/i,
         label: "Document",
-        icon: "📄",
+        Icon: DocumentText,
         bgColor: "bg-blue-50",
-        textColor: "text-blue-600",
+        iconColor: "#3B82F6",
     },
     {
         match: /\.(xls|xlsx|csv|tsv|numbers)$/i,
         label: "Spreadsheet",
-        icon: "📊",
+        Icon: FileText,
         bgColor: "bg-emerald-50",
-        textColor: "text-emerald-600",
+        iconColor: "#10B981",
     },
     {
         match: /\.(ppt|pptx|key|odp)$/i,
         label: "Presentation",
-        icon: "📽️",
+        Icon: Document,
         bgColor: "bg-orange-50",
-        textColor: "text-orange-600",
+        iconColor: "#F97316",
     },
     {
         match: /\.(pdf)$/i,
         label: "PDF",
-        icon: "📕",
+        Icon: DocumentText,
         bgColor: "bg-red-50",
-        textColor: "text-red-600",
+        iconColor: "#EF4444",
     },
     {
         match: /\.(jpg|jpeg|png|gif|svg|webp|bmp|ico|heic)$/i,
         label: "Image",
-        icon: "🖼️",
+        Icon: Gallery,
         bgColor: "bg-purple-50",
-        textColor: "text-purple-600",
+        iconColor: "#8B5CF6",
     },
     {
         match: /\.(mp4|mov|avi|mkv|webm|flv)$/i,
         label: "Video",
-        icon: "🎬",
+        Icon: Videocamera,
         bgColor: "bg-pink-50",
-        textColor: "text-pink-600",
+        iconColor: "#EC4899",
     },
     {
         match: /\.(mp3|wav|aac|flac|ogg|m4a)$/i,
         label: "Audio",
-        icon: "🎵",
+        Icon: MusicNote,
         bgColor: "bg-indigo-50",
-        textColor: "text-indigo-600",
+        iconColor: "#6366F1",
     },
     {
         match: /\.(zip|rar|7z|tar|gz|bz2)$/i,
         label: "Archive",
-        icon: "📦",
+        Icon: ZipFile,
         bgColor: "bg-amber-50",
-        textColor: "text-amber-600",
+        iconColor: "#F59E0B",
     },
     {
         match: /\.(js|ts|tsx|jsx|py|java|go|rs|c|cpp|html|css|json|xml|yaml|yml|md)$/i,
         label: "Code",
-        icon: "💻",
+        Icon: Code,
         bgColor: "bg-cyan-50",
-        textColor: "text-cyan-600",
+        iconColor: "#06B6D4",
     },
     {
         match: /\.(fig|sketch|psd|ai|xd)$/i,
         label: "Design",
-        icon: "🎨",
+        Icon: FigmaFile,
         bgColor: "bg-fuchsia-50",
-        textColor: "text-fuchsia-600",
+        iconColor: "#D946EF",
     },
 ];
 
@@ -85,24 +97,24 @@ const FILE_CATEGORIES: Array<{
 const GOOGLE_CATEGORIES: Array<{
     match: RegExp;
     label: string;
-    icon: string;
+    Icon: React.ComponentType<any>;
     bgColor: string;
-    textColor: string;
+    iconColor: string;
 }> = [
     {
         match: /\(Responses\)$/i,
         label: "Spreadsheet",
-        icon: "📊",
+        Icon: FileText,
         bgColor: "bg-emerald-50",
-        textColor: "text-emerald-600",
+        iconColor: "#10B981",
     },
 ];
 
 const DEFAULT_CATEGORY = {
     label: "File",
-    icon: "📁",
+    Icon: File,
     bgColor: "bg-gray-50",
-    textColor: "text-gray-500",
+    iconColor: "#6B7280",
 };
 
 function getFileCategory(fileName: string) {
@@ -125,19 +137,20 @@ interface DashboardFileItemProps {
 
 export const DashboardFileItem: React.FC<DashboardFileItemProps> = ({ file }) => {
     const category = getFileCategory(file.name);
+    const IconComponent = category.Icon;
 
     return (
         <div className="flex items-center justify-between px-3 py-2.5 rounded-2xl bg-white hover:bg-gray-50/80 transition-all duration-200 group">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className={`h-10 w-10 ${category.bgColor} rounded-xl flex items-center justify-center text-lg shrink-0`}>
-                    {category.icon}
+                <div className={`h-10 w-10 ${category.bgColor} rounded-xl flex items-center justify-center shrink-0`}>
+                    <IconComponent className="h-5 w-5" color={category.iconColor} strokeWidth={1.5} />
                 </div>
                 <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-semibold text-gray-700 truncate">
                         {file.name}
                     </h4>
                     <div className="flex items-center gap-2 mt-0.5">
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${category.bgColor} ${category.textColor}`}>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${category.bgColor}`} style={{ color: category.iconColor }}>
                             {category.label}
                         </span>
                         <span className="text-[11px] text-gray-400">

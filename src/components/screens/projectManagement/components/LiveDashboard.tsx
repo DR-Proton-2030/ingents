@@ -25,6 +25,7 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ snapshot, projectI
                     files={snapshot.files}
                     newFilesCount={snapshot.newFilesToday}
                     projectId={projectId}
+                    onUploadComplete={onTaskUpdate}
                 />
             </div>
         </div>

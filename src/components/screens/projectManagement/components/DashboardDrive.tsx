@@ -5,13 +5,17 @@ import { DashboardFileItem } from "./DashboardFileItem";
 import { api } from "@/utils/api";
 import { toast } from "react-toastify";
 
+const MAX_FILE_SIZE_MB = 2;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 interface DashboardDriveProps {
     files: Array<{ name: string; when: string; webViewLink?: string }>;
     newFilesCount: number;
     projectId: string;
+    onUploadComplete?: () => void;
 }
 
-export const DashboardDrive: React.FC<DashboardDriveProps> = ({ files, newFilesCount, projectId }) => {
+export const DashboardDrive: React.FC<DashboardDriveProps> = ({ files, newFilesCount, projectId, onUploadComplete }) => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,6 +26,11 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({ files, newFilesC
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (!selectedFile) return;
+
+        if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
+            toast.error(`File too large. Maximum size is ${MAX_FILE_SIZE_MB}MB.`);
+            return;
+        }
 
         setIsUploading(true);
         try {
@@ -61,6 +70,8 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({ files, newFilesC
 
                     if (uploaded) {
                         toast.success(`"${selectedFile.name}" uploaded to Drive`);
+                        // Trigger workspace refresh to show the new file
+                        onUploadComplete?.();
                     } else {
                         toast.error("Upload failed. Google Drive upload action not available.");
                     }
