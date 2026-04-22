@@ -19,12 +19,13 @@ export const ProjectGraph: React.FC<ProjectGraphProps> = ({ projectId }) => {
 
         sections.forEach((section) => {
             const title = section.title.toLowerCase();
-            if (title === "completed") {
-                done = section.count;
-            } else if (title === "in progress") {
-                inProgress = section.count;
-            } else if (title === "not started") {
-                waiting = section.count;
+            if (title.includes("complet") || title.includes("done")) {
+                done += section.count;
+            } else if (title.includes("progress")) {
+                inProgress += section.count;
+            } else {
+                // Everything else: "not started", "backlog", "pending", etc.
+                waiting += section.count;
             }
         });
 

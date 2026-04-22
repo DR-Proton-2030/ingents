@@ -21,7 +21,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     onQuickPrompt,
 }) => {
     return (
-        <div className="relative rounded-[30px] bg-transparent pt-6">
+        <div className="relative rounded-[30px] bg-transparent pt-6 -mt-4">
             <div className="pointer-events-none absolute left-1/2 top-0 z-0 h-8 w-[78%] -translate-x-1/2 rounded-[24px] bg-gray-200 shadow-[0_1px_0_rgba(0,0,0,0.12)]" />
             <div className="pointer-events-none absolute left-1/2 top-2 z-0 h-8 w-[88%] -translate-x-1/2 rounded-[24px] bg-gray-300 shadow-[0_2px_0_rgba(0,0,0,0.2)]" />
 
@@ -31,7 +31,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
 
 
                 {/* Chat Area */}
-                <div className="flex-1 p-2 overflow-y-auto space-y-4 min-h-[300px]">
+                <div className="flex-1 p-2 overflow-y-auto space-y-4 h-[50vh]">
                     <AnimatePresence mode="wait">
                         {assistantReply && (
                             <motion.div

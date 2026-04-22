@@ -517,18 +517,19 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className=" p-4 space-y-4 "
+            className=" p-2 space-y-4 "
         >
-            <WorkspaceTopBar
-                projectName={project.name}
-                connections={connections}
-                automationCount={automationCount}
-                onConnectClick={() => setIsConnectionsModalOpen(true)}
-            />
+
 
             <div className="flex gap-4">
 
-                <div className="w-2/3 h-[82vh] overflow-y-auto hidescroll" >
+                <div className="w-2/3 h-[78vh] overflow-y-auto hidescroll" >
+                    <WorkspaceTopBar
+                        projectName={project.name}
+                        connections={connections}
+                        automationCount={automationCount}
+                        onConnectClick={() => setIsConnectionsModalOpen(true)}
+                    />
                     {/* <WorkspaceOverview
                         projectName={project.name}
                         userName={userName}
@@ -558,7 +559,7 @@ export const SmartProjectWorkspace: React.FC<SmartProjectWorkspaceProps> = ({
                     </div>
                 </div>
 
-                <div className="w-1/3">
+                <div className="w-1/3 ml-2">
                     <AssistantPanel
                         assistantPrompt={assistantPrompt}
                         assistantReply={assistantReply}
