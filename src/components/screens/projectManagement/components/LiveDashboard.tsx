@@ -20,10 +20,11 @@ export const LiveDashboard: React.FC<LiveDashboardProps> = ({ snapshot, projectI
                 />
                 <ProjectGraph projectId={projectId} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mt-6">
                 <DashboardDrive
                     files={snapshot.files}
                     newFilesCount={snapshot.newFilesToday}
+                    projectId={projectId}
                 />
             </div>
         </div>

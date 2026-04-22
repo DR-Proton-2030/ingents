@@ -162,6 +162,7 @@ export const buildSnapshotFromLiveData = (
             ? driveFilesSorted.slice(0, 3).map((file) => ({
                 name: file.name,
                 when: formatWhen(file.modifiedTime || file.createdTime),
+                webViewLink: file.webViewLink,
             }))
             : attachments.slice(0, 3).map((attachment: any) => ({
                 name: attachment.name,

@@ -36,7 +36,7 @@ export interface WorkspaceSnapshot {
     newFilesToday: number;
     prNeedsReview: number;
     tasks: WorkspaceTask[];
-    files: Array<{ name: string; when: string }>;
+    files: Array<{ name: string; when: string; webViewLink?: string }>;
     activity: string[];
 }
 
@@ -48,13 +48,7 @@ export interface DriveFileRecord {
     webViewLink?: string;
 }
 
-export interface DriveFileRecord {
-    id?: string;
-    name: string;
-    modifiedTime?: string;
-    createdTime?: string;
-    webViewLink?: string;
-}
+
 
 export interface ActivityRecord {
     message?: string;
