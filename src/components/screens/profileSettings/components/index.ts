@@ -1,5 +1,4 @@
 export * from "./PersonalInfo";
 export * from "./Security";
-export * from "./Notifications";
-export * from "./Businesses";
+export * from "./MemberManagement";
 export * from "./Integrations";

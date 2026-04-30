@@ -49,10 +49,7 @@ export const DashboardHeader = () => {
           </button> */}
 
       </div>
-      <InviteUsersModal
-        isOpen={isInviteModalOpen}
-        onClose={handleCloseModal}
-      />
+  
 
       <CreateMeetingDrawer
         isOpen={isScheduleDrawerOpen}

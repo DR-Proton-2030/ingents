@@ -5,11 +5,14 @@ import Image from "next/image";
 import {
   X,
   MessageCircle,
+  Plus,
 } from "lucide-react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
 import TeamMembersTable from "@/components/screens/dashboard/TeamMembersTable";
 import { useRouter, useParams } from "next/navigation";
+import { AddCircle } from "@solar-icons/react";
+import InviteUsersModal from "@/components/shared/inviteUsersModal/InviteUsersModal";
 
 export const TeamControl = () => {
   const { users } = useGetUsers();
@@ -38,6 +41,16 @@ export const TeamControl = () => {
 
   const joinedCount = safeUsers.filter((u: any) => u.has_joined).length;
 
+
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+  const handleInviteClick = () => {
+    setIsInviteModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsInviteModalOpen(false);
+  }
   return (
     <>
       <div className="rounded-[32px] ">
@@ -50,9 +63,9 @@ export const TeamControl = () => {
               <div className="text-2xl font-  text-white [text-shadow:0_2px_2px_rgba(0,0,0,0.45)]" >
                 Team members
               </div>
-              <h3 className="text-lg leading-none font-normal  text-white/95 " >
-                {safeUsers.length}
-              </h3>
+              <button onClick={handleInviteClick} className="flex items-center gap-1 rounded-full bg-[#4a4d52] px-3 py-1 text-sm font-medium text-white hover:bg-[#5e6167] transition-colors">
+                <Plus size={16}/>
+              </button>
             </div>
 
             <div className="space-y-2">
@@ -143,6 +156,11 @@ export const TeamControl = () => {
         </div>,
         typeof window !== "undefined" ? document.body : ({} as HTMLElement)
       )}
+
+          <InviteUsersModal
+              isOpen={isInviteModalOpen}
+              onClose={handleCloseModal}
+            />
     </>
   );
 };
