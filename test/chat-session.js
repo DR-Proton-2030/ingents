@@ -34,6 +34,7 @@ async function run() {
   }
 
   console.log('Test complete');
+  console.log('Test complete');
 }
 
 run().catch((e) => { console.error(e); process.exit(1); });
