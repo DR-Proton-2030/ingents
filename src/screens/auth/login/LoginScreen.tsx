@@ -78,15 +78,22 @@ const handleSubmit = async (e: React.FormEvent) => {
     const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", // ✅ KEY FIX
+      credentials: "include",
       body: JSON.stringify(formData),
     });
 
     const data = await response.json();
 
     if (response.status === 400 && data.code === "PASSWORD_NOT_SET") {
-      setApiError(data.message);
+      setApiError(
+        "This account still needs to be activated with a temporary password."
+      );
       setShowSetupPassword(true);
+      return;
+    }
+
+    if (response.ok && data.code === "PASSWORD_RESET_REQUIRED") {
+      router.replace("/reset-password");
       return;
     }
 
@@ -97,7 +104,6 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     setUser(data.data.user);
     router.push("/dashboard");
-
   } catch {
     setApiError("Something went wrong. Please try again.");
   } finally {
@@ -258,15 +264,11 @@ useEffect(() => {
             </div> */}
 
             {/* Submit Button */}
-           {showSetupPassword ? (
-  <button
-    type="button"
-    onClick={() => router.push("/setup-password")}
-    className="w-full px-8 py-3 rounded-full font-medium bg-orange-500 hover:bg-orange-600 text-white transition-all"
-  >
-    Setup Password
-  </button>
-) : (
+          {showSetupPassword ? (
+            <div className="w-full rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
+              Use the temporary password created for this account to continue.
+            </div>
+          ) : (
   <button
     type="submit"
     disabled={isLoading}

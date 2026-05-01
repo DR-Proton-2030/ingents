@@ -13,6 +13,7 @@ export function middleware(req: NextRequest) {
     "/auth/login",
     "/auth/signup",
     "/setup-password",
+    "/reset-password",
   ];
 
   // Allow /meeting/* routes (e.g., /meeting/5E75B3ED-2)

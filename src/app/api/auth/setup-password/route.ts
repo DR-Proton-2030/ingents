@@ -6,29 +6,31 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 export async function POST(req: Request) {
   try {
-    // Extract cookies from the incoming request
-    // const cookies = req.headers.get("cookie") || "";
-    
     // Parse request body
     const body = await req.json();
-    const token = req.headers.get("Authorization");
+    const authorization = req.headers.get("authorization");
+    const cookie = req.headers.get("cookie");
 
     console.log("Received setup password request with body:", body);
-    
+
+    // Forward Authorization header or cookies to backend so it can verify the token.
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(authorization ? { Authorization: authorization } : {}),
+      ...(cookie ? { Cookie: cookie } : {}),
+    };
+
     const response = await axios.post(
       `${BACKEND_URL}/api/v1/auth/setup-password`,
       body,
       {
-        headers: {
-          "Content-Type": "application/json",
-          // Forward the Authorization header if present
-          ...(token ? { Authorization: token } : {}),
-        },
-        // withCredentials: true, // Important for cookie handling
+        headers,
+        withCredentials: true,
       }
     );
+
     console.log("response from setup password:", response.data);
-    return NextResponse.json(response.data);
+    return NextResponse.json(response.data, { status: response.status });
   } catch (err: any) {
     console.error("Backend API error:", err.response?.data || err.message);
     return NextResponse.json(

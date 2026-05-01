@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -45,7 +45,7 @@ const SetupPassword = () => {
     try {
       const res = await api.auth.setupPassword(password, token);
       if(res){
-        router.push("/login");
+        router.replace("/login");
       }
     } catch (err: any) {
       setErrorMsg(err.message);
@@ -63,10 +63,10 @@ const SetupPassword = () => {
             <Lock className="text-orange-600" size={28} />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Set up your password
+            Reset your password
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Secure your account with a strong password
+            Create a new password to finish activating your account
           </p>
         </div>
 
@@ -176,7 +176,7 @@ const SetupPassword = () => {
                 : "bg-orange-300 cursor-not-allowed"
             }`}
         >
-          {loading ? "Setting Password..." : "Set Password"}
+          {loading ? "Saving Password..." : "Reset Password"}
         </button>
 
         <p className="text-center text-xs text-gray-500 mt-6">

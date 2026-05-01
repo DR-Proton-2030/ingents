@@ -88,7 +88,7 @@ export const Meets = () => {
 									{day.name}
 								</span>
 								<span
-									className={`p-3 rounded-full flex items-center justify-center text-sm leading-none ${active
+									className={`h-10 w-10 rounded-full flex items-center justify-center text-sm leading-none ${active
 										? "bg-[#f48c52] text-white"
 										: "bg-[#eaebef] text-slate-800"
 										}`}

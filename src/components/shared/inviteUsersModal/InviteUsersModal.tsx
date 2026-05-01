@@ -25,6 +25,7 @@ interface InviteUsersModalProps {
 const InviteUsersModal: React.FC<InviteUsersModalProps> = ({ isOpen, onClose }) => {
 	const [fullName, setFullName] = useState("");
 	const [email, setEmail] = useState("");
+	const [tempPassword, setTempPassword] = useState("");
 	const [role, setRole] = useState<UserRole>("employee");
 	const [loading, setLoading] = useState(false);
 
@@ -44,7 +45,7 @@ const InviteUsersModal: React.FC<InviteUsersModalProps> = ({ isOpen, onClose }) 
 	}, [isOpen, onClose]);
 
 	const handleInvite = async () => {
-		if (!fullName || !email) {
+		if (!fullName || !email || !tempPassword) {
 			toast.error("Please fill all fields");
 			return;
 		}
@@ -60,6 +61,7 @@ const InviteUsersModal: React.FC<InviteUsersModalProps> = ({ isOpen, onClose }) 
 				body: JSON.stringify({
 					full_name: fullName,
 					email,
+					password: tempPassword,
 					role,
 				}),
 				credentials: "include",
@@ -75,6 +77,7 @@ const InviteUsersModal: React.FC<InviteUsersModalProps> = ({ isOpen, onClose }) 
 			// Reset form
 			setFullName("");
 			setEmail("");
+			setTempPassword("");
 			setRole("employee");
 			onClose();
 		} catch (error: any) {
@@ -152,6 +155,22 @@ const InviteUsersModal: React.FC<InviteUsersModalProps> = ({ isOpen, onClose }) 
 										value={email}
 										onChange={(e) => setEmail(e.target.value)}
 										className="w-full h-14 pl-12 pr-4 rounded-2xl bg-gray-100 border-2 border-transparent focus:border-orange-500/20 focus:bg-white outline-none text-sm font-bold text-gray-800 transition-all "
+									/>
+								</div>
+							</div>
+
+							<div className="relative group">
+								<label className="block text-[10px] font-bold text-gray-500 uppercase mb-2 ml-1 group-focus-within:text-orange-500 transition-colors">
+									Temporary Password
+								</label>
+								<div className="relative">
+									<ShieldUser className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
+									<input
+										type="text"
+										placeholder="e.g. Temp@1234"
+										value={tempPassword}
+										onChange={(e) => setTempPassword(e.target.value)}
+										className="w-full h-14 pl-12 pr-4 rounded-2xl bg-gray-100 border-2 border-transparent focus:border-orange-500/20 focus:bg-white outline-none text-sm font-bold text-gray-800 transition-all"
 									/>
 								</div>
 							</div>
