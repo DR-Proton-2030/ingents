@@ -7,8 +7,8 @@ import Profile from "./Profile";
 import { useSite } from "@/contexts/SiteContext";
 import {
   Checklist,
+  Dialog,
   Folder,
-  GraphUp,
   Home,
   Letter,
   Settings,
@@ -51,6 +51,11 @@ export default function Sidebar() {
       href: `/${site}/social-media`,
       label: "Social Media",
       icon: Share,
+    },
+    {
+      href: `/${site}/team-chat`,
+      label: "Team Chat",
+      icon: Dialog,
     },
     {
       href: `/${site}/email-marketing`,

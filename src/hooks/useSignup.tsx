@@ -4,10 +4,10 @@ import { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   validateUserDetails,
-  validateCompanyDetails,
   hasValidationErrors,
 } from "@/lib/validation/signupValidation";
 import AuthContext from "@/contexts/authContext/authContext";
+import { api } from "@/utils/api";
 
 interface UserDetailsFormData {
   full_name: string;
@@ -17,23 +17,15 @@ interface UserDetailsFormData {
   profile_picture?: File | null;
 }
 
-interface CompanyDetailsFormData {
-  company_name: string;
-  website?: string;
-  phone?: string;
-  address?: string;
-  description?: string;
-  company_logo?: File | null;
-}
-
 export function useSignup() {
   const router = useRouter();
   const { setUser } = useContext(AuthContext);
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string | null>(null);
-
+  const [otp, setOtp] = useState("");
 
   const [userDetails, setUserDetails] = useState<UserDetailsFormData>({
     full_name: "",
@@ -41,15 +33,6 @@ export function useSignup() {
     password: "",
     confirmPassword: "",
     profile_picture: null,
-  });
-
-  const [companyDetails, setCompanyDetails] = useState<CompanyDetailsFormData>({
-    company_name: "",
-    website: "",
-    phone: "",
-    address: "",
-    description: "",
-    company_logo: null,
   });
 
   const handleUserDetailsChange = (data: Partial<UserDetailsFormData>) => {
@@ -66,45 +49,75 @@ export function useSignup() {
     });
   };
 
-  const handleCompanyDetailsChange = (
-    data: Partial<CompanyDetailsFormData>
-  ) => {
-    setCompanyDetails((prev) => ({ ...prev, ...data }));
-    // Clear errors for changed fields
-    Object.keys(data).forEach((key) => {
-      if (errors[key]) {
-        setErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[key];
-          return newErrors;
-        });
-      }
-    });
+  const handleOtpChange = (value: string) => {
+    setOtp(value);
+    if (errors.otp) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.otp;
+        return newErrors;
+      });
+    }
   };
 
-  const goNext = () => {
+  const sendOtp = async () => {
+    try {
+      await api.auth.getOtp({ email: userDetails.email });
+      return true;
+    } catch (error) {
+      console.error("Failed to send OTP:", error);
+      setApiError("Failed to send verification code. Please try again.");
+      return false;
+    }
+  };
+
+  const resendOtp = async () => {
+    setIsResendingOtp(true);
+    setApiError(null);
+    try {
+      await api.auth.getOtp({ email: userDetails.email });
+    } catch (error) {
+      console.error("Failed to resend OTP:", error);
+      setApiError("Failed to resend verification code. Please try again.");
+    } finally {
+      setIsResendingOtp(false);
+    }
+  };
+
+  const goNext = async () => {
     if (currentStep === 1) {
       const validationErrors = validateUserDetails(userDetails);
       if (hasValidationErrors(validationErrors)) {
         setErrors(validationErrors);
         return;
       }
+      
       setErrors({});
-      setCurrentStep(2);
+      setIsLoading(true);
+      setApiError(null);
+      
+      const otpSent = await sendOtp();
+      setIsLoading(false);
+      
+      if (otpSent) {
+        setCurrentStep(2);
+      }
     }
   };
 
   const goPrevious = () => {
     if (currentStep === 2) {
       setCurrentStep(1);
+      setOtp("");
       setErrors({});
+      setApiError(null);
     }
   };
 
   const submit = async () => {
-    const validationErrors = validateCompanyDetails(companyDetails);
-    if (hasValidationErrors(validationErrors)) {
-      setErrors(validationErrors);
+    // Validate OTP
+    if (otp.length !== 6) {
+      setErrors({ otp: "Please enter a valid 6-digit verification code" });
       return;
     }
 
@@ -113,16 +126,16 @@ export function useSignup() {
     setErrors({});
 
     try {
+      // First verify OTP
+      await api.auth.verifyOtp({ email: userDetails.email, otp });
+
+      // Then proceed with signup
       const formData = new FormData();
       const { confirmPassword, ...userDetailsForBackend } = userDetails;
       formData.append("user_details", JSON.stringify(userDetailsForBackend));
-      formData.append("company_details", JSON.stringify(companyDetails));
 
       if (userDetails.profile_picture) {
         formData.append("user_avatar", userDetails.profile_picture);
-      }
-      if (companyDetails.company_logo) {
-        formData.append("company_logo", companyDetails.company_logo);
       }
 
       const response = await fetch("/api/auth/signup", {
@@ -152,14 +165,16 @@ export function useSignup() {
   return {
     currentStep,
     isLoading,
+    isResendingOtp,
     errors,
     apiError,
     userDetails,
-    companyDetails,
+    otp,
     handleUserDetailsChange,
-    handleCompanyDetailsChange,
+    handleOtpChange,
     goNext,
     goPrevious,
+    resendOtp,
     submit,
     setCurrentStep,
   } as const;

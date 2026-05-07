@@ -7,15 +7,15 @@ export async function POST(req: NextRequest) {
 
     // Extract user details
     const userDetailsString = formData.get("user_details") as string;
-    const companyDetailsString = formData.get("company_details") as string;
+    const companyDetailsString = formData.get("company_details") as string | null;
 
     // Extract files
     const userAvatar = formData.get("user_avatar") as File | null;
     const companyLogo = formData.get("company_logo") as File | null;
 
-    if (!userDetailsString || !companyDetailsString) {
+    if (!userDetailsString) {
       return NextResponse.json(
-        { message: "Missing required data" },
+        { message: "Missing required user data" },
         { status: 400 }
       );
     }
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     let userDetails, companyDetails;
     try {
       userDetails = JSON.parse(userDetailsString);
-      companyDetails = JSON.parse(companyDetailsString);
+      companyDetails = companyDetailsString ? JSON.parse(companyDetailsString) : null;
     } catch (error) {
       return NextResponse.json(
         { message: "Invalid JSON data" },
@@ -39,19 +39,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!companyDetails.company_name) {
-      return NextResponse.json(
-        { message: "Missing required company fields" },
-        { status: 400 }
-      );
-    }
-
     // Create form data for backend
     const backendFormData = new FormData();
 
     // Add user and company details
     backendFormData.append("user_details", JSON.stringify(userDetails));
-    backendFormData.append("company_details", JSON.stringify(companyDetails));
+    if (companyDetails) {
+      backendFormData.append("company_details", JSON.stringify(companyDetails));
+    }
 
     // Add files if they exist
     if (userAvatar) {

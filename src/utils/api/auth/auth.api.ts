@@ -70,6 +70,25 @@ export const getOtp = async (payload: Payload) => {
   }
 };
 
+export const verifyOtp = async (payload: { email: string; otp: string }) => {
+  try {
+    console.log("🚀 Calling verify OTP API...");
+    const response = await API.post(`/${initialRoute}/verify-otp`, payload);
+    console.log("Verify OTP API response:", response.data);
+
+    const { success, message, verified } = response.data || {};
+
+    if (success || verified) {
+      return { success: true, message };
+    }
+
+    throw new Error(message || "OTP verification failed");
+  } catch (error: any) {
+    console.error("Verify OTP Error:", error);
+    throw new Error(error.response?.data?.message || "OTP verification failed");
+  }
+};
+
 export const googleSignUp = async (payload: any) => {
   try {
     console.log("🚀 Calling google signup API...");
