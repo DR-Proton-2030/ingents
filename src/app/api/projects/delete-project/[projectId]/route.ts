@@ -6,11 +6,11 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:898
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const cookies = req.headers.get("cookie") || "";
-    const { projectId } = params;
+    const { projectId } = await params;
     
     const response = await axios.delete(
       `${BACKEND_URL}/api/v1/projects/delete-project/${projectId}`,

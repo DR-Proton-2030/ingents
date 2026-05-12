@@ -210,6 +210,19 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                       )}
                     </div>
                   </button>
+                  {!phase.is_default && !isEditing && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingPhaseId(phase._id);
+                        setEditValue(phase.name);
+                      }}
+                      className="absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover/parent:opacity-100 p-1 hover:bg-gray-200 rounded transition-all z-10"
+                    >
+                      <Pen className="w-2.5 h-2.5 text-gray-400 hover:text-orange-500" />
+                    </button>
+                  )}
                   {isUpdating && isEditing && (
                     <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-20">
                       <div className="w-3 h-3 border border-orange-500 border-t-transparent rounded-full animate-spin" />

@@ -4,9 +4,9 @@ import axios from "axios";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
 
-export async function POST(req: Request, { params }: { params: { parentTaskId: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ parentTaskId: string }> }) {
   try {
-    const { parentTaskId } = params;
+    const { parentTaskId } = await params;
 
     // Extract cookies from the incoming request
     const cookies = req.headers.get("cookie") || "";

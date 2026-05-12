@@ -6,13 +6,14 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:898
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookies = req.headers.get("cookie") || "";
 
     const response = await axios.delete(
-      `${BACKEND_URL}/api/v1/todos/delete-todo/${params.id}`,
+      `${BACKEND_URL}/api/v1/todos/delete-todo/${id}`,
       {
         headers: {
           "Content-Type": "application/json",

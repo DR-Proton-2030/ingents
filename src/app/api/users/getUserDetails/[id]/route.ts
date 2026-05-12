@@ -11,10 +11,10 @@ interface Params {
 // GET /api/users/getUser/[id]
 export async function GET(
   req: Request,
-  { params }: { params: Params }
+  { params }: { params: Promise<Params> }
 ) {
   try {
-    const { id } = params; // get id from URL
+    const { id } = await params; // get id from URL
 
     if (!id) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 });

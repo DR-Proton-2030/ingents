@@ -306,9 +306,12 @@ const TaskManagement: React.FC = () => {
 
         {/* Task Views */}
         <div className="space-y-4">
-          {activeView === "spreadsheet" && (
-            sections.length > 0 ? (
-              sections.map((section: any) => (
+          {activeView === "spreadsheet" && (() => {
+            const nonEmptySections = sections.filter(
+              (section: any) => (section.tasks?.length ?? 0) > 0
+            );
+            return nonEmptySections.length > 0 ? (
+              nonEmptySections.map((section: any) => (
                 <TaskSection
                   key={section.id}
                   section={section}
@@ -342,8 +345,8 @@ const TaskManagement: React.FC = () => {
                   setSearchQuery("");
                 }}
               />
-            )
-          )}
+            );
+          })()}
 
           {activeView === "board" && (
             <BoardView

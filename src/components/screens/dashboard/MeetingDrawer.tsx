@@ -460,7 +460,7 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
                                     </button>
                                     <button
                                         onClick={() =>
-                                            navigator.clipboard.writeText(meeting.meeting_link)
+                                            navigator.clipboard.writeText(`https://ingents.ai/meeting/${meeting.meeting_code}`)
                                         }
                                         className="p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                                         title="Copy link"

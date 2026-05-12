@@ -4,9 +4,9 @@ import axios from "axios";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
 
-export async function PATCH(req: Request, { params }: { params: { phaseId: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ phaseId: string }> }) {
   try {
-    const { phaseId } = params;
+    const { phaseId } = await params;
 
     // Extract cookies from the incoming request
     const cookies = req.headers.get("cookie") || "";

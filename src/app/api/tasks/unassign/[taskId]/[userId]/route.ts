@@ -6,10 +6,10 @@ const BACKEND_URL =
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { taskId: string; userId: string } }
+  { params }: { params: Promise<{ taskId: string; userId: string }> }
 ) {
   try {
-    const { taskId, userId } = params;
+    const { taskId, userId } = await params;
     const cookies = req.headers.get("cookie") || "";
 
     const response = await axios.delete(

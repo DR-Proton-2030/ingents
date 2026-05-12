@@ -9,6 +9,7 @@ import {
 import { Meeting } from "@/utils/api/meeting/meeting.api";
 import MeetingDrawer from "./MeetingDrawer";
 import { DashboardHeader } from "./DashboardHeader";
+import { useRouter } from "next/navigation";
 
 const sameDay = (a: Date, b: Date) =>
 	a.getFullYear() === b.getFullYear() &&
@@ -29,6 +30,7 @@ const formatTime = (iso: string) =>
 	});
 
 export const Meets = () => {
+	const router = useRouter();
 	const [weekOffset, setWeekOffset] = useState(0);
 	const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null);
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -180,12 +182,12 @@ export const Meets = () => {
 
 										<button
 											onClick={() => {
-												if (meeting.meeting_link) {
-													window.open(meeting.meeting_link, "_blank", "noopener,noreferrer");
+												if (meeting.meeting_code) {
+													router.push(`/meeting/${meeting.meeting_code}`);
 												}
 											}}
 											className="mt-3 w-full rounded-xl bg-slate-50 py-2 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-slate-100 transition-colors border border-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
-											disabled={!meeting.meeting_link}
+											disabled={!meeting.meeting_code}
 										>
 											<div className="p-1 rounded-md bg-green-500 text-white">
 												<Video className="h-4 w-4" />

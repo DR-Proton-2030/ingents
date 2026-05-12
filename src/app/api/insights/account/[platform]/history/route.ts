@@ -6,13 +6,14 @@ const BACKEND_URL =
 
 export async function GET(
   req: Request,
-  { params }: { params: { platform: string } }
+  { params }: { params: Promise<{ platform: string }> }
 ) {
   const { searchParams } = new URL(req.url);
   try {
+    const { platform } = await params;
     const cookies = req.headers.get("cookie") || "";
     const response = await axios.get(
-      `${BACKEND_URL}/api/v1/insights/account/${params.platform}/history`,
+      `${BACKEND_URL}/api/v1/insights/account/${platform}/history`,
       {
         params: Object.fromEntries(searchParams.entries()),
         headers: { "Content-Type": "application/json", Cookie: cookies },

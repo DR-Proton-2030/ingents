@@ -6,12 +6,12 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:898
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { projectId: string } }
+  { params }: { params: Promise<{ projectId: string }> }
 ) {
   try {
     const body = await req.json();
     const cookies = req.headers.get("cookie") || "";
-    const { projectId } = params;
+    const { projectId } = await params;
     
     const response = await axios.patch(
       `${BACKEND_URL}/api/v1/projects/update-project/${projectId}`,

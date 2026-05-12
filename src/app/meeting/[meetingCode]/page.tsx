@@ -1162,6 +1162,7 @@ export default function MeetingPage() {
                         onToggleMute={toggleMute}
                         onToggleVideo={toggleVideo}
                         onJoin={joinRoom}
+                        hasJoined={isInCall}
                     />
                 ) : admissionStatus === "waiting" ? (
                     <div className="h-screen flex flex-col items-center justify-center p-8 text-center space-y-8 bg-gray-50">
