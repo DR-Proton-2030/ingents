@@ -4,22 +4,15 @@ import Layout from "@/screens/layout/Layout";
 import {
   User,
   ShieldCheck,
-  Users,
-  Link as LinkIcon,
-  RefreshCcw
 } from "lucide-react";
 import {
   PersonalInfo,
   Security,
-  MemberManagement,
-  Integrations
 } from "./components";
 
 const sidebarItems = [
   { id: "personal", label: "Personal Info", icon: User },
   { id: "security", label: "Emails & Password", icon: ShieldCheck },
-  { id: "members", label: "Member Management", icon: Users },
-  { id: "integrations", label: "Integration", icon: LinkIcon },
 ];
 
 const ProfileSettings: React.FC = () => {
@@ -31,10 +24,6 @@ const ProfileSettings: React.FC = () => {
         return <PersonalInfo />;
       case "security":
         return <Security />;
-      case "members":
-        return <MemberManagement />;
-      case "integrations":
-        return <Integrations />;
       default:
         return null;
     }
