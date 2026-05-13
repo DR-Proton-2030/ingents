@@ -120,6 +120,7 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
 }) => {
     const router = useRouter();
     const { user } = useContext(AuthContext);
+    const [mounted, setMounted] = useState(false);
     const [meeting, setMeeting] = useState<MeetingDetails | null>(null);
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -251,6 +252,10 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
 
     // Close on escape key
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
         };
@@ -272,7 +277,7 @@ export const MeetingDrawer: React.FC<MeetingDrawerProps> = ({
         : null;
 
     // Use portal to render at body level (SSR guard)
-    if (typeof document === "undefined") return null;
+    if (!mounted) return null;
 
     return createPortal(
         <div

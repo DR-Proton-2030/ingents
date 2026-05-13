@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -236,7 +236,7 @@ export default function SubscriptionScreen() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span
               className={`px-3 py-1 rounded-full text-xs font-bold ${subscription.status === "active"
                 ? "bg-emerald-50 text-emerald-600"
@@ -247,6 +247,14 @@ export default function SubscriptionScreen() {
             >
               {subscription.status.replace("_", " ").toUpperCase()}
             </span>
+            {subscription.plan === "free" && (
+              <button
+                onClick={() => setActiveTab("plans")}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-gray-900 text-white text-xs font-bold rounded-full hover:bg-gray-700 transition-all active:scale-95"
+              >
+                Upgrade <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </motion.div>
       )}

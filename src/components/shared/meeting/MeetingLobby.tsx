@@ -304,11 +304,10 @@ export const MeetingLobby: React.FC<MeetingLobbyProps> = ({
                     <div className="p-8 space-y-6 bg-gray-50/50 border-t border-gray-100">
                         <div className="space-y-4">
                             {/* Copy Join Link - Hidden after join */}
-                            {!hasJoined && (
+                            {!hasJoined && meetingInfo?.meeting_code && (
                                 <button
                                     onClick={() => {
-                                        const code = meetingInfo?.meeting_code || meetingCode;
-                                        const joinLink = `https://ingents.ai/meeting/${code}`;
+                                        const joinLink = `https://ingents.ai/meeting/${meetingInfo.meeting_code}`;
                                         navigator.clipboard.writeText(joinLink);
                                         setCopied(true);
                                         setTimeout(() => setCopied(false), 2000);
