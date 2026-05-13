@@ -10,7 +10,7 @@ export const AuthHeader = ({ onPress, btn ,login}: any) => {
       {/* Hero */}
       <div className="max-w-6xl mx-auto px-6 lg:px-12 py-12 text-center">
         <div className="max-w-3xl mx-auto">
-          <div className="inline-block mb-6 px-4 py-2 bg-white/60 rounded-full text-sm text-gray-600">
+          <div className="hidden lg:inline-block mb-6 px-4 py-2 bg-white/60 rounded-full text-sm text-gray-600">
             Are you a Brand? Explore how to use Tract for growth.
           </div>
 {
