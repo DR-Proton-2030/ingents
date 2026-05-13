@@ -128,7 +128,7 @@ export const TeamControl = () => {
       </div>
 
       {/* Team Members Drawer - Slides from right */}
-      {createPortal(
+      {typeof window !== "undefined" && createPortal(
         <div
           className={`fixed inset-0 z-[9999] transition-opacity duration-300 ${modalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             }`}
@@ -143,8 +143,6 @@ export const TeamControl = () => {
               }`}
             onClick={(e) => e.stopPropagation()}
           >
-
-
             {/* Drawer Content */}
             <div className="h-full overflow-auto">
               <TeamMembersTable
@@ -154,7 +152,7 @@ export const TeamControl = () => {
             </div>
           </div>
         </div>,
-        typeof window !== "undefined" ? document.body : ({} as HTMLElement)
+        document.body
       )}
 
           <InviteUsersModal
