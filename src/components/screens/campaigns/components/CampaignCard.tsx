@@ -40,7 +40,10 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDelete, onStatu
           <TrashBinMinimalistic size={16} />
         </button>
 
-        <h3 className="text-sm font-bold text-gray-900 mb-3 pr-8">{campaign.name}</h3>
+        <h3 className="text-sm font-bold text-gray-900 mb-1 pr-8">{campaign.name}</h3>
+        <p className="text-[11px] text-gray-500 mb-3 line-clamp-2 leading-relaxed">
+          {campaign.message_content || (campaign.use_ai_generation ? `AI: ${campaign.ai_context}` : "No content")}
+        </p>
 
         {/* Chips Row */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -100,7 +103,7 @@ const CampaignCard: React.FC<CampaignCardProps> = ({ campaign, onDelete, onStatu
 
       <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{campaign.name}</h3>
       <p className="text-sm text-gray-500 mt-1 mb-4 line-clamp-2 leading-relaxed h-10">
-        {campaign.message_content}
+        {campaign.message_content || (campaign.use_ai_generation ? `AI: ${campaign.ai_context}` : "No content")}
       </p>
 
       <div className="flex items-center justify-between border-t border-gray-100 pt-4 mt-auto">

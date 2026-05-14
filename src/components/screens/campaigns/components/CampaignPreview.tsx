@@ -3,9 +3,11 @@ import React from "react";
 
 interface CampaignPreviewProps {
   messageContent: string;
+  useAi?: boolean;
+  aiContext?: string;
 }
 
-const CampaignPreview: React.FC<CampaignPreviewProps> = ({ messageContent }) => {
+const CampaignPreview: React.FC<CampaignPreviewProps> = ({ messageContent, useAi, aiContext }) => {
   return (
     <div className="lg:col-span-1 flex justify-center">
       <div className="relative bg-black rounded-[2.5rem] p-3 shadow-xl border border-gray-800 h-[560px] w-[280px] text-white overflow-hidden flex flex-col">
@@ -42,7 +44,14 @@ const CampaignPreview: React.FC<CampaignPreviewProps> = ({ messageContent }) => 
                 Media
               </div>
 
-              {messageContent ? (
+              {useAi ? (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold text-blue-500 uppercase tracking-tighter mb-1">AI Generating Content...</p>
+                  <p className="text-[12px] text-gray-800 leading-relaxed italic border-l-2 border-blue-500 pl-2">
+                    {aiContext || "Describe your campaign context in the form..."}
+                  </p>
+                </div>
+              ) : messageContent ? (
                 <p className="text-[12px] text-gray-800 leading-relaxed">
                   {messageContent}
                 </p>

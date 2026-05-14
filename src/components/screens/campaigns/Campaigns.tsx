@@ -11,6 +11,7 @@ import CampaignTypeSelection from "./components/CampaignTypeSelection";
 import CampaignForm from "./components/CampaignForm";
 import CampaignPreview from "./components/CampaignPreview";
 import CampaignGrid from "./components/CampaignGrid";
+import { Loading } from "@/components/shared/loadingScreen/Loading";
 
 type ViewState = "overview" | "create_selection" | "create_details";
 
@@ -102,17 +103,14 @@ const Campaigns: React.FC = () => {
         {view === "overview" && (
           <div className="min-h-[60vh]">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-96 space-y-4">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-gray-500 font-bold animate-pulse uppercase tracking-widest text-xs">Syncing Campaigns...</p>
-              </div>
+              <Loading />
             ) : campaigns.length === 0 ? (
               <CampaignEmptyState onCreateClick={() => setView("create_selection")} />
             ) : (
-              <CampaignGrid 
-                campaigns={filteredCampaigns} 
-                onDeleteCampaign={handleDeleteCampaign} 
-                onUpdateStatus={handleUpdateStatus} 
+              <CampaignGrid
+                campaigns={filteredCampaigns}
+                onDeleteCampaign={handleDeleteCampaign}
+                onUpdateStatus={handleUpdateStatus}
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onCreateClick={() => setView("create_selection")}
@@ -152,7 +150,11 @@ const Campaigns: React.FC = () => {
               aiContext={aiContext}
               setAiContext={setAiContext}
             />
-            <CampaignPreview messageContent={messageContent} />
+            <CampaignPreview
+              messageContent={messageContent}
+              useAi={useAi}
+              aiContext={aiContext}
+            />
           </div>
         )}
       </div>
