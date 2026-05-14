@@ -90,7 +90,7 @@ const Attendence = () => {
             {/* Grid Table */}
             <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-4 items-center mt-5">
                 {/* Y-axis Labels */}
-                <div className="flex flex-col gap-[22px] text-right pb-1">
+                <div className="flex flex-col gap-[28px] text-center pb-1">
                     {weeks.map((week) => (
                         <span
                             key={week}

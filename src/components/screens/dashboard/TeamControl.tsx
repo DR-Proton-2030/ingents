@@ -58,13 +58,13 @@ export const TeamControl = () => {
           <div className="pointer-events-none absolute left-1/2 top-0 z-0 h-8 w-[78%] -translate-x-1/2 rounded-[24px] bg-gray-200 shadow-[0_1px_0_rgba(0,0,0,0.12)]" />
           <div className="pointer-events-none absolute left-1/2 top-2 z-0 h-8 w-[88%] -translate-x-1/2 rounded-[24px] bg-gray-300 shadow-[0_2px_0_rgba(0,0,0,0.2)]" />
 
-          <div className="relative z-10 rounded-[26px] border border-[#5b5b5b] bg-[#2b2d31] px-5 pb-5 pt-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+          <div className="relative z-10 h-72 overflow-y-auto hidescroll rounded-[26px] border border-[#5b5b5b] bg-[#2b2d31] px-5 pb-5 pt-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
             <div className="mb-5 flex items-center justify-between">
               <div className="text-2xl font-  text-white [text-shadow:0_2px_2px_rgba(0,0,0,0.45)]" >
                 Team members
               </div>
               <button onClick={handleInviteClick} className="flex items-center gap-1 rounded-full bg-[#4a4d52] px-3 py-1 text-sm font-medium text-white hover:bg-[#5e6167] transition-colors">
-                <Plus size={16}/>
+                <Plus size={16} />
               </button>
             </div>
 
@@ -155,10 +155,10 @@ export const TeamControl = () => {
         document.body
       )}
 
-          <InviteUsersModal
-              isOpen={isInviteModalOpen}
-              onClose={handleCloseModal}
-            />
+      <InviteUsersModal
+        isOpen={isInviteModalOpen}
+        onClose={handleCloseModal}
+      />
     </>
   );
 };
