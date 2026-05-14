@@ -86,7 +86,9 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
       setPostContent(generatedContent);
       setShowAiPrompt(false);
     } catch (error: any) {
-      console.log('`first`')
+      const errorMessage = error.response?.data?.message || error.message || "Failed to generate content";
+      toast.error(errorMessage);
+      console.error("AI Generation Error:", error);
     } finally {
       setIsGenerating(false);
     }

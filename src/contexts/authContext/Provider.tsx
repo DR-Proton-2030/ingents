@@ -69,15 +69,10 @@ const AuthContextProvider = ({ children }: ContextProviderProps) => {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const currentPath = window.location.pathname;
-      const isProtected =
-        currentPath.includes("site") ||
-        currentPath.includes("dashboard") ||
-        currentPath.includes("analytics") ||
-        currentPath.includes("chat") ||
-        currentPath.includes("meeting") ||
-        currentPath.includes("seo-management") ||
-        currentPath.includes("social-media");
-      setIsOnProtectedRoute(isProtected);
+      // Any path under /dashboard or a site slug is protected
+      const publicPaths = ["/login", "/signup", "/forgot-password", "/setup-password", "/verify"];
+      const isPublic = publicPaths.some((p) => currentPath.startsWith(p));
+      setIsOnProtectedRoute(!isPublic && currentPath !== "/");
     }
   }, []);
 

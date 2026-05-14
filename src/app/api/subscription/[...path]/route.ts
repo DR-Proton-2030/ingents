@@ -3,8 +3,7 @@ import { NextResponse } from "next/server";
 import axios from "axios";
 import { cookies } from "next/headers";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
+const BACKEND_URL = "http://localhost:8989";
 
 async function proxyRequest(req: Request, method: string) {
   try {
