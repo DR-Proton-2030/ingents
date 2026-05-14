@@ -201,18 +201,7 @@ export default function CreatePostPage() {
   return (
     <Layout>
       <div className="mx-auto px-5 max-w-7xl font-sans min-h-screen">
-        <CreatePostHeader
-          basePath={basePath}
-          connectedPlatforms={connectedPlatforms}
-          selectedPlatforms={form.selectedPlatforms}
-          togglePlatformFromHeader={form.togglePlatformFromHeader}
-          handlePost={handlePost}
-          isPosting={form.isPosting}
-          postContent={form.postContent}
-          images={form.images}
-          video={form.video}
-          showScheduler={form.showScheduler}
-        />
+
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-10">
           {/* Left Column - Form */}
@@ -221,15 +210,19 @@ export default function CreatePostPage() {
             animate={{ opacity: 1, y: 0 }}
             className="lg:col-span-7 bg-white rounded-2xl  -sm overflow-hidden"
           >
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-800 flex items-center gap-2">
-                <div className="p-2 bg-slate-100 rounded-lg">
-                  <FiEdit3 className="w-4 h-4 text-slate-600" />
-                </div>
-                Compose
-              </h2>
-              <div className="text-xs text-slate-400">Step 1 of 2</div>
-            </div>
+            <CreatePostHeader
+              basePath={basePath}
+              connectedPlatforms={connectedPlatforms}
+              selectedPlatforms={form.selectedPlatforms}
+              togglePlatformFromHeader={form.togglePlatformFromHeader}
+              handlePost={handlePost}
+              isPosting={form.isPosting}
+              postContent={form.postContent}
+              images={form.images}
+              video={form.video}
+              showScheduler={form.showScheduler}
+            />
+
 
             <CreatePostForm
               postContent={form.postContent}
@@ -257,6 +250,8 @@ export default function CreatePostPage() {
               isPosting={form.isPosting}
               handlePost={handlePost}
               basePath={basePath}
+              userId={user?.id || (user as any)?._id}
+              companyId={(user as any)?.company_id || (user as any)?.company_object_id}
             />
           </motion.div>
 

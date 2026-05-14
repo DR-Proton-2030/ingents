@@ -34,7 +34,7 @@ export const CreatePostHeader: React.FC<CreatePostHeaderProps> = ({
     selectedPlatforms.length === 0;
 
   return (
-    <div className="flex items-center justify-between mb-6 pt-5">
+    <div className="flex  px-5 items-center justify-between mb-6 pt-5">
       <div className="flex items-center gap-4">
         <Link
           href={basePath}
@@ -42,12 +42,7 @@ export const CreatePostHeader: React.FC<CreatePostHeaderProps> = ({
         >
           <FiArrowLeft className="w-5 h-5 text-slate-600" />
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Create Post</h1>
-          <p className="text-sm text-slate-500">
-            Compose and preview your content before publishing
-          </p>
-        </div>
+
       </div>
 
       <div className="hidden md:flex items-center gap-3">
@@ -59,11 +54,10 @@ export const CreatePostHeader: React.FC<CreatePostHeaderProps> = ({
               <button
                 key={platform}
                 onClick={() => togglePlatformFromHeader(platform)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${
-                  isSelected
-                    ? `${config.bgColor} text-white shadow-sm`
-                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
-                }`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm font-medium ${isSelected
+                  ? `${config.bgColor} text-white shadow-sm`
+                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  }`}
                 title={`Select ${config.name}`}
               >
                 {config.icon}
@@ -76,11 +70,10 @@ export const CreatePostHeader: React.FC<CreatePostHeaderProps> = ({
         <button
           onClick={handlePost}
           disabled={isPublishDisabled}
-          className={`px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${
-            isPublishDisabled
-              ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-              : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
-          }`}
+          className={`px-5 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 ${isPublishDisabled
+            ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+            : "bg-slate-900 text-white hover:bg-slate-800 shadow-lg"
+            }`}
         >
           {isPosting ? (
             <>

@@ -83,7 +83,6 @@ export const DataPrivacy: React.FC = () => {
             URL.revokeObjectURL(url);
 
             setExported(true);
-            toast.success("Data exported successfully.");
             setTimeout(() => setExported(false), 4000);
         } catch {
             toast.error("Failed to export data.");
@@ -175,16 +174,14 @@ export const DataPrivacy: React.FC = () => {
                                     <td className="px-6 py-4 text-sm text-gray-800 font-medium">
                                         {badge ? (
                                             <span
-                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                                    active
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${active
                                                         ? "bg-emerald-50 text-emerald-600"
                                                         : "bg-amber-50 text-amber-600"
-                                                }`}
+                                                    }`}
                                             >
                                                 <span
-                                                    className={`w-1.5 h-1.5 rounded-full ${
-                                                        active ? "bg-emerald-500" : "bg-amber-500"
-                                                    }`}
+                                                    className={`w-1.5 h-1.5 rounded-full ${active ? "bg-emerald-500" : "bg-amber-500"
+                                                        }`}
                                                 />
                                                 {value}
                                             </span>

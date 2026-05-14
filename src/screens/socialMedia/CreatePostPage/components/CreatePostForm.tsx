@@ -32,7 +32,14 @@ interface CreatePostFormProps {
   isPosting: boolean;
   handlePost: () => void;
   basePath: string;
+  userId: string;
+  companyId: string;
 }
+
+import { useState } from "react";
+import { Stars } from "@solar-icons/react";
+import { generateAIContent } from "@/service/ai/ai.service";
+import { toast } from "react-toastify";
 
 export const CreatePostForm: React.FC<CreatePostFormProps> = ({
   postContent,
@@ -60,7 +67,30 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
   isPosting,
   handlePost,
   basePath,
+  userId,
+  companyId,
 }) => {
+  const [showAiPrompt, setShowAiPrompt] = useState(false);
+  const [aiContext, setAiContext] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateAI = async () => {
+    if (!aiContext.trim()) {
+      toast.error("Please enter what you want to generate");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const generatedContent = await generateAIContent(userId, companyId, aiContext);
+      setPostContent(generatedContent);
+      setShowAiPrompt(false);
+    } catch (error: any) {
+      console.log('`first`')
+    } finally {
+      setIsGenerating(false);
+    }
+  };
   const maxCharacters = 2200;
   const characterCount = postContent.length;
 
@@ -114,10 +144,53 @@ export const CreatePostForm: React.FC<CreatePostFormProps> = ({
 
       {/* Main Content Area */}
       <div className="relative">
-        <label className="text-xs font-semibold text-slate-500 uppercase  mb-3 block flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-          {selectedPlatforms.includes("youtube") ? "Title & Description" : "Post Content"}
-        </label>
+        <div className="flex items-center justify-between mb-3">
+          <label className="text-xs font-semibold text-slate-500 uppercase flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+            {selectedPlatforms.includes("youtube") ? "Title & Description" : "Post Content"}
+          </label>
+          <button
+            onClick={() => setShowAiPrompt(!showAiPrompt)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all ${showAiPrompt ? 'bg-gradient-to-br from-purple-500 to-blue-500 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-100 text-slate-400 border border-slate-200 hover:bg-slate-200'}`}
+          >
+            <Stars size={18} className={showAiPrompt ? 'animate-spin-slow' : ''} />
+            {showAiPrompt ? "CLOSE AI ASSISTANT" : "AI MAGIC"}
+          </button>
+        </div>
+
+        {showAiPrompt && (
+          <div className="mb-4 space-y-3 p-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-blue-100 animate-in fade-in zoom-in-95 duration-300">
+            <p className="text-[11px] text-blue-600 font-bold italic">
+              "Describe the post you want, and AI will draft it for you."
+            </p>
+            <div className="relative">
+              <textarea
+                value={aiContext}
+                onChange={(e) => setAiContext(e.target.value)}
+                placeholder="e.g. Write a catchy post about our new summer collection launch with 20% discount..."
+                className="w-full h-24 p-3 bg-white border border-blue-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
+              />
+              <button
+                onClick={handleGenerateAI}
+                disabled={isGenerating || !aiContext.trim()}
+                className="absolute bottom-3 right-3 bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-blue-700 disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Stars size={14} />
+                    Generate
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="relative">
           <textarea
             value={postContent}
