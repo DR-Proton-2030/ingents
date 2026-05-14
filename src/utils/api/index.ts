@@ -22,6 +22,7 @@ import { getCampaigns, createCampaign, updateCampaignStatus, deleteCampaign } fr
 import { getIntegrations, initiateConnection, executeAction } from "./integration/integration.api";
 import { chatWithAssistant } from "./virtualAssistant/virtualAssistant.api";
 import { setupGithubPrToTrelloAutomation } from "./automation/automation.api";
+import { aiTokenUsageAPI } from "./aiTokenUsage";
 
 export const api = {
   auth: {
@@ -97,5 +98,6 @@ export const api = {
   },
   automation: {
     setupGithubPrToTrelloAutomation
-  }
+  },
+  aiTokenUsage: aiTokenUsageAPI
 }
