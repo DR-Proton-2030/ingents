@@ -85,6 +85,18 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     const { users: allUsers } = useGetUsers();
     const [searchQuery, setSearchQuery] = useState("");
     const headerFileInputRef = React.useRef<HTMLInputElement>(null);
+    const titleRef = React.useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (isOpen && titleRef.current) {
+            setTimeout(() => {
+                if (titleRef.current) {
+                    titleRef.current.style.height = 'auto';
+                    titleRef.current.style.height = titleRef.current.scrollHeight + 'px';
+                }
+            }, 0);
+        }
+    }, [formData.title, isOpen]);
 
     const filteredUsers = (Array.isArray(allUsers) ? allUsers : []).filter((u: any) => {
         const term = searchQuery.toLowerCase().trim();
@@ -315,6 +327,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-hide space-y-6">
                     {/* Task Title (Inline Editable) */}
                     <textarea
+                        ref={titleRef}
                         name="title"
                         value={formData.title}
                         onChange={(e) => {
