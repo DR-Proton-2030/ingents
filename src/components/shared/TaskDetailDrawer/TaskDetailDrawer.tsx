@@ -89,6 +89,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     // User search
     const { users: allUsers } = useGetUsers();
     const [searchQuery, setSearchQuery] = useState("");
+    const headerFileInputRef = React.useRef<HTMLInputElement>(null);
 
     const filteredUsers = (Array.isArray(allUsers) ? allUsers : []).filter((u: any) => {
         const term = searchQuery.toLowerCase().trim();
@@ -186,6 +187,14 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         setNewAttachments(prev => [...prev, ...newAtts].slice(0, 10 - existingAttachments.length));
     };
 
+    const handleHeaderFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            handleAddFiles(Array.from(files));
+        }
+        if (headerFileInputRef.current) headerFileInputRef.current.value = "";
+    };
+
     const handleRemoveNewAttachment = (index: number) => {
         setNewAttachments(prev => prev.filter((_, i) => i !== index));
     };
@@ -261,6 +270,16 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                     onSave={handleSave}
                     onDeleteClick={() => setShowDeleteConfirm(true)}
                     onClose={onClose}
+                    onAddAttachmentClick={() => headerFileInputRef.current?.click()}
+                />
+
+                <input
+                    ref={headerFileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                    onChange={handleHeaderFileChange}
+                    className="hidden"
                 />
 
                 {/* Content Panel */}

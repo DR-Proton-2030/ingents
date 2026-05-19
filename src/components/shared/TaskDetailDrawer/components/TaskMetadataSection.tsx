@@ -24,6 +24,25 @@ interface TaskMetadataSectionProps {
     setIsPriorityDropdownOpen: (open: boolean) => void;
 }
 
+const AVATAR_COLORS = [
+    "bg-blue-500",
+    "bg-purple-500",
+    "bg-green-500",
+    "bg-pink-500",
+    "bg-orange-500",
+    "bg-indigo-500",
+    "bg-red-500",
+    "bg-teal-500",
+];
+
+const getAvatarColor = (seed: string) => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+        hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
+
 export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
     task,
     formData,
@@ -56,7 +75,10 @@ export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
                                         {u.profile_picture ? (
                                             <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
                                         ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-[8px] font-bold text-gray-500 uppercase bg-gray-100">
+                                            <div className={cn(
+                                                "w-full h-full flex items-center justify-center text-[8px] font-bold text-white uppercase",
+                                                getAvatarColor(u._id || u.id || u.full_name || "")
+                                            )}>
                                                 {u.full_name?.charAt(0) || "?"}
                                             </div>
                                         )}
@@ -94,7 +116,7 @@ export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
                 <button
                     type="button"
                     onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 bg-gray-100  rounded-full hover:bg-pink-100 text-sm font-semibold text-pink-600  transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-3 py-2 bg-gray-100  rounded-full hover:bg-blue-100 text-sm font- text-blue-600  transition-all cursor-pointer"
                 >
                     <span>{selectedProject ? selectedProject.name : "Select Project"}</span>
                     <ChevronDown className="w-3.5 h-3.5 opacity-80" />
@@ -133,9 +155,9 @@ export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
             {/* Fields Grid Box */}
             <div className="flex items-start gap-3">
                 <span className="w-28 text-sm text-gray-700 font-semibold mt-2.5">Fields</span>
-                <div className="flex-1 border border-gray-200/60 rounded-2xl overflow-hidden bg-white max-w-md ">
+                <div className="flex-1 border border-gray-200/60 rounded-2xl bg-white max-w-md relative">
                     {/* Status Column */}
-                    <div className="flex items-center border-b border-gray-100 divide-x divide-gray-100">
+                    <div className="flex items-center border-b border-gray-100 divide-x divide-gray-100 rounded-t-2xl">
                         <div className="w-1/3 px-4 py-3.5 flex items-center gap-2 text-xs  text-gray-700">
                             <CheckCircle className="w-4 h-4 text-gray-700" />
                             <span>Status</span>
@@ -143,8 +165,8 @@ export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
                         <div className="w-2/3 px-4 py-2">
                             <StatusDropdown
                                 taskId={task._id}
-                                currentStatus={task.status_object_id || task.status}
-                                phaseInfo={task.phase_details}
+                                currentStatus={task.phase_info?.name || task.status_object_id || task.status}
+                                phaseInfo={task.phase_info}
                                 onStatusChange={async (taskId, phaseId) => {
                                     onEditTask(taskId, { status_object_id: phaseId });
                                 }}
@@ -153,7 +175,7 @@ export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
                     </div>
 
                     {/* Priority Column */}
-                    <div className="flex items-center divide-x divide-gray-100 relative">
+                    <div className="flex items-center divide-x divide-gray-100 relative rounded-b-2xl z-10">
                         <div className="w-1/3 px-4 py-3.5 flex items-center gap-2 text-xs text-gray-700">
                             <Clock className="w-4 h-4 text-gray-500" />
                             <span>Priority</span>

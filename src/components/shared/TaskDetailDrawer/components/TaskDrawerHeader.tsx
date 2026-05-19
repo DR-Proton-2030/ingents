@@ -9,6 +9,7 @@ interface TaskDrawerHeaderProps {
     onSave: () => void;
     onDeleteClick: () => void;
     onClose: () => void;
+    onAddAttachmentClick?: () => void;
 }
 
 export const TaskDrawerHeader: React.FC<TaskDrawerHeaderProps> = ({
@@ -16,6 +17,7 @@ export const TaskDrawerHeader: React.FC<TaskDrawerHeaderProps> = ({
     onSave,
     onDeleteClick,
     onClose,
+    onAddAttachmentClick,
 }) => {
     const isCompleted = phaseName.toLowerCase().includes("complete") || phaseName.toLowerCase().includes("done");
 
@@ -34,7 +36,11 @@ export const TaskDrawerHeader: React.FC<TaskDrawerHeaderProps> = ({
                 <button type="button" className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all">
                     <Share2 className="w-4.5 h-4.5" />
                 </button>
-                <button type="button" className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all">
+                <button 
+                    type="button" 
+                    onClick={onAddAttachmentClick}
+                    className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all"
+                >
                     <Paperclip className="w-4.5 h-4.5" />
                 </button>
                 <button type="button" className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all hidden sm:inline-block">
