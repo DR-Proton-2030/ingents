@@ -13,7 +13,7 @@ import {
   EditableText,
   TaskActionDropdown,
 } from ".";
-import { CloseCircle, Tag } from "@solar-icons/react";
+import { CloseCircle, Pen, PenNewSquare, Tag } from "@solar-icons/react";
 
 import { TaskCardProps } from "@/types/interface/props/TaskCard.props";
 import { formatDate } from "@/utils/commonFunction/formatDate";
@@ -31,8 +31,9 @@ import {
   ChecklistMinimalistic,
   TrashBinTrash
 } from "@solar-icons/react";
-import { Plus, Trash } from "lucide-react";
+import { Plus, Trash, Edit2, Pencil, ClipboardEdit } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Eye } from "@solar-icons/react/ssr";
 
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -244,12 +245,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
         {/* Actions Cell */}
         <td className="px-2 py-3 text-right pr-4">
-          <div className="flex items-center justify-end ">
-            <TaskActionDropdown
-              onViewDetails={() => onTaskClick?.(task)}
-              onAddSubtask={() => handleAddSubtask(task._id)}
-              onDelete={() => setIsDeleteDialogOpen(true)}
-            />
+          <div className="flex items-center justify-end gap-1">
+            <button
+              onClick={() => onTaskClick?.(task)}
+              className="p-2 hover:bg-blue-50 text-gray-500 rounded-lg transition-all cursor-pointer"
+              title="Edit Task"
+              aria-label="Edit Task"
+            >
+              <PenNewSquare className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setIsDeleteDialogOpen(true)}
+              className="p-2 hover:bg-rose-50 hover:text-rose-500 text-gray-500 rounded-lg transition-all cursor-pointer"
+              title="Delete Task"
+              aria-label="Delete Task"
+            >
+              <TrashBinTrash className="w-4.5 h-4.5" />
+            </button>
           </div>
         </td>
       </tr>
