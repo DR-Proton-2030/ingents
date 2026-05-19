@@ -177,10 +177,23 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         onClose();
     };
 
-    // Attachment Handlers
-    const handleAddFiles = (files: File[]) => {
+    // Attachment Handlers — auto-save on add/remove so files persist to DB immediately
+    const handleAddFiles = async (files: File[]) => {
         const newAtts = files.map(file => ({ file, description: "" }));
-        setNewAttachments(prev => [...prev, ...newAtts].slice(0, 10 - existingAttachments.length));
+        const allNew = [...newAttachments, ...newAtts].slice(0, 10 - existingAttachments.length);
+        setNewAttachments(allNew);
+
+        // Immediately upload to server
+        await onEditTask(task._id, {
+            attachments: [
+                ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
+                ...allNew
+            ],
+        }, true);
+
+        // After successful upload, refetch will update task.attachments via props,
+        // so reset newAttachments (they are now existing on the server)
+        setNewAttachments([]);
     };
 
     const handleHeaderFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -195,8 +208,14 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         setNewAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleRemoveExistingAttachment = (index: number) => {
-        setExistingAttachments(prev => prev.filter((_, i) => i !== index));
+    const handleRemoveExistingAttachment = async (index: number) => {
+        const updated = existingAttachments.filter((_, i) => i !== index);
+        setExistingAttachments(updated);
+
+        // Persist removal to server immediately
+        await onEditTask(task._id, {
+            attachments: updated.map(att => ({ url: att.url, description: att.description })),
+        }, true);
     };
 
     const handleUpdateNewDescription = (index: number, description: string) => {

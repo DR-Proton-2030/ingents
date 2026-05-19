@@ -78,7 +78,7 @@ const AttachmentCard: React.FC<AttachmentCardProps> = ({
                         <div className="flex flex-col min-w-0">
                             <h5
                                 onClick={onPreview}
-                                className="text-[11px] font-black text-gray-800 truncate cursor-pointer hover:text-indigo-600 transition-colors "
+                                className="text-[11px] font-semibold text-gray-800 truncate cursor-pointer hover:text-indigo-600 transition-colors "
                             >
                                 {name}
                             </h5>
