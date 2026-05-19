@@ -124,16 +124,14 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     return (
         <section className="space-y-4">
             <div className="flex items-center justify-between">
-                {
-                    totalFiles > 0 && <>
-                        <h3 className="text-xs font-bold text-black/80  flex items-center gap-2">
-                            <span>Attachments</span>
-                            <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px]">
-                                {totalFiles}/10
-                            </span>
-                        </h3>
-                    </>
-                }
+                <h3 className="text-xs font-bold text-black/80 flex items-center gap-2">
+                    <span>Attachments</span>
+                    {totalFiles > 0 && (
+                        <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px]">
+                            {totalFiles}/10
+                        </span>
+                    )}
+                </h3>
 
                 {canAddMore && totalFiles > 0 && (
                     <motion.button
@@ -160,7 +158,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
             />
 
             {/* Main Upload Dropzone */}
-            {/* {canAddMore && totalFiles === 0 && (
+            {canAddMore && totalFiles === 0 && (
                 <UploadDropzone
                     isDragging={isDragging}
                     onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -173,7 +171,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                     }}
                     onClick={() => fileInputRef.current?.click()}
                 />
-            )} */}
+            )}
 
             {/* Files List */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
