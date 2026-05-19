@@ -10,11 +10,12 @@ import {
   Filter,
   MenuDots,
   Notes,
-  Document
+  Document,
+  Tuning
 } from "@solar-icons/react";
 import { ViewMode } from "@/types/interface/task.interface";
 import { motion } from "framer-motion";
-import { Download, Share, Sparkle, Table } from "lucide-react";
+import { Download, Plus, Share, Sparkle, Table } from "lucide-react";
 import { ITaskFilters } from "@/types/interface/taskFilter.interface";
 import { ProjectSelector, CreateProjectDrawer } from "./components";
 import { IProject } from "@/types/interface/project.interface";
@@ -54,7 +55,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-2">
         {/* Row 1: View Tabs */}
         {/* <div className="flex items-center gap-1 p-1 bg-white backdrop-blur-xl  rounded-2xl shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] w-fit">
           {viewTabs.map((tab) => {
@@ -101,14 +102,14 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               <button
                 onClick={onFilter}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 bg-white  rounded-2xl text-sm font-bold transition-all ",
+                  "flex items-center gap-2 px-4 py-2.5  rounded-full text-sm font-semibold transition-all ",
                   activeFilterCount > 0
                     ? "border-orange-200 text-orange-600 bg-orange-50"
-                    : "bg-white border-gray-100 text-gray-700 hover:bg-gray-50 hover:border-gray-200"
+                    : "bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:border-gray-200"
                 )}
               >
                 <div className="relative">
-                  <Filter className={cn("w-4 h-4", activeFilterCount > 0 ? "text-orange-500" : "text-gray-400")} />
+                  <Tuning className={cn("w-4 h-4", activeFilterCount > 0 ? "text-orange-500" : "text-gray-400")} />
                   {activeFilterCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
@@ -122,35 +123,17 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                 <span className="hidden sm:inline">Filter</span>
               </button>
 
-              {/* Integrations */}
-              <button
-                onClick={() => onIntegrationsOpen?.()}
-                className="group p-2.5  text-gray-600 rounded-2xl hover:bg-gray-100 hover:border-gray-200 transition-all"
-                title="Integrations & Apps"
-              >
-                <Share className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
 
-              {/* Download */}
-              <button
-                onClick={onDownloadReport}
-                className="group p-2.5 bg-gray-200  text-gray-600 rounded-2xl hover:bg-gray-100 hover:border-gray-200 transition-all "
-                title="Download Report"
-              >
-                <Download className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-              </button>
-
-              <div className="h-6 w-px bg-gray-200 mx-1" />
+              <div className="h-7 w-px bg-gray-200 mx-1" />
 
               {/* Create Task */}
               <button
                 onClick={onCreateTask}
-                className="group flex items-center gap-2 px-5 py-2.5 bg-black/80 text-white  rounded-full text-sm font-bold shadow-[0_10px_20px_-10px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_25px_-10px_rgba(0,0,0,0.4)] hover:bg-black transition-all active:scale-95 whitespace-nowrap"
+                className="group flex items-center gap-2 p-3 bg-black/70 text-white 
+                 rounded-full text-sm 
+                 "
               >
-                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center group-hover:rotate-90 transition-transform duration-300">
-                  <AddCircle className="w-4 h-4 text-white" />
-                </div>
-                <span>Create Task</span>
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           </div>
