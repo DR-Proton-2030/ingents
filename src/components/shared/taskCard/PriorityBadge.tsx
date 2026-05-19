@@ -30,10 +30,8 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority }) => {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold   transition-all text-black/70",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-sm font-normal transition-all",
         current.bg,
-
-        "border border-white/50 shado"
       )}
     >
       {/* <Flag className={cn("w-3.5 h-3.5", current.color)} /> */}

@@ -127,7 +127,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.95 }}
         transition={{ duration: 0.2, ease: "easeOut" }}
-        className="fixed w-64 p-2 bg-white/95 backdrop-blur-xl rounded-xl flex flex-col gap-1 overflow-hidden border-2 border-gray-100/50"
+        className="fixed w-64 p-2 bg-white backdrop-blur-xl rounded-xl flex flex-col gap-1 overflow-hidden border-2 border-gray-100/50"
         style={{
           top: menuPosition.top,
           left: Math.min(menuPosition.left, typeof window !== 'undefined' ? window.innerWidth - 270 : menuPosition.left)
@@ -135,7 +135,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-2 py-1 mb-1 ">
-          <p className="text-[10px] font-bold text-gray-600 uppercase ">Select Status</p>
+          <p className="text-md font-semibold text-gray-600  ">Select Status</p>
         </div>
 
         <div className="max-h-64 overflow-y-auto border-2 border-gray-100/50 rounded-xl flex flex-col gap-1 pr-1 custom-scrollbar">
@@ -167,7 +167,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     className={cn(
                       "flex items-center gap-3 w-full p-2.5 rounded-xl transition-all duration-200 group/item text-left relative",
                       isSelected
-                        ? "bg-gray-100 border border-gray-100/50 "
+                        ? "bg-gray-100 "
                         : "hover:bg-gray-50/50 hover:translate-x-1"
                     )}
                   >
@@ -262,7 +262,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300 active:scale-95 group w-max whitespace-nowrap",
+          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300  group w-max ",
           isOpen ? "ring-4 ring-gray-100" : "hover:shadow-m"
         )}
         style={{
@@ -270,16 +270,16 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
           borderColor: currentColor + '30'      // Subtle border color
         }}
       >
-        <span className="text-xs font-semibold text-black/80 whitespace-nowrap">
+        <div className="text-[13px] font-base text-black/80 ">
           {currentLabel}
-        </span>
-        <AltArrowDown
+        </div>
+        {/* <AltArrowDown
           className={cn(
             "w-3.5 h-3.5 transition-transform duration-300 shrink-0",
             isOpen ? "rotate-180" : ""
           )}
           style={{ color: currentColor + '80' }}
-        />
+        /> */}
       </button>
 
       {mounted && createPortal(

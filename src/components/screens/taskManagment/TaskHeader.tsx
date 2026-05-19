@@ -125,7 +125,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               {/* Integrations */}
               <button
                 onClick={() => onIntegrationsOpen?.()}
-                className="group p-2.5 bg-gray-200 text-gray-600 rounded-2xl hover:bg-gray-100 hover:border-gray-200 transition-all"
+                className="group p-2.5  text-gray-600 rounded-2xl hover:bg-gray-100 hover:border-gray-200 transition-all"
                 title="Integrations & Apps"
               >
                 <Share className="w-5 h-5 group-hover:scale-110 transition-transform" />
