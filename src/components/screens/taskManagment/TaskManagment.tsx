@@ -55,6 +55,7 @@ const TaskManagement: React.FC = () => {
   } = useTasks(filters, searchQuery);
 
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("all");
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | undefined>();
 
@@ -278,7 +279,7 @@ const TaskManagement: React.FC = () => {
     <Layout showSidebar={true}>
       <div className="mx-auto max-w-7xl px-4 py-6 space-y-6 hidescroll overflow-y-auto h-[80vh]">
         {/* Header with tabs and search */}
-        <TaskHeader
+        {/* <TaskHeader
           activeView={activeView}
           onViewChange={setActiveView}
           searchQuery={searchQuery}
@@ -302,7 +303,7 @@ const TaskManagement: React.FC = () => {
           }}
           onDownloadReport={() => handlePrint()}
           onIntegrationsOpen={() => setIsIntegrationsOpen(true)}
-        />
+        /> */}
 
         {/* Task Views */}
         <div className="space-y-4">
@@ -310,41 +311,97 @@ const TaskManagement: React.FC = () => {
             const nonEmptySections = sections.filter(
               (section: any) => (section.tasks?.length ?? 0) > 0
             );
-            return nonEmptySections.length > 0 ? (
-              nonEmptySections.map((section: any) => (
-                <TaskSection
-                  key={section.id}
-                  section={section}
-                  onToggleTask={handleToggleTask}
-                  onAddTask={handleAddTask}
-                  expandedTasks={expandedTasks}
-                  handleStatusChange={handleStatusChange}
-                  handleDeleteTask={handleDeleteTaskById}
-                  handleAddSubtask={handleAddSubtask}
-                  handleUnAssignTask={handleUnassignTaskFromUser}
-                  handleAssignTask={handleAssignTaskToUser}
-                  searchUsers={searchUsers}
-                  handleEditTask={handleEditTask}
-                  onTaskClick={setSelectedTask}
-                  itemsPerPage={itemsPerPage}
-                  onPageChange={setSectionPage}
-                />
-              ))
-            ) : (
-              <TaskEmptyState
-                hasFilters={!!(filters.userId || filters.statusId || filters.dueDate || filters.onlyMyTasks || filters.sort_by || searchQuery)}
-                onClearFilters={() => {
-                  setFilters({
-                    userId: null,
-                    statusId: null,
-                    dueDate: null,
-                    onlyMyTasks: false,
-                    sort_by: null,
-                    project_object_id: null,
-                  });
-                  setSearchQuery("");
-                }}
-              />
+
+            // Validate that selected section is currently non-empty, otherwise fallback to 'all'
+            const activeTabId = (selectedSectionId === "all" || nonEmptySections.some((s: any) => s.id === selectedSectionId))
+              ? selectedSectionId
+              : "all";
+
+            const allTasks = nonEmptySections.flatMap((s: any) => s.tasks || []);
+
+            const visibleSections = activeTabId === "all"
+              ? nonEmptySections.length > 0 ? [
+                  {
+                    id: "all",
+                    title: "All Tasks",
+                    color: "#4f46e5", // Indigo
+                    count: allTasks.length,
+                    tasks: allTasks,
+                    currentPage: 1,
+                    totalPages: 1,
+                  }
+                ] : []
+              : nonEmptySections.filter((sec: any) => sec.id === activeTabId);
+
+            return (
+              <div className="space-y-6">
+                {nonEmptySections.length > 0 && (
+                  <div className="flex justify-start">
+                    <div className="flex items-center bg-gray-100/70 p-1.5 rounded-2xl gap-1.5 border border-gray-200/30">
+                      <button
+                        onClick={() => setSelectedSectionId("all")}
+                        className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          activeTabId === "all"
+                            ? "bg-white text-gray-900 shadow-sm border border-gray-100/40 font-semibold"
+                            : "text-gray-500 hover:text-gray-800"
+                        }`}
+                      >
+                        All
+                      </button>
+                      {nonEmptySections.map((sec: any) => (
+                        <button
+                          key={sec.id}
+                          onClick={() => setSelectedSectionId(sec.id)}
+                          className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                            activeTabId === sec.id
+                              ? "bg-white text-gray-900 shadow-sm border border-gray-100/40 font-semibold"
+                              : "text-gray-500 hover:text-gray-800"
+                          }`}
+                        >
+                          {sec.title}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {visibleSections.length > 0 ? (
+                  visibleSections.map((section: any) => (
+                    <TaskSection
+                      key={section.id}
+                      section={section}
+                      onToggleTask={handleToggleTask}
+                      onAddTask={(sectionId) => handleAddTask(sectionId === "all" ? "todo" : sectionId)}
+                      expandedTasks={expandedTasks}
+                      handleStatusChange={handleStatusChange}
+                      handleDeleteTask={handleDeleteTaskById}
+                      handleAddSubtask={handleAddSubtask}
+                      handleUnAssignTask={handleUnassignTaskFromUser}
+                      handleAssignTask={handleAssignTaskToUser}
+                      searchUsers={searchUsers}
+                      handleEditTask={handleEditTask}
+                      onTaskClick={setSelectedTask}
+                      itemsPerPage={itemsPerPage}
+                      onPageChange={setSectionPage}
+                    />
+                  ))
+                ) : (
+                  <TaskEmptyState
+                    hasFilters={!!(filters.userId || filters.statusId || filters.dueDate || filters.onlyMyTasks || filters.sort_by || searchQuery)}
+                    onClearFilters={() => {
+                      setFilters({
+                        userId: null,
+                        statusId: null,
+                        dueDate: null,
+                        onlyMyTasks: false,
+                        sort_by: null,
+                        project_object_id: null,
+                      });
+                      setSearchQuery("");
+                    }}
+                  />
+                )}
+              </div>
             );
           })()}
 

@@ -63,45 +63,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
 
   return (
     <div className="mb-8">
-      {/* Section Header */}
-      <div className="flex items-center gap-3 mb-3">
 
-
-        {/* Section Badge */}
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-full  "
-          style={{
-            backgroundColor: sectionColor,
-
-          }}
-        >
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-0.5 hover:bg-white/20 rounded-lg"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-white" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-white" />
-            )}
-          </button>
-          <div className="text-white text-sm -ml-1">{section.title}</div>
-        </div>
-
-        {/* Task Count */}
-        <span
-          className="text-[11px] w-8 h-8 flex items-center justify-center rounded-full font-black "
-          style={{
-            backgroundColor: sectionColor,
-            color: 'white'
-          }}
-        >
-          {section.count}
-        </span>
-
-
-
-      </div>
 
       {/* Task Table */}
       {!isCollapsed && (
