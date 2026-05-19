@@ -24,10 +24,8 @@ import { TaskHeaderProps, ViewTab } from "@/types/interface/props/taskHeader.pro
 
 const viewTabs: ViewTab[] = [
   { id: "spreadsheet", label: "Spreadsheet", icon: Table },
-  { id: "timeline", label: "Timeline", icon: ClockCircle },
   { id: "calendar", label: "Calendar", icon: Calendar },
   { id: "board", label: "Board", icon: Widget },
-  { id: "assistant", label: "Assistant", icon: Sparkle },
 ];
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
@@ -58,7 +56,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
     <>
       <div className="space-y-6">
         {/* Row 1: View Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-white backdrop-blur-xl  rounded-2xl shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] w-fit">
+        {/* <div className="flex items-center gap-1 p-1 bg-white backdrop-blur-xl  rounded-2xl shadow-[0_4px_12px_-4px_rgba(0,0,0,0.05)] w-fit">
           {viewTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeView === tab.id;
@@ -78,7 +76,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                     transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                   />
                 )}
-                {/* @ts-ignore */}
                 <Icon className={cn("relative z-10 w-5 h-5 transition-colors", isActive ? "text-gray-600" : "text-gray-400")} />
                 <span className={cn("relative z-10 hidden sm:inline-block transition-opacity duration-300", isActive ? "opacity-100" : "opacity-60")}>
                   {tab.label}
@@ -86,7 +83,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               </button>
             );
           })}
-        </div>
+        </div> */}
 
         {/* Row 2: Project Selector and Actions */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -99,18 +96,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Search */}
-            <div className="relative group flex-1 lg:flex-none min-w-[240px]">
-              <Magnifer className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-11 pr-4 py-2.5 bg-white rounded-2xl text-sm w-full lg:w-64 focus:outline-none focus:ring-4 focus:ring-orange-500/5 focus:border-orange-500/40 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.03)] transition-all placeholder:text-gray-400 font-semibold"
-              />
-            </div>
-
             <div className="flex items-center gap-2">
               {/* Filter */}
               <button

@@ -131,23 +131,16 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   <AltArrowRight className="w-4 h-4" />
                 )}
               </button>
-            ) : (
-              <div className="w-6 h-6 flex items-center justify-center">
-                <ChecklistMinimalistic className="w-4 h-4 text-gray-600" />
-              </div>
-            )}
+            ) : null}
 
-            {/* Drag Handle (Visual only for now) */}
-            <div className="opacity-0 group-hover:opacity-100 cursor-grab text-gray-300 transition-opacity">
-              <Widget className="w-4 h-4" />
-            </div>
+
 
             <div className="flex flex-col gap-0.5 min-w-0">
               <div className="flex items-center gap-2">
                 <EditableText
                   value={task.title}
                   placeholder="Task title"
-                  className="font-bold text-gray-800 text-sm tracking-tight"
+                  className="font- text-gray-800 text-md"
                   onSave={(value: string) => handleEditTask(task._id, { title: value })}
                 />
 
@@ -169,7 +162,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                     )}
                   </div>
                 )} */}
-                
+
                 {/* Indicators */}
                 <div className="flex items-center gap-1.5">
                   {(task.subtaskCount || 0) > 0 && (
@@ -191,28 +184,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </td>
 
         {/* Description Cell */}
-        <td className="py-4 px-4 relative">
-          <div
-            ref={descTriggerRef}
-            className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-orange-600 transition-all group/desc w-fit"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDescription(!showDescription);
-            }}
-          >
-            <Notes className={cn("w-4 h-4 shrink-0 transition-transform duration-300", showDescription ? "scale-110 text-orange-500" : "group-hover/desc:scale-110")} />
-            <span className={cn("font-medium transition-colors", showDescription && "text-orange-600")}>View</span>
-          </div>
-
-          <TaskDescriptionModal
-            isOpen={showDescription}
-            onClose={() => setShowDescription(false)}
-            description={task.description || ""}
-            taskTitle={task.title}
-            onSave={(value: string) => handleEditTask(task._id, { description: value })}
-            position={descPosition}
-          />
-        </td>
 
         {/* Assignee Cell */}
         <td className="py-4 px-4">

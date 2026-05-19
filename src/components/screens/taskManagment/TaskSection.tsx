@@ -69,14 +69,12 @@ const TaskSection: React.FC<TaskSectionProps> = ({
       {!isCollapsed && (
         <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200 ">
+            <thead className="bg-gray-100 py-6">
               <tr>
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Task
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
+
                 <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Assignee
                 </th>
