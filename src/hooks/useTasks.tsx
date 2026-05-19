@@ -40,9 +40,11 @@ export const useTasks = (filters: any = DEFAULT_FILTERS, searchQuery: string = "
   const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
   const lastSectionIdRef = useRef<string | null>(null);
 
-  const fetchTasks = useCallback(async (targetPhaseId?: string) => {
+  const fetchTasks = useCallback(async (targetPhaseId?: string, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError(null);
 
       // 1. Fetch phases
@@ -151,10 +153,12 @@ export const useTasks = (filters: any = DEFAULT_FILTERS, searchQuery: string = "
     return res;
   };
 
-  const handleEditTask = async (taskId: string, payload: TaskUpdatePayload) => {
+  const handleEditTask = async (taskId: string, payload: TaskUpdatePayload, silent = false) => {
     const res = await updateTask(taskId, payload);
-    toast.success("Task updated");
-    fetchTasks();
+    if (!silent) {
+      toast.success("Task updated");
+    }
+    fetchTasks(undefined, silent);
     return res;
   };
 

@@ -24,7 +24,7 @@ interface TaskManagementModalsProps {
   setFilters: (filters: any) => void;
   selectedTask: any;
   setSelectedTask: (task: any) => void;
-  handleEditTask: (id: string, payload: any) => Promise<any>;
+  handleEditTask: (id: string, payload: any, silent?: boolean) => Promise<any>;
   handleDeleteTaskById: (id: string) => Promise<void>;
   handleAddSubtask: (id: string) => void;
   handleAssignTaskToUser: (taskId: string, userId: string) => Promise<void>;
@@ -101,8 +101,8 @@ const TaskManagementModals: React.FC<TaskManagementModalsProps> = ({
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         task={selectedTask}
-        onEditTask={async (id, payload) => {
-          const res = await handleEditTask(id, payload);
+        onEditTask={async (id, payload, silent = true) => {
+          const res = await handleEditTask(id, payload, silent);
           if (selectedTask && selectedTask._id === id) {
             const rawTask = res?.data || res;
             setSelectedTask(normalizeTask(rawTask));

@@ -31,7 +31,7 @@ interface TaskDetailDrawerProps {
     isOpen: boolean;
     onClose: () => void;
     task: any;
-    onEditTask: (taskId: string, updates: any) => void;
+    onEditTask: (taskId: string, updates: any, silent?: boolean) => void;
     onDeleteTask: (taskId: string) => void;
     onAddSubtask: (taskId: string) => void;
     onAssignTask: (taskId: string, userId: string) => void;
@@ -172,7 +172,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 ...newAttachments
             ],
             tag_object_id_list: task?.tags?.map((t: any) => t._id)
-        });
+        }, false);
         setIsSaving(false);
         onClose();
     };
@@ -245,8 +245,8 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         setComments(updatedComments);
         setCommentText("");
 
-        // Persist comment list update to backend
-        onEditTask(task._id, { comments: updatedComments });
+        // Persist comment list update to backend silently
+        onEditTask(task._id, { comments: updatedComments }, true);
     };
 
     if (typeof document === "undefined" || !task) return null;

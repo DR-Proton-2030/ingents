@@ -165,10 +165,10 @@ export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
                         <div className="w-2/3 px-4 py-2">
                             <StatusDropdown
                                 taskId={task._id}
-                                currentStatus={task.phase_info?.name || task.status_object_id || task.status}
+                                currentStatus={task.phase_info?.name || task.phase_object_id || task.status_object_id || task.status}
                                 phaseInfo={task.phase_info}
                                 onStatusChange={async (taskId, phaseId) => {
-                                    onEditTask(taskId, { status_object_id: phaseId });
+                                    onEditTask(taskId, { phase_object_id: phaseId });
                                 }}
                             />
                         </div>
