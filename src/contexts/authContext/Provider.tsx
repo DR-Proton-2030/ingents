@@ -10,42 +10,8 @@ import { api } from "@/utils/api";
 
 const AuthContextProvider = ({ children }: ContextProviderProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const [isOnProtectedRoute, setIsOnProtectedRoute] = useState<boolean>(false);
-  const [isVerifying, setIsVerifying] = useState<boolean>(false);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState<boolean>(false);
   const isMounted = useRef(true);
-
-  const fetchUser = useCallback(async () => {
-    if (isVerifying || !isMounted.current) return;
-
-    try {
-      setIsVerifying(true);
-      console.log("🔍 Fetching user from auth context...");
-      const response = await api.auth.verifyToken();
-
-      if (!isMounted.current) return;
-
-      if (response && response.data) {
-        console.log("✅ User verified successfully:", response.data.user);
-        dispatch({
-          type: actions.SET_USER,
-          payload: { user: response.data.user, isLoggedIn: true },
-        });
-      }
-    } catch (error: any) {
-      if (!isMounted.current) return;
-      console.error("❌ User verification failed:", error.message);
-      dispatch({
-        type: actions.SET_USER,
-        payload: { user: null, isLoggedIn: false },
-      });
-    } finally {
-      if (isMounted.current) {
-        setIsVerifying(false);
-        setHasCheckedAuth(true);
-      }
-    }
-  }, [isVerifying]); // Removed isOnProtectedRoute to prevent recreation
+  const hasFetched = useRef(false);
 
   const setUser = useCallback((user: IUser | null) => {
     dispatch({
@@ -60,24 +26,54 @@ const AuthContextProvider = ({ children }: ContextProviderProps) => {
   };
 
   useEffect(() => {
-    // Only fetch user if we haven't checked yet or if we're on a protected route without a user
-    if (!state.user && !isVerifying && !hasCheckedAuth && isOnProtectedRoute) {
-      fetchUser();
-    }
-  }, [isOnProtectedRoute, state.user, isVerifying, hasCheckedAuth, fetchUser]);
+    if (hasFetched.current) return;
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const currentPath = window.location.pathname;
-      // Any path under /dashboard or a site slug is protected
-      const publicPaths = ["/login", "/signup", "/forgot-password", "/setup-password", "/verify"];
-      const isPublic = publicPaths.some((p) => currentPath.startsWith(p));
-      setIsOnProtectedRoute(!isPublic && currentPath !== "/");
-    }
+    const currentPath = window.location.pathname;
+    const publicPaths = ["/login", "/signup", "/forgot-password", "/setup-password", "/verify"];
+    const isPublic = publicPaths.some((p) => currentPath.startsWith(p));
+    const isProtected = !isPublic && currentPath !== "/";
+
+    if (!isProtected) return;
+
+    hasFetched.current = true;
+
+    const fetchUser = async () => {
+      try {
+        console.log("🔍 Fetching user from auth context...");
+        const response = await api.auth.verifyToken();
+
+        if (!isMounted.current) return;
+
+        console.log("🔎 Full verify response:", JSON.stringify(response, null, 2)?.slice(0, 500));
+
+        // Extract user - handle multiple possible response shapes
+        const user = response?.data?.user  // { data: { user: {...} } }
+          || response?.user               // { user: {...} }
+          || (response?.data?.full_name ? response.data : null)  // { data: { full_name: ... } }
+          || (response?.full_name ? response : null);             // { full_name: ... }
+
+        console.log("👤 Extracted user:", user?.full_name, user?._id);
+
+        if (user) {
+          dispatch({
+            type: actions.SET_USER,
+            payload: { user, isLoggedIn: true },
+          });
+        } else {
+          console.error("❌ Could not extract user from response");
+        }
+      } catch (error: any) {
+        if (!isMounted.current) return;
+        console.error("❌ User verification failed:", error.message);
+        dispatch({
+          type: actions.SET_USER,
+          payload: { user: null, isLoggedIn: false },
+        });
+      }
+    };
+
+    fetchUser();
   }, []);
-
-  // Reset check status when route changes (optional, but keep it for now)
-  // Actually, don't reset unless you want to re-verify on every internal navigation.
 
   // Cleanup effect
   useEffect(() => {
