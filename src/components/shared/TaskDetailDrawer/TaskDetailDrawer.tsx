@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import AuthContext from "@/contexts/authContext/authContext";
 import { createPortal } from "react-dom";
 import { UsersGroupRounded, Calendar } from "@solar-icons/react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
@@ -47,6 +48,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     onAssignTask,
     onUnassignTask,
 }) => {
+    const { user: currentUser } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -63,14 +65,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<"comments" | "updates">("comments");
     const [commentText, setCommentText] = useState("");
-    const [comments, setComments] = useState<Array<{ id: string; author: string; avatar?: string; time: string; text: string }>>([
-        {
-            id: "1",
-            author: "John Smith",
-            time: "17th Feb 2024",
-            text: "Hi 👋 I'll do that task now, you can start working on another task!"
-        }
-    ]);
+    const [comments, setComments] = useState<Array<{ id: string; author: string; avatar?: string; time: string; text: string }>>([]);
 
     // Calendar States
     const [viewDate, setViewDate] = useState(new Date());
@@ -133,6 +128,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 setSelAmPm("AM");
             }
 
+            setComments((task as any).comments || []);
             document.body.style.overflow = "hidden";
         } else {
             document.body.style.overflow = "";
@@ -227,16 +223,30 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
     const handleSendComment = () => {
         if (!commentText.trim()) return;
-        setComments(prev => [
-            ...prev,
-            {
-                id: String(prev.length + 1),
-                author: "John Smith",
-                time: "Just Now",
-                text: commentText.trim()
-            }
-        ]);
+        const authorName = currentUser?.full_name || "Anonymous";
+        const authorAvatar = (currentUser as any)?.profile_picture || (currentUser as any)?.avatar || "";
+        const timeString = new Date().toLocaleDateString(undefined, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+
+        const newComment = {
+            id: String(Date.now()),
+            author: authorName,
+            avatar: authorAvatar,
+            time: timeString,
+            text: commentText.trim()
+        };
+
+        const updatedComments = [...comments, newComment];
+
+        // Optimistic UI update
+        setComments(updatedComments);
         setCommentText("");
+
+        // Persist comment list update to backend
+        onEditTask(task._id, { comments: updatedComments });
     };
 
     if (typeof document === "undefined" || !task) return null;
