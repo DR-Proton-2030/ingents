@@ -106,10 +106,15 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     };
 
     const combinedForPreview: TaskAttachment[] = [
-        ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
+        ...existingAttachments.map(att => ({ 
+            url: att.url, 
+            description: att.description,
+            isImage: ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(att.url.split("?")[0].split(".").pop()?.toLowerCase() || "")
+        })),
         ...attachments.map(att => ({
             url: att.file ? URL.createObjectURL(att.file) : (att.url || ""),
-            description: att.description
+            description: att.description,
+            isImage: att.file ? att.file.type.startsWith("image/") : ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes((att.url || "").split("?")[0].split(".").pop()?.toLowerCase() || "")
         }))
     ];
 

@@ -19,6 +19,7 @@ export interface TaskAttachment {
   _id?: string;
   url: string;
   description?: string;
+  isImage?: boolean;
 }
 
 export interface Task {

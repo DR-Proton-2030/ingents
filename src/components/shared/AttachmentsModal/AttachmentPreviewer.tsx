@@ -85,7 +85,7 @@ const AttachmentPreviewer: React.FC<AttachmentPreviewerProps> = ({
                         className="w-full h-full max-w-5xl max-h-[80vh] flex items-center justify-center p-4"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachments[currentIndex].url) ? (
+                        {attachments[currentIndex].isImage || /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(attachments[currentIndex].url) ? (
                             <img 
                                 src={attachments[currentIndex].url} 
                                 alt="Preview" 
