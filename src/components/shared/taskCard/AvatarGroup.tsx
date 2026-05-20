@@ -61,6 +61,7 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({
   searchUsers,
 }) => {
   const [hoveredUser, setHoveredUser] = useState<{ id: string; name: string; rect: DOMRect } | null>(null);
+  const [unassignTarget, setUnassignTarget] = useState<Assignee | null>(null);
   const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const safeAssignees = assignees ?? [];
@@ -115,9 +116,7 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              if (window.confirm(`Unassign ${assignee.full_name}?`)) {
-                handleUnAssignTask(taskId, assignee._id);
-              }
+              setUnassignTarget(assignee);
             }}
             className="absolute -top-0.5 -right-1.5 w-4 h-4 rounded-full bg-white cursor-pointer text-red-400 hover:text-white hover:bg-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90 z-[30]"
           >
@@ -144,6 +143,62 @@ const AvatarGroup: React.FC<AvatarGroupProps> = ({
               {/* Tooltip Arrow */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1.5 border-[6px] border-transparent border-t-gray-900" />
             </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Unassign Confirmation Modal */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {unassignTarget && (
+            <div className="fixed inset-0 z-[10002] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setUnassignTarget(null)}
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-[360px] bg-white/95 backdrop-blur-md shadow-2xl rounded-3xl border border-gray-100/80 overflow-hidden p-6 flex flex-col items-center text-center"
+              >
+                <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center mb-4 text-rose-600 transition-transform duration-300 hover:scale-105">
+                  <TrashBinMinimalistic className="w-6 h-6" />
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-900 tracking-tight mb-2">Remove teammate?</h3>
+
+                <p className="text-sm text-gray-500 font-normal leading-relaxed mb-6 px-1">
+                  Are you sure you want to unassign <span className="font-semibold text-gray-800">"{unassignTarget.full_name}"</span> from this task?
+                </p>
+
+                <div className="flex gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={() => setUnassignTarget(null)}
+                    className="flex-1 h-11 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-700 font-medium text-sm rounded-full transition-all duration-200 flex items-center justify-center border border-gray-200/60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleUnAssignTask(taskId, unassignTarget._id);
+                      setUnassignTarget(null);
+                    }}
+                    className="flex-1 h-11 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-medium text-sm rounded-full transition-all duration-200 flex items-center justify-center shadow-lg shadow-rose-600/10 active:scale-[0.98]"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </motion.div>
+            </div>
           )}
         </AnimatePresence>,
         document.body

@@ -28,41 +28,43 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                     />
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                        initial={{ opacity: 0, scale: 0.95, y: 12 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 12 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 350 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="relative w-full max-w-[340px] bg-white shadow-2xl rounded-[32px] border border-white/20 overflow-hidden"
+                        className="relative w-full max-w-[360px] bg-white/95 backdrop-blur-md shadow-2xl rounded-3xl border border-gray-100/80 overflow-hidden p-6 flex flex-col items-center text-center"
                     >
-                        <div className="p-7 text-center">
-                            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5 text-red-500 ring-4 ring-red-50">
-                                <TrashBinMinimalistic className="w-8 h-8" />
-                            </div>
-                            <h3 className="text-xl font-black text-gray-800 tracking-tight mb-2">Delete Task?</h3>
-                            <p className="text-sm text-gray-400 font-bold leading-relaxed px-2">
-                                This will permanently remove <span className="text-gray-700 italic">"{taskTitle}"</span> and all its subtasks. This action cannot be undone.
-                            </p>
+                        <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center mb-4 text-rose-600 transition-transform duration-300 hover:scale-105">
+                            <TrashBinMinimalistic className="w-6 h-6" />
                         </div>
+                        
+                        <h3 className="text-lg font-semibold text-gray-900 tracking-tight mb-2">Delete task?</h3>
+                        
+                        <p className="text-sm text-gray-500 font-normal leading-relaxed mb-6 px-1">
+                            Are you sure you want to permanently delete <span className="font-semibold text-gray-800">"{taskTitle}"</span>? This will also remove all its subtasks. This action cannot be undone.
+                        </p>
 
-                        <div className="flex gap-4 p-4 bg-gray-50/50">
+                        <div className="flex gap-3 w-full">
                             <button
+                                type="button"
                                 onClick={onClose}
-                                className="flex-1 h-12 bg-white text-gray-500 rounded-full text-[10px] font-black uppercase border border-gray-200 hover:bg-gray-50 transition-all active:scale-95"
+                                className="flex-1 h-11 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 text-gray-700 font-medium text-sm rounded-full transition-all duration-200 flex items-center justify-center border border-gray-200/60"
                             >
                                 Cancel
                             </button>
                             <button
+                                type="button"
                                 onClick={() => {
                                     onConfirm();
                                     onClose();
                                 }}
-                                className="flex-[1.5] h-12 bg-red-500 text-white rounded-full text-[10px] font-black uppercase hover:bg-red-600 transition-all shadow-lg shadow-red-200 active:scale-95"
+                                className="flex-1 h-11 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-medium text-sm rounded-full transition-all duration-200 flex items-center justify-center shadow-lg shadow-rose-600/10 active:scale-[0.98]"
                             >
-                                Delete Now
+                                Delete
                             </button>
                         </div>
                     </motion.div>

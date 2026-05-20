@@ -43,6 +43,13 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   const [editValue, setEditValue] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // OPTIMISTIC UPDATE STATE
+  const [localStatusId, setLocalStatusId] = useState(currentStatus);
+
+  // Sync with prop when it changes
+  useEffect(() => {
+    setLocalStatusId(currentStatus);
+  }, [currentStatus]);
 
   const fetchPhases = useCallback(async () => {
     try {
@@ -81,7 +88,6 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
     }
   };
 
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -111,66 +117,91 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
   }, [isOpen]);
 
   const activePhase = phases.find(p =>
-    p._id === currentStatus ||
-    p.name === currentStatus ||
-    p.name.toLowerCase().replace(/ /g, "-") === (currentStatus || "").toLowerCase().replace(/ /g, "-")
+    p._id === localStatusId ||
+    p.name === localStatusId ||
+    p.name.toLowerCase().replace(/ /g, "-") === (localStatusId || "").toLowerCase().replace(/ /g, "-")
   );
 
-  const currentLabel = activePhase ? activePhase.name : (phaseInfo?.name || currentStatus);
+  const currentLabel = activePhase ? activePhase.name : (phaseInfo?.name || localStatusId);
   const currentColor = activePhase?.color || phaseInfo?.color || "#9a49e1ff";
   const CurrentIcon = getPhaseIcon(currentLabel);
+
+  const getAlphaBgColor = (hex: string, alpha: string = "10") => {
+    const cleanHex = hex.replace("#", "").substring(0, 8);
+    return `#${cleanHex}${alpha}`;
+  };
 
   const menuContent = (
     <div className="fixed inset-0 z-[99999]" onClick={() => setIsOpen(false)}>
       <motion.div
-        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+        initial={{ opacity: 0, y: 12, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
-        className="fixed w-64 p-2 bg-white backdrop-blur-xl rounded-xl flex flex-col gap-1 overflow-hidden border-2 border-gray-100/50"
+        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+        transition={{ type: "spring", damping: 18, stiffness: 220 }}
+        className="fixed w-64 p-2.5 bg-white/80 backdrop-blur-xl rounded-2xl flex flex-col gap-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.12),0_1px_2px_rgba(0,0,0,0.05)] border border-white/60"
         style={{
           top: menuPosition.top,
           left: Math.min(menuPosition.left, typeof window !== 'undefined' ? window.innerWidth - 270 : menuPosition.left)
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-2 py-1 mb-1 ">
-          <p className="text-md font-semibold text-gray-600  ">Select Status</p>
+
+
+        <div className="px-2.5 py-1.5 border-b border-gray-100/50 mb-1 flex items-center justify-between">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Status</p>
+          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: currentColor }} />
         </div>
 
-        <div className="max-h-64 overflow-y-auto border-2 border-gray-100/50 rounded-xl flex flex-col gap-1 pr-1 custom-scrollbar">
+        <div className="max-h-60 overflow-y-auto flex flex-col gap-1 pr-1 custom-scrollbar">
           {isLoading ? (
-            <div className="p-4 text-center">
-              <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Fetching Phases...</p>
+            <div className="py-8 text-center flex flex-col items-center justify-center gap-2">
+              <div className="w-5 h-5 border-2 border-gray-100 border-t-blue-500 rounded-full animate-spin" />
+              <p className="text-[10px] text-gray-400 font-semibold tracking-wide">Fetching phases...</p>
             </div>
           ) : phases.length > 0 ? (
             [...phases].sort((a, b) => a.index - b.index).map((phase) => {
               const Icon = getPhaseIcon(phase.name);
               const isSelected = (
-                currentStatus === phase.name ||
-                currentStatus === phase._id ||
-                (currentStatus || "").toLowerCase().replace(/ /g, "-") === phase.name.toLowerCase().replace(/ /g, "-")
+                localStatusId === phase.name ||
+                localStatusId === phase._id ||
+                (localStatusId || "").toLowerCase().replace(/ /g, "-") === phase.name.toLowerCase().replace(/ /g, "-")
               );
 
               const isEditing = editingPhaseId === phase._id;
+              const itemColor = phase.color || currentColor;
 
               return (
-                <div key={phase._id} className="relative group/parent">
+                <div key={phase._id} className="relative group/parent flex items-center w-full">
                   <button
                     onClick={() => {
                       if (!isEditing) {
+                        setLocalStatusId(phase._id);
                         onStatusChange(taskId, phase._id);
                         setIsOpen(false);
                       }
                     }}
                     className={cn(
-                      "flex items-center gap-3 w-full p-2.5 rounded-xl transition-all duration-200 group/item text-left relative",
+                      "flex items-center gap-3 w-full px-2.5 py-2 rounded-xl transition-all duration-200 text-left relative cursor-pointer group",
                       isSelected
-                        ? "bg-gray-100 "
-                        : "hover:bg-gray-50/50 hover:translate-x-1"
+                        ? "font-semibold "
+                        : "hover:bg-gray-100 "
                     )}
+                    style={{
+                      backgroundColor: isSelected ? getAlphaBgColor(itemColor, "08") : undefined,
+                    }}
                   >
+                    <div
+                      className="w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:scale-105 shrink-0"
+                      style={{
+                        backgroundColor: getAlphaBgColor(itemColor, isSelected ? "15" : "08"),
+                      }}
+                    >
+                      <Icon
+                        className="w-4 h-4 shrink-0 transition-transform duration-300"
+                        style={{ color: itemColor }}
+                      />
+                    </div>
+
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
                         <input
@@ -182,34 +213,28 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                             if (e.key === "Escape") setEditingPhaseId(null);
                           }}
                           onBlur={() => handleUpdatePhase(phase._id)}
-                          className="w-full bg-white border border-orange-200 rounded px-1 py-0.5 text-[11px] font-black focus:outline-none focus:ring-1 focus:ring-orange-500"
+                          className="w-full bg-white border border-gray-200/80 rounded-lg px-2 py-1 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-sm"
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-[11px] font-black transition-colors truncate"
-                            style={{ color: isSelected ? (phase.color || '#25272aff') : '#9ca3af' }}>
-                            {phase.name}
-                          </p>
-                          {!phase.is_default && !isEditing && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingPhaseId(phase._id);
-                                setEditValue(phase.name);
-                              }}
-                              className="opacity-0 group-hover/parent:opacity-100 p-1 hover:bg-gray-200 rounded transition-all"
-                            >
-                              <Pen className="w-2.5 h-2.5 text-gray-400 hover:text-orange-500" />
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {isSelected && !isEditing && (
-                        <p className="text-[9px] text-gray-400 font-bold">Current Status</p>
+                        <span
+                          className="text-xs truncate block tracking-wide font-medium"
+                          style={{ color: isSelected ? "#111827" : "#4b5563" }}
+                        >
+                          {phase.name}
+                        </span>
                       )}
                     </div>
+
+                    {isSelected && !isEditing && (
+                      <motion.span
+                        layoutId={`active-dot-${taskId}`}
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ backgroundColor: itemColor }}
+                      />
+                    )}
                   </button>
+
                   {!phase.is_default && !isEditing && (
                     <button
                       type="button"
@@ -218,38 +243,37 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                         setEditingPhaseId(phase._id);
                         setEditValue(phase.name);
                       }}
-                      className="absolute top-1/2 -translate-y-1/2 right-2 opacity-0 group-hover/parent:opacity-100 p-1 hover:bg-gray-200 rounded transition-all z-10"
+                      className="absolute right-2.5 opacity-0 group-hover/parent:opacity-100 p-1.5 bg-white/95 hover:bg-gray-100 rounded-lg border border-gray-100 shadow-sm transition-all duration-200 z-10 cursor-pointer"
                     >
-                      <Pen className="w-2.5 h-2.5 text-gray-400 hover:text-orange-500" />
+                      <Pen className="w-2.5 h-2.5 text-gray-400 hover:text-gray-700" />
                     </button>
                   )}
+
                   {isUpdating && isEditing && (
-                    <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-20">
-                      <div className="w-3 h-3 border border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] flex items-center justify-center rounded-xl z-20">
+                      <div className="w-3.5 h-3.5 border border-blue-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                   )}
                 </div>
               );
             })
           ) : (
-            <div className="p-4 text-center">
-              <p className="text-xs text-gray-400 font-bold">No phases found</p>
+            <div className="py-6 text-center">
+              <p className="text-xs text-gray-400 font-medium">No phases found</p>
             </div>
           )}
         </div>
 
-        <div className="mt-1 pt-1 border-t border-gray-100/50">
+        <div className="mt-1 pt-1.5 border-t border-gray-100/50">
           <button
             onClick={() => {
               setIsModalOpen(true);
               setIsOpen(false);
             }}
-            className="flex items-center gap-3 w-full p-2.5 rounded-xl transition-all duration-200 hover:bg-orange-50/50 group/add"
+            className="px-3 py-1.5 rounded-lg text-xs flex  transition-all"
           >
-            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-              <Plus className="w-4 h-4 text-orange-600" />
-            </div>
-            <p className="text-[11px] font-semibold  text-orange-600 ">Create New Phase</p>
+            <Plus className="w-3.5 h-3.5 text-gray-400  transition-colors" />
+            <span>Add Custom Phase</span>
           </button>
         </div>
       </motion.div>
@@ -258,28 +282,38 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(156, 163, 175, 0.25);
+          border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(156, 163, 175, 0.4);
+        }
+      `}} />
+
       <button
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-300  group w-max ",
-          isOpen ? "ring-4 ring-gray-100" : "hover:shadow-m"
+          "flex items-center justify-center px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 w-max cursor-pointer select-none ",
+          isOpen
+            ? "scale-[1.02] "
+            : "hover:scale-[1.02] active:scale-[0.98] "
         )}
         style={{
-          backgroundColor: currentColor + '50', // Subtle background color
-          borderColor: currentColor + '30'      // Subtle border color
+          backgroundColor: getAlphaBgColor(currentColor, "15"),
+          color: activePhase?.color || currentColor,
         }}
       >
-        <div className="text-[13px] font-base text-black/80 ">
-          {currentLabel}
-        </div>
-        {/* <AltArrowDown
-          className={cn(
-            "w-3.5 h-3.5 transition-transform duration-300 shrink-0",
-            isOpen ? "rotate-180" : ""
-          )}
-          style={{ color: currentColor + '80' }}
-        /> */}
+        <span>{currentLabel}</span>
       </button>
 
       {mounted && createPortal(
@@ -295,6 +329,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         onSuccess={async (newPhaseId) => {
           await fetchPhases();
           if (newPhaseId && taskId) {
+            setLocalStatusId(newPhaseId);
             onStatusChange(taskId, newPhaseId);
           }
         }}

@@ -136,10 +136,10 @@ const SearchAndAssign: React.FC<SearchAndAssignProps> = ({
   );
 
   return (
-    <div className="relative rounded-full bg-gray-200 flex items-center justify-center p-2 cursor-pointer  hover:bg-gray-300 transition-all">
+    <div className="relative rounded-full bg-gray-200 flex items-center justify-center p-2 cursor-pointer transition-all">
       <button
         ref={buttonRef}
-        className='text-xs font-bold flex items-center gap-1.5 focus:outline-none'
+        className='text-xs font-bold flex items-center gap-1.5 focus:outline-none cursor-pointer'
         type="button"
         onClick={(e) => {
           e.stopPropagation();
