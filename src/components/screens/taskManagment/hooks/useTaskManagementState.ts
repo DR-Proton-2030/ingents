@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useTasks, normalizeTask } from "@/hooks/useTasks";
 import { ViewMode, TaskStatus } from "@/types/interface/task.interface";
 import { TaskFormData } from "@/types/interface/task-modal.interface";
@@ -8,6 +8,16 @@ import { useReactToPrint } from "react-to-print";
 
 export function useTaskManagementState() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const [filters, setFilters] = useState<ITaskFilters>({
     userId: null as string | null,
     statusId: null as string | null,
@@ -32,7 +42,7 @@ export function useTaskManagementState() {
     handleEditTask,
     setSectionPage,
     itemsPerPage,
-  } = useTasks(filters, searchQuery);
+  } = useTasks(filters, debouncedSearchQuery);
 
   const [activeView, setActiveView] = useState<ViewMode>("spreadsheet");
   const [parentTaskId, setParentTaskId] = useState<string | null>(null);
