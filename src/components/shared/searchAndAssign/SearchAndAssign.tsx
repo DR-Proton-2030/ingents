@@ -61,7 +61,7 @@ const SearchAndAssign: React.FC<SearchAndAssignProps> = ({
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-[400px] bg-white shadow-2xl rounded-[32px] border border-white/20 flex flex-col overflow-hidden"
+        className="relative w-full max-w-[400px] bg-white shadow-2xl rounded-2xl  flex flex-col overflow-hidden"
       >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
@@ -81,24 +81,25 @@ const SearchAndAssign: React.FC<SearchAndAssignProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name or email..."
-              className="w-full h-12 pl-12 pr-4 rounded-2xl transition-all outline-none text-sm font-bold bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-500/10 border border-transparent focus:border-orange-500 text-gray-800"
+              className="w-full h-12 pl-12 pr-4 rounded-2xl transition-all outline-none text-sm  bg-gray-100 
+              text-gray-800"
             />
           </div>
 
           <div className="space-y-4">
-            <h5 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+            <h5 className="text-[10px] font-bold text-gray-400 ml-1">
               Search Results
             </h5>
-            <div className="max-h-80 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+            <div className="max-h-80 overflow-y-auto pr-1 space-y-2 custom-scrollbar hidescroll">
               {search.trim() === "" ? (
                 <div className="text-center py-12">
                   <User className="w-12 h-12 text-gray-100 mx-auto mb-3" />
-                  <p className="text-xs font-bold text-gray-300 uppercase tracking-widest">Type to search people</p>
+                  <p className="text-xs font-bold text-gray-300 ">Type to search people</p>
                 </div>
               ) : filteredUsers.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-sm font-bold text-gray-400">No teammates found</p>
-                  <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">Try a different name or email</p>
+                  <p className="text-[10px] text-gray-400  mt-1">Try a different name or email</p>
                 </div>
               ) : (
                 filteredUsers.map((u: IUser) => (
@@ -106,9 +107,9 @@ const SearchAndAssign: React.FC<SearchAndAssignProps> = ({
                     key={u.id || (u as any)._id}
                     type="button"
                     onClick={() => handleSelectUser(u)}
-                    className="w-full p-3 flex items-center gap-4 hover:bg-orange-50 rounded-2xl transition-all group text-left border border-transparent hover:border-orange-100 shadow-sm hover:shadow-md"
+                    className="w-full p-3 flex items-center gap-4  rounded-2xl transition-all group text-left  bg-gray-100"
                   >
-                    <div className="w-11 h-11 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-black shadow-sm uppercase overflow-hidden ring-2 ring-white group-hover:ring-orange-200 transition-all">
+                    <div className="w-11 h-11 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-sm font-black shadow-sm uppercase overflow-hidden ring-2 ring-white transition-all">
                       {u.profile_picture ? (
                         <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -121,7 +122,7 @@ const SearchAndAssign: React.FC<SearchAndAssignProps> = ({
                       </p>
                       <p className="text-[10px] text-gray-500 truncate">{u.email}</p>
                     </div>
-                    <div className="w-8 h-8 rounded-xl bg-gray-50 group-hover:bg-orange-500 flex items-center justify-center transition-all group-hover:scale-110">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 group-hover:bg-orange-500 bg-gray-200 flex items-center justify-center transition-all group-hover:scale-110">
                       <Plus className="w-4 h-4 text-gray-400 group-hover:text-white" />
                     </div>
                   </button>
