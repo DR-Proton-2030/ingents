@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CloseCircle, AltArrowRight } from "@solar-icons/react";
+import { AltArrowRight } from "@solar-icons/react";
 
 interface ScheduleModalProps {
     isOpen: boolean;
@@ -11,22 +11,31 @@ interface ScheduleModalProps {
     onSave: (date: Date) => void;
 }
 
+const timeSlots = [
+    "8:00 AM", "8:30 AM", "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM",
+    "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM",
+    "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM",
+    "5:00 PM", "5:30 PM", "6:00 PM", "6:30 PM", "7:00 PM", "7:30 PM",
+    "8:00 PM", "8:30 PM", "9:00 PM", "9:30 PM", "10:00 PM"
+];
+
 const ScheduleModal: React.FC<ScheduleModalProps> = ({
     isOpen,
     onClose,
     dueDate,
     onSave,
 }) => {
-    const [step, setStep] = useState<1 | 2>(1);
     const [viewDate, setViewDate] = useState(new Date());
     const [selDate, setSelDate] = useState(new Date());
-    const [selHour, setSelHour] = useState("09");
+    const [selHour, setSelHour] = useState("10");
     const [selMinute, setSelMinute] = useState("00");
     const [selAmPm, setSelAmPm] = useState("AM");
 
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const activeRef = useRef<HTMLButtonElement>(null);
+
     useEffect(() => {
         if (isOpen) {
-            setStep(1);
             if (dueDate) {
                 const d = new Date(dueDate);
                 setSelDate(d);
@@ -36,7 +45,8 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
                 setSelAmPm(h >= 12 ? "PM" : "AM");
                 h = h % 12 || 12;
                 setSelHour(String(h).padStart(2, "0"));
-                setSelMinute(String(m).padStart(2, "0"));
+                const roundedM = m >= 45 ? 0 : m >= 15 ? 30 : 0;
+                setSelMinute(String(roundedM).padStart(2, "0"));
             } else {
                 const now = new Date();
                 setSelDate(now);
@@ -46,20 +56,75 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
                 setSelAmPm(h >= 12 ? "PM" : "AM");
                 h = h % 12 || 12;
                 setSelHour(String(h).padStart(2, "0"));
-                setSelMinute("00");
+                const roundedM = m >= 45 ? 0 : m >= 15 ? 30 : 0;
+                setSelMinute(String(roundedM).padStart(2, "0"));
             }
         }
     }, [dueDate, isOpen]);
 
-    const getDaysInMonth = (date: Date) => {
+    // Scroll active time slot into view when open or selected time changes
+    useEffect(() => {
+        if (isOpen) {
+            const timer = setTimeout(() => {
+                if (activeRef.current) {
+                    activeRef.current.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                }
+            }, 120);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, selHour, selMinute, selAmPm]);
+
+    const getDaysInMonthMondayBased = (date: Date) => {
         const year = date.getFullYear();
         const month = date.getMonth();
-        const firstDay = new Date(year, month, 1).getDay();
-        const days = new Date(year, month + 1, 0).getDate();
-        return { firstDay, days };
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const firstDayOffset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const daysInPrevMonth = new Date(year, month, 0).getDate();
+        return { firstDayOffset, daysInMonth, daysInPrevMonth };
     };
 
-    const calendarData = getDaysInMonth(viewDate);
+    const { firstDayOffset, daysInMonth, daysInPrevMonth } = getDaysInMonthMondayBased(viewDate);
+    const cells: { day: number; isCurrentMonth: boolean; date: Date }[] = [];
+    const viewYear = viewDate.getFullYear();
+    const viewMonth = viewDate.getMonth();
+
+    // 1. Previous month padding days
+    for (let i = firstDayOffset - 1; i >= 0; i--) {
+        const d = daysInPrevMonth - i;
+        cells.push({
+            day: d,
+            isCurrentMonth: false,
+            date: new Date(viewYear, viewMonth - 1, d)
+        });
+    }
+
+    // 2. Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+        cells.push({
+            day: d,
+            isCurrentMonth: true,
+            date: new Date(viewYear, viewMonth, d)
+        });
+    }
+
+    // 3. Next month padding days
+    const remaining = 42 - cells.length;
+    for (let d = 1; d <= remaining; d++) {
+        cells.push({
+            day: d,
+            isCurrentMonth: false,
+            date: new Date(viewYear, viewMonth + 1, d)
+        });
+    }
+
+    const handleSelectTime = (slot: string) => {
+        const [timePart, ampm] = slot.split(" ");
+        const [h, m] = timePart.split(":");
+        setSelHour(h.padStart(2, "0"));
+        setSelMinute(m);
+        setSelAmPm(ampm);
+    };
 
     const handleSave = () => {
         const year = selDate.getFullYear();
@@ -73,6 +138,29 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
         const formattedDate = `${year}-${month}-${day}T${String(h).padStart(2, "0")}:${selMinute}`;
         onSave(new Date(formattedDate));
         onClose();
+    };
+
+    const formatSelectedDateTime = () => {
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const mStr = monthNames[selDate.getMonth()];
+        const dStr = selDate.getDate();
+        const yStr = selDate.getFullYear();
+
+        const formattedSelHour = parseInt(selHour);
+        const timeStr = `${formattedSelHour}:${selMinute} ${selAmPm}`;
+
+        return `${mStr} ${dStr}, ${yStr} ${timeStr}`;
+    };
+
+    // Calculate currently active slot string to match array items
+    const activeSlotStr = `${parseInt(selHour)}:${selMinute} ${selAmPm}`;
+
+    const prevMonth = () => {
+        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+    };
+
+    const nextMonth = () => {
+        setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
     };
 
     if (typeof document === "undefined") return null;
@@ -95,237 +183,152 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 350 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="relative w-full max-w-[450px] bg-gray-50 shadow-2xl rounded-2xl border border-gray-100 flex flex-col overflow-hidden"
+                        className="relative w-full max-w-[580px] bg-white shadow-2xl rounded-3xl border border-gray-100 flex flex-col overflow-hidden"
                     >
-                        <div className="p-6 flex flex-col gap-5">
-                            <div className="flex items-center justify-between">
-                                {step === 1 ? (
-                                    <div className="flex flex-col gap-1">
-                                        <h4 className="text-2xl font-semibold text-gray-800 ">Select Date</h4>
-                                        <div className="flex items-center gap-1.5 mt-0.5">
-                                            <span className="w-5 h-1.5 rounded-full bg-orange-500 transition-all duration-300" />
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-200 transition-all duration-300" />
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-3">
-                                        <motion.button
-                                            type="button"
-                                            whileHover={{ scale: 1.1 }}
-                                            whileTap={{ scale: 0.9 }}
-                                            onClick={() => setStep(1)}
-                                            className="p-2 hover:bg-gray-55 rounded-xl transition-all"
-                                        >
-                                            <AltArrowRight className="w-4 h-4 text-gray-500 rotate-180" />
-                                        </motion.button>
-                                        <div className="flex flex-col gap-1">
-                                            <h4 className="text-lg font-black text-gray-800 tracking-tight">Select Time</h4>
-                                            <div className="flex items-center gap-1.5 mt-0.5">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-gray-200 transition-all duration-300" />
-                                                <span className="w-5 h-1.5 rounded-full bg-orange-500 transition-all duration-300" />
+                        {/* Split Picker Columns */}
+                        <div className="flex flex-col sm:flex-row p-6 gap-6">
+
+                            {/* Left Column: Monday-based Calendar */}
+                            <div className="flex-1 flex flex-col gap-4">
+                                <div className="flex items-center justify-between px-1">
+                                    <button
+                                        type="button"
+                                        onClick={prevMonth}
+                                        className="p-2.5 border border-gray-200 hover:bg-gray-50 rounded-full transition flex items-center justify-center text-gray-500 hover:text-gray-800"
+                                    >
+                                        <AltArrowRight className="w-4 h-4 rotate-180" />
+                                    </button>
+                                    <h5 className="text-base  text-gray-800 ">
+                                        {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                                    </h5>
+                                    <button
+                                        type="button"
+                                        onClick={nextMonth}
+                                        className="p-2.5 border border-gray-200 hover:bg-gray-55 rounded-full transition flex items-center justify-center text-gray-500 hover:text-gray-800"
+                                    >
+                                        <AltArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-7 gap-y-1.5 gap-x-1 justify-items-center">
+                                    {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d, idx) => (
+                                        <div key={`${d}-${idx}`} className="text-[11px] font-semibold text-gray-400 text-center py-1  w-10">{d}</div>
+                                    ))}
+                                    {cells.map((cell, idx) => {
+                                        const { day, isCurrentMonth } = cell;
+
+                                        if (!isCurrentMonth) {
+                                            return (
+                                                <div
+                                                    key={`pad-${idx}`}
+                                                    className="h-10 w-10 flex items-center justify-center text-gray-300 font-medium text-sm select-none"
+                                                >
+                                                    {day}
+                                                </div>
+                                            );
+                                        }
+
+                                        const isSelected = selDate.getDate() === day &&
+                                            selDate.getMonth() === viewMonth &&
+                                            selDate.getFullYear() === viewYear;
+
+                                        const today = new Date();
+                                        const isToday = today.getDate() === day &&
+                                            today.getMonth() === viewMonth &&
+                                            today.getFullYear() === viewYear;
+
+                                        const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                                        const isPast = cell.date < todayDateOnly;
+
+                                        return (
+                                            <div key={day} className="flex justify-center items-center h-10 w-10">
+                                                <button
+                                                    type="button"
+                                                    disabled={isPast}
+                                                    onClick={() => {
+                                                        setSelDate(new Date(viewYear, viewMonth, day));
+                                                    }}
+                                                    className={`h-10 w-10 rounded-full text-sm font-semibold transition-all flex flex-col items-center justify-center relative ${isPast
+                                                        ? "text-gray-200 cursor-not-allowed"
+                                                        : isSelected
+                                                            ? "bg-blue-500 text-white "
+                                                            : "text-gray-700 hover:bg-gray-200"
+                                                        }`}
+                                                >
+                                                    <span>{day}</span>
+                                                    {isToday && (
+                                                        <span className={`w-1.5 h-1.5 rounded-full absolute bottom-1 ${isSelected ? "bg-white" : "bg-blue-500"
+                                                            }`} />
+                                                    )}
+                                                </button>
                                             </div>
-                                        </div>
-                                    </div>
-                                )}
-                                <motion.button
-                                    whileHover={{ scale: 1.1, rotate: 90 }}
-                                    whileTap={{ scale: 0.9 }}
-                                    onClick={onClose}
-                                    className="p-2 hover:bg-gray-55 rounded-full transition-colors"
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Divider on Desktop */}
+                            <div className="hidden sm:block border-r border-gray-200/60" />
+
+                            {/* Right Column: Time Slot List */}
+                            <div className="w-full sm:w-[120px] flex flex-col">
+                                <div
+                                    ref={scrollContainerRef}
+                                    className="overflow-y-auto max-h-[290px] flex flex-col gap-1 "
+                                    style={{
+                                        scrollbarWidth: 'thin',
+                                        scrollbarColor: '#e5e7eb transparent'
+                                    }}
                                 >
-                                    <CloseCircle className="w-5 h-5 text-gray-400" />
-                                </motion.button>
-                            </div>
-
-                            <div className=" flex flex-col justify-between">
-                                <AnimatePresence mode="wait">
-                                    {step === 1 ? (
-                                        <motion.div
-                                            key="step-date"
-                                            initial={{ opacity: 0, x: -16 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: 16 }}
-                                            transition={{ duration: 0.2, ease: "easeInOut" }}
-                                            className="flex flex-col gap-4"
-                                        >
-                                            <div className="flex items-center justify-between px-1">
-                                                <h5 className="text-md text-gray-800 ">
-                                                    {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
-                                                </h5>
-                                                <div className="flex gap-1.5">
-                                                    <motion.button
-                                                        type="button"
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))}
-                                                        className="p-3 hover:bg-gray-55 rounded-full bg-gray-200 transition"
-                                                    >
-                                                        <AltArrowRight className="w-4 h-4 text-gray-800 rotate-180" />
-                                                    </motion.button>
-                                                    <motion.button
-                                                        type="button"
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))}
-                                                        className="p-3 hover:bg-gray-55 rounded-full bg-gray-200 transition"
-                                                    >
-                                                        <AltArrowRight className="w-4 h-4 text-gray-800" />
-                                                    </motion.button>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-7 gap-0.5">
-                                                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, idx) => (
-                                                    <div key={`${d}-${idx}`} className="text-xs font-black text-gray-300 text-center  tracking-widest">{d}</div>
-                                                ))}
-                                                {[...Array(calendarData.firstDay)].map((_, i) => <div key={`empty-${i}`} />)}
-                                                {[...Array(calendarData.days)].map((_, i) => {
-                                                    const day = i + 1;
-                                                    const isSelected = selDate.getDate() === day && selDate.getMonth() === viewDate.getMonth() && selDate.getFullYear() === viewDate.getFullYear();
-                                                    const today = new Date();
-                                                    const isToday = today.getDate() === day && today.getMonth() === viewDate.getMonth() && today.getFullYear() === viewDate.getFullYear();
-
-                                                    const cellDate = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-                                                    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                                                    const isPast = cellDate < todayDateOnly;
-
-                                                    return (
-                                                        <div key={day} className="flex justify-center items-center gap-0">
-                                                            <motion.button
-                                                                type="button"
-                                                                disabled={isPast}
-                                                                whileTap={isPast ? undefined : { scale: 0.92 }}
-                                                                onClick={() => {
-                                                                    setSelDate(new Date(viewDate.getFullYear(), viewDate.getMonth(), day));
-                                                                    setStep(2);
-                                                                }}
-                                                                className={`h-12 w-20 rounded-xl m-0 text-sm font-semibold transition-all flex flex-col items-center justify-center relative ${isPast
-                                                                    ? "text-gray-300 cursor-not-allowed"
-                                                                    : isSelected
-                                                                        ? "bg-blue-500 text-white "
-                                                                        : isToday
-                                                                            ? "text-gray-600 hover:bg-black/10 hover:text-gray-100"
-                                                                            : "text-gray-600 hover:bg-black/10 hover:text-gray-500"
-                                                                    }`}
-                                                            >
-                                                                <span className="">{day}</span>
-                                                                {isToday && !isSelected && (
-                                                                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full absolute bottom-1.5" />
-                                                                )}
-                                                            </motion.button>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="step-time"
-                                            initial={{ opacity: 0, x: 16 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -16 }}
-                                            transition={{ duration: 0.2, ease: "easeInOut" }}
-                                            className="flex flex-col gap-4"
-                                        >
-                                            <div className="p-4 bg-orange-50/60 rounded-2xl border border-orange-100/50 flex flex-col items-center justify-center text-center">
-                                                <span className="text-[10px] uppercase font-black tracking-wider text-orange-500 mb-1">Selected Date</span>
-                                                <span className="text-base font-black text-orange-950">
-                                                    {selDate.toLocaleDateString('default', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}
-                                                </span>
-                                                <span className="text-xs text-orange-700/80 mt-1 font-bold">
-                                                    {selHour}:{selMinute} {selAmPm}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-1">Hour</span>
-                                                <div className="grid grid-cols-4 gap-1.5">
-                                                    {["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"].map(h => {
-                                                        const isSelected = selHour === h;
-                                                        return (
-                                                            <motion.button
-                                                                key={h}
-                                                                type="button"
-                                                                whileHover={{ scale: 1.05 }}
-                                                                whileTap={{ scale: 0.95 }}
-                                                                onClick={() => setSelHour(h)}
-                                                                className={`py-2 rounded-xl text-xs font-bold transition-all border text-center ${isSelected
-                                                                    ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20"
-                                                                    : "bg-white border-gray-100 text-gray-500 hover:border-orange-200 hover:text-orange-500"
-                                                                    }`}
-                                                            >
-                                                                {h}
-                                                            </motion.button>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex justify-between items-center px-1">
-                                                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Minutes</span>
-                                                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest pr-4">Period</span>
-                                                </div>
-                                                <div className="grid grid-cols-5 gap-2">
-                                                    <div className="col-span-4 grid grid-cols-4 gap-1.5">
-                                                        {["00", "15", "30", "45"].map(m => {
-                                                            const isSelected = selMinute === m;
-                                                            return (
-                                                                <motion.button
-                                                                    key={m}
-                                                                    type="button"
-                                                                    whileHover={{ scale: 1.05 }}
-                                                                    whileTap={{ scale: 0.95 }}
-                                                                    onClick={() => setSelMinute(m)}
-                                                                    className={`py-2 rounded-xl text-xs font-bold transition-all border text-center ${isSelected
-                                                                        ? "bg-orange-500 border-orange-500 text-white shadow-md shadow-orange-500/20"
-                                                                        : "bg-white border-gray-100 text-gray-500 hover:border-orange-200 hover:text-orange-500"
-                                                                        }`}
-                                                                >
-                                                                    :{m}
-                                                                </motion.button>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    <div className="col-span-1 flex flex-col gap-1 bg-gray-50 p-0.5 rounded-xl border border-gray-100 shrink-0">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelAmPm("AM")}
-                                                            className={`flex-1 py-1 rounded-lg text-[10px] font-black transition-all ${selAmPm === "AM"
-                                                                ? "bg-black text-white shadow-sm"
-                                                                : "text-gray-400 hover:text-gray-600"
-                                                                }`}
-                                                        >
-                                                            AM
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setSelAmPm("PM")}
-                                                            className={`flex-1 py-1 rounded-lg text-[10px] font-black transition-all ${selAmPm === "PM"
-                                                                ? "bg-black text-white shadow-sm"
-                                                                : "text-gray-400 hover:text-gray-600"
-                                                                }`}
-                                                        >
-                                                            PM
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <motion.button
+                                    {timeSlots.map(slot => {
+                                        const isSelected = activeSlotStr === slot;
+                                        return (
+                                            <button
+                                                key={slot}
+                                                ref={isSelected ? activeRef : null}
                                                 type="button"
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                onClick={handleSave}
-                                                className="w-full h-12 bg-black hover:bg-gray-900 text-white rounded-2xl text-sm font-bold shadow-xl shadow-black/10 mt-4 transition-all"
+                                                onClick={() => handleSelectTime(slot)}
+                                                className={`w-full text-left px-4 py-2 text-sm font-bold transition-all rounded-xl ${isSelected
+                                                    ? "bg-gray-100 text-[#1e1e24]"
+                                                    : "text-gray-400 hover:text-gray-800 hover:bg-gray-50"
+                                                    }`}
                                             >
-                                                Confirm & Schedule
-                                            </motion.button>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                                {slot}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
+
                         </div>
+
+                        {/* Divider before Bottom Bar */}
+                        <div className="border-t border-gray-100" />
+
+                        {/* Bottom Action Bar */}
+                        <div className="p-4 bg-white flex items-center justify-between px-6">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="text-rose-500 hover:text-gray-800 font-bold text-sm transition-colors py-2 px-3 rounded-xl hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+
+                            <div className="border border-gray-200 bg-white rounded-full px-4 py-2 font-bold text-sm text-gray-700  select-none tracking-tight">
+                                {formatSelectedDateTime()}
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleSave}
+                                className="border border-gray-300 bg-white  text-gray-800 font-bold text-sm rounded-full px-5 py-2 transition-all 
+                                hover:bg-blue-500 hover:text-white flex items-center justify-center"
+                            >
+                                Schedule
+                            </button>
+                        </div>
+
                     </motion.div>
                 </div>
             )}
