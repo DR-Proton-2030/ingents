@@ -183,7 +183,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 350 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="relative w-full max-w-[580px] bg-white shadow-2xl rounded-3xl border border-gray-100 flex flex-col overflow-hidden"
+                        className="relative w-full max-w-[580px] bg-white backdrop-blur shadow-2xl rounded-2xl flex flex-col overflow-hidden"
                     >
                         {/* Split Picker Columns */}
                         <div className="flex flex-col sm:flex-row p-6 gap-6">
@@ -210,9 +210,9 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-7 gap-y-1.5 gap-x-1 justify-items-center">
+                                <div className="grid grid-cols-7 gap-y-0.5 gap-x- justify-items-center">
                                     {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((d, idx) => (
-                                        <div key={`${d}-${idx}`} className="text-[11px] font-semibold text-gray-400 text-center py-1  w-10">{d}</div>
+                                        <div key={`${d}-${idx}`} className="text-[11px] font-semibold text-gray-400 text-center py-1  w-1">{d}</div>
                                     ))}
                                     {cells.map((cell, idx) => {
                                         const { day, isCurrentMonth } = cell;

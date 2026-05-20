@@ -157,14 +157,15 @@ export const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
                 <span className="w-28 text-sm text-gray-700 font-semibold">Tags</span>
                 <div
                     onClick={() => setActivePicker("tags")}
-                    className="flex flex-wrap items-center gap-1.5 hover:bg-gray-50 rounded-2xl px-2.5 py-1.5 transition-all cursor-pointer border border-transparent hover:border-gray-200/50 min-h-8"
+                    className="flex flex-wrap items-center gap-1.5 hover:bg-gray-50 rounded-2xl px-2.5 py-1.5 
+                    transition-all cursor-pointer border border-transparent hover:border-gray-200/50 min-h-8"
                 >
                     {task?.tags?.length > 0 ? (
                         <div className="flex flex-wrap items-center gap-1.5">
                             {task.tags.map((t: any) => (
                                 <span
                                     key={t._id}
-                                    className="px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0"
+                                    className="px-2.5 py-1.5 rounded-lg text-[14px] shrink-0"
                                     style={{
                                         backgroundColor: t.color + "15",
                                         borderColor: t.color + "40",

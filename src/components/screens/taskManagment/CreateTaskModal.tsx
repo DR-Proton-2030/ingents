@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { CloseCircle, CheckCircle as CheckCircleIcon, Calendar as CalendarIcon, UsersGroupRounded } from "@solar-icons/react";
-import { ChevronDown, Clock } from "lucide-react";
+import { ArrowRight, ChevronDown, Clock, Plus } from "lucide-react";
 import type { CreateTaskModalProps, TaskFormData, AttachmentInput } from "@/types/interface/task-modal.interface";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
@@ -207,42 +207,39 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       >
         {/* Premium Header */}
         <div className="h-16 px-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 hover:bg-gray-50 rounded-full transition-all text-gray-500 hover:text-gray-700 cursor-pointer"
-            >
-              <CloseCircle className="w-5 h-5" />
-            </button>
-            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
-              New Task Creation
-            </span>
-          </div>
+
 
           <div className="flex items-center gap-2">
             <button
               type="submit"
               form="create-task-form"
               disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl bg-black text-white text-xs font-bold hover:bg-orange-500 transition-all flex items-center gap-2 shadow-md shadow-black/5 active:scale-95 cursor-pointer"
+              className="px-4 py-2 rounded-full cursor-pointer hover:bg-blue-500 hover:text-white  text-black text-lg border  border-gray-200  flex  items-center  gap-2 "
             >
               {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <CheckCircleIcon className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                   Create Task
                 </>
               )}
             </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-px h-6 bg-gray-200 mx-1" />
+            <button type="button" onClick={onClose} className="p-2.5 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-xl transition-all">
+              <ArrowRight className="w-5 h-5" />
+            </button>
+
           </div>
         </div>
 
         {/* Content Panel */}
         <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-hide space-y-6 bg-white">
           <form onSubmit={handleSubmit} id="create-task-form" className="space-y-6">
-            
+
             {/* Task Title (Big Textarea like Drawer) */}
             <textarea
               name="title"
@@ -444,12 +441,16 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               <button
                 type="button"
                 onClick={() => setActivePicker("tags")}
-                className="flex items-center gap-2 hover:bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200 transition-all cursor-pointer text-xs font-semibold text-gray-600"
+                className="flex items-center gap-2 hover:bg-gray-50 rounded-full px-3 py-1.5  transition-all cursor-pointer text-xs font-semibold text-gray-600"
               >
                 {selectedTags.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {selectedTags.map((tag) => (
-                      <span key={tag._id} className="bg-gray-100 text-gray-800 px-2 py-0.5 rounded text-[11px]">
+                      <span key={tag._id} className="px-2.5 py-1.5 rounded-lg text-[14px] shrink-0]" style={{
+                        backgroundColor: tag.color + "15",
+                        borderColor: tag.color + "40",
+                        color: tag.color
+                      }}>
                         {tag.name}
                       </span>
                     ))}
@@ -496,8 +497,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h4 className="text-xl font-bold text-gray-800">
-                {activePicker === "time" ? "Select Due Time" : 
-                 activePicker === "participants" ? "Assign Teammates" : "Manage Tags"}
+                {activePicker === "time" ? "Select Due Time" :
+                  activePicker === "participants" ? "Assign Teammates" : "Manage Tags"}
               </h4>
               <button type="button" onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full cursor-pointer">
                 <CloseCircle className="w-5 h-5 text-gray-400" />

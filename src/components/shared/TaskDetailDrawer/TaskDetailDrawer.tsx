@@ -404,7 +404,8 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
 
                 {/* Side Picker Panel */}
                 <div className={cn(
-                    "absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 w-96 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md z-[99999]",
+                    "absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md z-[99999]",
+                    activePicker === "time" ? "w-[580px]" : "w-96",
                     activePicker ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10 pointer-events-none"
                 )}>
                     {activePicker === "time" && (
