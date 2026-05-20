@@ -84,8 +84,8 @@ const SpreadsheetView: React.FC<SpreadsheetViewProps> = ({
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 pr-4 py-3 bg-white rounded-full text-sm w-full focus:outline-none border border-gray-200/70
-             transition-all placeholder:text-gray-400 font-semibold"
+              className="pl-11 pr-4 py-3 bg-white rounded-full text-md w-full focus:outline-none border border-gray-200/70
+             transition-all placeholder:text-gray-400 "
             />
           </div>
           {/* Status Pills */}

@@ -40,18 +40,16 @@ export default function NavList({
             )}
             <Link
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all duration-150 relative group z-10 ${
-                isActive
-                  ? "text-white"
-                  : "text-gray-600 hover:bg-white/70 hover:text-gray-800"
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-full text-sm font-semibold transition-all duration-150 relative group z-10 ${isActive
+                ? "text-white"
+                : "text-gray-600 hover:bg-white/70 hover:text-gray-800"
+                }`}
             >
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${
-                  isActive
-                    ? "bg-white/15 border border-white/20 shadow-[0_6px_16px_-10px_rgba(15,23,42,0.4)]"
-                    : "bg-white/70 border border-white/60 group-hover:border-white"
-                }`}
+                className={`flex h-9 w-9 items-center justify-center rounded-full transition-all ${isActive
+                  ? "bg-white/15 border border-white/20 shadow-[0_6px_16px_-10px_rgba(15,23,42,0.4)]"
+                  : "bg-white/70 border border-white/60 group-hover:border-white"
+                  }`}
               >
                 {Icon ? (
                   <Icon
