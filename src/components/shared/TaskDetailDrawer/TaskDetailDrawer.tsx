@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
+import AuthContext from "@/contexts/authContext/authContext";
 import { createPortal } from "react-dom";
-import { CloseCircle, CheckCircle, TrashBinMinimalistic } from "@solar-icons/react";
+import { UsersGroupRounded, Calendar } from "@solar-icons/react";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
 import { TaskAttachment } from "@/types/interface/task.interface";
@@ -17,18 +18,20 @@ import {
     DateTimePicker,
     ParticipantsPicker,
     DeleteConfirmModal,
+    TaskDrawerHeader,
+    TaskMetadataSection,
+    CommentsSection,
 } from "./components";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
 import TagPicker from "@/components/shared/TagPicker/TagPicker";
 import { ITag } from "@/types/interface/tag.interface";
 import useProjects from "@/hooks/useProjects";
-import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
 
 interface TaskDetailDrawerProps {
     isOpen: boolean;
     onClose: () => void;
     task: any;
-    onEditTask: (taskId: string, updates: any) => void;
+    onEditTask: (taskId: string, updates: any, silent?: boolean) => void;
     onDeleteTask: (taskId: string) => void;
     onAddSubtask: (taskId: string) => void;
     onAssignTask: (taskId: string, userId: string) => void;
@@ -45,6 +48,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     onAssignTask,
     onUnassignTask,
 }) => {
+    const { user: currentUser } = useContext(AuthContext);
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -55,6 +59,13 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     const [activePicker, setActivePicker] = useState<"time" | "participants" | "tags" | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Premium Interactive States
+    const [isPriorityDropdownOpen, setIsPriorityDropdownOpen] = useState(false);
+    const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<"comments" | "updates">("comments");
+    const [commentText, setCommentText] = useState("");
+    const [comments, setComments] = useState<Array<{ id: string; author: string; avatar?: string; time: string; text: string }>>([]);
 
     // Calendar States
     const [viewDate, setViewDate] = useState(new Date());
@@ -73,6 +84,19 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
     // User search
     const { users: allUsers } = useGetUsers();
     const [searchQuery, setSearchQuery] = useState("");
+    const headerFileInputRef = React.useRef<HTMLInputElement>(null);
+    const titleRef = React.useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        if (isOpen && titleRef.current) {
+            setTimeout(() => {
+                if (titleRef.current) {
+                    titleRef.current.style.height = 'auto';
+                    titleRef.current.style.height = titleRef.current.scrollHeight + 'px';
+                }
+            }, 0);
+        }
+    }, [formData.title, isOpen]);
 
     const filteredUsers = (Array.isArray(allUsers) ? allUsers : []).filter((u: any) => {
         const term = searchQuery.toLowerCase().trim();
@@ -116,6 +140,7 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 setSelAmPm("AM");
             }
 
+            setComments((task as any).comments || []);
             document.body.style.overflow = "hidden";
         } else {
             document.body.style.overflow = "";
@@ -159,23 +184,50 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                 ...newAttachments
             ],
             tag_object_id_list: task?.tags?.map((t: any) => t._id)
-        });
+        }, false);
         setIsSaving(false);
         onClose();
     };
 
-    // Attachment Handlers
-    const handleAddFiles = (files: File[]) => {
+    // Attachment Handlers — auto-save on add/remove so files persist to DB immediately
+    const handleAddFiles = async (files: File[]) => {
         const newAtts = files.map(file => ({ file, description: "" }));
-        setNewAttachments(prev => [...prev, ...newAtts].slice(0, 10 - existingAttachments.length));
+        const allNew = [...newAttachments, ...newAtts].slice(0, 10 - existingAttachments.length);
+        setNewAttachments(allNew);
+
+        // Immediately upload to server
+        await onEditTask(task._id, {
+            attachments: [
+                ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
+                ...allNew
+            ],
+        }, true);
+
+        // After successful upload, refetch will update task.attachments via props,
+        // so reset newAttachments (they are now existing on the server)
+        setNewAttachments([]);
+    };
+
+    const handleHeaderFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            handleAddFiles(Array.from(files));
+        }
+        if (headerFileInputRef.current) headerFileInputRef.current.value = "";
     };
 
     const handleRemoveNewAttachment = (index: number) => {
         setNewAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleRemoveExistingAttachment = (index: number) => {
-        setExistingAttachments(prev => prev.filter((_, i) => i !== index));
+    const handleRemoveExistingAttachment = async (index: number) => {
+        const updated = existingAttachments.filter((_, i) => i !== index);
+        setExistingAttachments(updated);
+
+        // Persist removal to server immediately
+        await onEditTask(task._id, {
+            attachments: updated.map(att => ({ url: att.url, description: att.description })),
+        }, true);
     };
 
     const handleUpdateNewDescription = (index: number, description: string) => {
@@ -200,11 +252,41 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
         onUnassignTask(task._id, userId);
     };
 
-    if (typeof document === "undefined") return null;
+    const handleSendComment = () => {
+        if (!commentText.trim()) return;
+        const authorName = currentUser?.full_name || "Anonymous";
+        const authorAvatar = (currentUser as any)?.profile_picture || (currentUser as any)?.avatar || "";
+        const timeString = new Date().toLocaleDateString(undefined, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+
+        const newComment = {
+            id: String(Date.now()),
+            author: authorName,
+            avatar: authorAvatar,
+            time: timeString,
+            text: commentText.trim()
+        };
+
+        const updatedComments = [...comments, newComment];
+
+        // Optimistic UI update
+        setComments(updatedComments);
+        setCommentText("");
+
+        // Persist comment list update to backend silently
+        onEditTask(task._id, { comments: updatedComments }, true);
+    };
+
+    if (typeof document === "undefined" || !task) return null;
 
     const currentDueDate = task?.due_date
         ? new Date(task.due_date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
         : "Select Due Date";
+
+    const selectedProject = projects.find(p => p._id === formData.project_object_id);
 
     return createPortal(
         <div
@@ -214,58 +296,90 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
             )}
             onClick={onClose}
         >
-            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
             <div
                 className={cn(
-                    "absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col",
+                    "absolute top-0 right-0 h-full w-full max-w-xl bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col border-l border-gray-100",
                     isOpen ? "translate-x-0" : "translate-x-full"
                 )}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Header */}
-                <div className="m-3 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold flex items-center gap-2">Task Details</h2>
-                        <div className="flex items-center gap-2">
-                            <button type="button" onClick={() => setShowDeleteConfirm(true)} className="p-2 hover:bg-white/30 rounded-full transition-colors">
-                                <TrashBinMinimalistic className="w-5 h-5 text-white" />
-                            </button>
-                            <button type="button" onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-                                <CloseCircle className="w-5 h-5" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                {/* Header Action Bar */}
+                <TaskDrawerHeader
+                    phaseName={task?.phase_details?.name || ""}
+                    onSave={handleSave}
+                    onDeleteClick={() => setShowDeleteConfirm(true)}
+                    onClose={onClose}
+                    onAddAttachmentClick={() => headerFileInputRef.current?.click()}
+                />
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto px-5 py-4 scrollbar-hide">
-                    <form id="edit-task-form" className="space-y-8 pb-6">
-                        <GeneralInfoSection formData={formData} onChange={handleChange} />
-                        <ScheduleSection
-                            currentDueDate={currentDueDate}
-                            priority={formData.priority}
-                            activePicker={activePicker}
-                            onTogglePicker={() => setActivePicker(activePicker === "time" ? null : "time")}
-                            onPriorityChange={(p) => setFormData(prev => ({ ...prev, priority: p }))}
+                <input
+                    ref={headerFileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                    onChange={handleHeaderFileChange}
+                    className="hidden"
+                />
+
+                {/* Content Panel */}
+                <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-hide space-y-6">
+                    {/* Task Title (Inline Editable) */}
+                    <textarea
+                        ref={titleRef}
+                        name="title"
+                        value={formData.title}
+                        onChange={(e) => {
+                            handleChange(e);
+                            e.target.style.height = 'auto';
+                            e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
+                        onBlur={handleSave}
+                        placeholder="Schedule me an appointment..."
+                        rows={1}
+                        className="w-full text-2xl sm:text-3xl text-gray-900 tracking-tight leading-snug border-none p-0 focus:ring-0 focus:outline-none placeholder:text-gray-300 resize-none overflow-hidden bg-transparent focus-visible:outline-none"
+                    />
+
+                    {/* Metadata Properties Rows */}
+                    <TaskMetadataSection
+                        task={task}
+                        formData={formData}
+                        setFormData={setFormData}
+                        projects={projects}
+                        currentDueDate={currentDueDate}
+                        onEditTask={onEditTask}
+                        setActivePicker={setActivePicker}
+                        isProjectDropdownOpen={isProjectDropdownOpen}
+                        setIsProjectDropdownOpen={setIsProjectDropdownOpen}
+                        isPriorityDropdownOpen={isPriorityDropdownOpen}
+                        setIsPriorityDropdownOpen={setIsPriorityDropdownOpen}
+                    />
+
+                    {/* Description Textarea */}
+                    <div className="space-y-2 max-w-lg pt-4">
+                        <label className="block text-sm font-bold text-gray-800 tracking-tight">Description</label>
+                        <textarea
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            onBlur={handleSave}
+                            placeholder="Provide context or instructions..."
+                            rows={4}
+                            className="w-full p-4 border border-gray-200/60 rounded-2xl outline-none text-sm font-medium text-gray-700 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/70 transition-all placeholder:text-gray-400 resize-none bg-white focus-visible:outline-none"
                         />
-                        <ProjectSelect
-                            projects={projects}
-                            selectedProjectId={formData.project_object_id}
-                            onProjectChange={(id) => setFormData(prev => ({ ...prev, project_object_id: id }))}
-                        />
-                        <AssigneesSection
-                            assignees={task?.assignees || []}
-                            onManageClick={() => setActivePicker("participants")}
-                        />
-                        <TagsSection
-                            tags={task?.tags || []}
-                            onManageClick={() => setActivePicker("tags")}
-                        />
+                    </div>
+
+                    {/* Subtasks Section */}
+                    <div className="pt-2 max-w-lg">
                         <SubtasksSection
                             subtasks={task?.subtask || []}
                             onAddSubtask={() => { onAddSubtask(task._id); onClose(); }}
                         />
+                    </div>
+
+                    {/* Attachments Section */}
+                    <div className="pt-2 max-w-lg">
                         <AttachmentsSection
                             attachments={newAttachments}
                             existingAttachments={existingAttachments}
@@ -275,30 +389,22 @@ const TaskDetailDrawer: React.FC<TaskDetailDrawerProps> = ({
                             onUpdateDescription={handleUpdateNewDescription}
                             onUpdateExistingDescription={handleUpdateExistingDescription}
                         />
-                    </form>
-                </div>
-
-                {/* Footer */}
-                <div className="p-6 bg-white border-t border-gray-100 shrink-0 shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.05)]">
-                    <div className="flex gap-4">
-                        <button type="button" onClick={onClose} disabled={isSaving}
-                            className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-500 text-xs font-bold hover:bg-gray-50 transition-all active:scale-95">
-                            Cancel
-                        </button>
-                        <button type="button" onClick={handleSave} disabled={isSaving}
-                            className="flex-[2] h-12 rounded-xl bg-black/80 text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-orange-600 transition-all active:scale-95 shadow-xl shadow-gray-200">
-                            {isSaving ? (
-                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                                <><CheckCircle className="w-5 h-5" />Save Changes</>
-                            )}
-                        </button>
                     </div>
+
+                    {/* Tabs & Live Comments Section */}
+                    <CommentsSection
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        commentText={commentText}
+                        setCommentText={setCommentText}
+                        comments={comments}
+                        onSendComment={handleSendComment}
+                    />
                 </div>
 
                 {/* Side Picker Panel */}
                 <div className={cn(
-                    "absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 w-96 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md",
+                    "absolute top-1/2 -translate-y-1/2 right-[100%] mr-4 w-96 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform border border-white/40 backdrop-blur-md z-[99999]",
                     activePicker ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10 pointer-events-none"
                 )}>
                     {activePicker === "time" && (

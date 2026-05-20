@@ -39,10 +39,13 @@ export const useTasks = (filters: any = DEFAULT_FILTERS, searchQuery: string = "
   // Track page for each section
   const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
   const lastSectionIdRef = useRef<string | null>(null);
+  const isInitialLoadRef = useRef(true);
 
-  const fetchTasks = useCallback(async (targetPhaseId?: string) => {
+  const fetchTasks = useCallback(async (targetPhaseId?: string, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent && isInitialLoadRef.current) {
+        setLoading(true);
+      }
       setError(null);
 
       // 1. Fetch phases
@@ -95,6 +98,7 @@ export const useTasks = (filters: any = DEFAULT_FILTERS, searchQuery: string = "
       toast.error(msg);
     } finally {
       setLoading(false);
+      isInitialLoadRef.current = false;
     }
   }, [filters, searchQuery, sectionPages, itemsPerPage]);
 
@@ -119,42 +123,36 @@ export const useTasks = (filters: any = DEFAULT_FILTERS, searchQuery: string = "
 
   const handleCreateTask = async (payload: TaskCreatePayload) => {
     const res = await createTask(payload);
-    toast.success("Task created");
     fetchTasks();
     return res;
   };
 
   const handleUpdateTask = async (taskId: string, payload: object) => {
     const res = await updateTaskStatus(taskId, payload);
-    toast.success("Task updated");
     fetchTasks();
     return res;
   };
 
   const handleDeleteTask = async (taskId: string) => {
     await deleteTask(taskId);
-    toast.success("Task deleted");
     fetchTasks();
   };
 
   const handleAssignTask = async (taskId: string, userId: string) => {
     const res = await assignTask(taskId, userId);
-    toast.success("User assigned");
     fetchTasks();
     return res;
   };
 
   const handleUnassignTask = async (taskId: string, userId: string) => {
     const res = await unassignTask(taskId, userId);
-    toast.success("User unassigned");
     fetchTasks();
     return res;
   };
 
-  const handleEditTask = async (taskId: string, payload: TaskUpdatePayload) => {
+  const handleEditTask = async (taskId: string, payload: TaskUpdatePayload, silent = false) => {
     const res = await updateTask(taskId, payload);
-    toast.success("Task updated");
-    fetchTasks();
+    fetchTasks(undefined, silent);
     return res;
   };
 

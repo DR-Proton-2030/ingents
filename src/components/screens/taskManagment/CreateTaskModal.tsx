@@ -2,25 +2,39 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { CloseCircle, CheckCircle } from "@solar-icons/react";
+import { CloseCircle, CheckCircle as CheckCircleIcon, Calendar as CalendarIcon, UsersGroupRounded } from "@solar-icons/react";
+import { ChevronDown, Clock } from "lucide-react";
 import type { CreateTaskModalProps, TaskFormData, AttachmentInput } from "@/types/interface/task-modal.interface";
 import useGetUsers from "@/hooks/getUsers/useGetUsers";
 import { IUser } from "@/types/interface/user.interface";
 import { cn } from "@/lib/utils";
 import {
-  CreateGeneralInfo,
-  CreateSchedule,
-  CreateAssignees,
-  CreateTags,
   CreateDateTimePicker,
   CreateParticipantsPicker,
 } from "./components";
 import TagPicker from "@/components/shared/TagPicker/TagPicker";
 import { ITag } from "@/types/interface/tag.interface";
 import AttachmentsSection from "@/components/shared/attachments/AttachmentsSection";
-import PhaseSelect from "@/components/shared/PhaseSelect/PhaseSelect";
 import useProjects from "@/hooks/useProjects";
-import ProjectSelect from "@/components/shared/ProjectSelect/ProjectSelect";
+
+const AVATAR_COLORS = [
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-green-500",
+  "bg-pink-500",
+  "bg-orange-500",
+  "bg-indigo-500",
+  "bg-red-500",
+  "bg-teal-500",
+];
+
+const getAvatarColor = (seed: string) => {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+};
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   isOpen,
@@ -53,6 +67,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [selectedTags, setSelectedTags] = useState<ITag[]>([]);
   const [activePicker, setActivePicker] = useState<"time" | "participants" | "tags" | null>(null);
   const [attachments, setAttachments] = useState<AttachmentInput[]>([]);
+
+  // Dropdown States
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const [isPriorityDropdownOpen, setIsPriorityDropdownOpen] = useState(false);
 
   // Custom Picker States
   const [viewDate, setViewDate] = useState(new Date());
@@ -91,6 +110,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       setActivePicker(null);
       setSearchQuery("");
       setSelectedTags([]);
+      setIsStatusDropdownOpen(false);
+      setIsProjectDropdownOpen(false);
+      setIsPriorityDropdownOpen(false);
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -133,7 +155,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title.trim()) return alert("Title is required");
+    if (!formData.title.trim()) return;
     setIsSubmitting(true);
     await onSubmit({
       ...formData,
@@ -163,6 +185,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   if (typeof document === "undefined") return null;
 
+  const selectedProject = projects.find(p => p._id === formData.project_object_id);
+  const selectedPhase = phases.find(p => p._id === formData.phase_object_id);
+
   return createPortal(
     <div
       className={cn(
@@ -171,94 +196,294 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       )}
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
 
       <div
         className={cn(
-          "absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col",
+          "absolute top-0 right-0 h-full w-full max-w-xl bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col border-l border-gray-100",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="m-3 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">Create New Task</h2>
-            <button type="button" onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-              <CloseCircle className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 scrollbar-hide">
-          <form onSubmit={handleSubmit} id="create-task-form" className="space-y-8 pb-6">
-            <CreateGeneralInfo
-              title={formData.title}
-              description={formData.description}
-              onChange={handleChange}
-            />
-            <PhaseSelect
-              phases={phases}
-              selectedPhaseId={formData.phase_object_id}
-              onPhaseChange={(id) => setFormData(prev => ({ ...prev, phase_object_id: id }))}
-            />
-            <ProjectSelect
-              projects={projects}
-              selectedProjectId={formData.project_object_id}
-              onProjectChange={(id) => setFormData(prev => ({ ...prev, project_object_id: id }))}
-            />
-            <CreateSchedule
-              dueDate={formData.due_date}
-              priority={formData.priority}
-              activePicker={activePicker}
-              onTogglePicker={() => setActivePicker(activePicker === "time" ? null : "time")}
-              onPriorityChange={(p) => setFormData(prev => ({ ...prev, priority: p }))}
-            />
-            <CreateAssignees
-              selectedUsers={selectedUsers}
-              onManageClick={() => setActivePicker("participants")}
-            />
-            <CreateTags
-              selectedTags={selectedTags}
-              onManageClick={() => setActivePicker("tags")}
-            />
-            <AttachmentsSection
-              attachments={attachments}
-              onAddFiles={handleAddFiles}
-              onRemoveAttachment={handleRemoveAttachment}
-              onUpdateDescription={handleUpdateDescription}
-            />
-          </form>
-        </div>
-
-        {/* Footer Actions */}
-        <div className="p-6 bg-white border-t border-gray-100 shrink-0 shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.05)]">
-          <div className="flex gap-4">
+        {/* Premium Header */}
+        <div className="h-16 px-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-500 text-xs font-bold hover:bg-gray-50 transition-all active:scale-95"
+              className="p-1.5 hover:bg-gray-50 rounded-full transition-all text-gray-500 hover:text-gray-700 cursor-pointer"
             >
-              Discard
+              <CloseCircle className="w-5 h-5" />
             </button>
+            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+              New Task Creation
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
               type="submit"
               form="create-task-form"
               disabled={isSubmitting}
-              className="flex-[2] h-12 rounded-xl bg-black/80 text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-orange-600 transition-all active:scale-95 shadow-xl shadow-gray-200"
+              className="px-4 py-2 rounded-xl bg-black text-white text-xs font-bold hover:bg-orange-500 transition-all flex items-center gap-2 shadow-md shadow-black/5 active:scale-95 cursor-pointer"
             >
               {isSubmitting ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  <CheckCircle className="w-5 h-5" />
+                  <CheckCircleIcon className="w-4 h-4" />
                   Create Task
                 </>
               )}
             </button>
           </div>
+        </div>
+
+        {/* Content Panel */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 scrollbar-hide space-y-6 bg-white">
+          <form onSubmit={handleSubmit} id="create-task-form" className="space-y-6">
+            
+            {/* Task Title (Big Textarea like Drawer) */}
+            <textarea
+              name="title"
+              value={formData.title}
+              onChange={(e) => {
+                handleChange(e);
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+              placeholder="Schedule me an appointment..."
+              rows={1}
+              className="w-full text-2xl sm:text-3xl text-gray-900 tracking-tight leading-snug border-none p-0 focus:ring-0 focus:outline-none placeholder:text-gray-300 resize-none overflow-hidden bg-transparent focus-visible:outline-none font-bold"
+              required
+            />
+
+            {/* Metadata Properties Rows */}
+            <div className="space-y-3">
+              {/* Assignee Row */}
+              <div className="flex items-center gap-3">
+                <span className="w-28 text-sm text-gray-700 font-semibold">Assignee</span>
+                <div
+                  onClick={() => setActivePicker("participants")}
+                  className="flex items-center gap-2 hover:bg-gray-50 rounded-full px-2.5 py-1.5 transition-all cursor-pointer border border-transparent hover:border-gray-200/50"
+                >
+                  {selectedUsers.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex -space-x-1.5">
+                        {selectedUsers.map((u: any) => (
+                          <div key={u._id || u.id} className="w-6 h-6 rounded-full border border-white bg-gray-200 overflow-hidden shadow-sm">
+                            {u.profile_picture ? (
+                              <img src={u.profile_picture} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className={cn(
+                                "w-full h-full flex items-center justify-center text-[8px] font-bold text-white uppercase",
+                                getAvatarColor(u._id || u.id || u.full_name || "")
+                              )}>
+                                {u.full_name?.charAt(0) || "?"}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-800">
+                        {selectedUsers.map((u: any) => u.full_name).join(", ")}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-400">
+                      <UsersGroupRounded className="w-4.5 h-4.5" />
+                      <span>Unassigned</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Due Date Row */}
+              <div className="flex items-center gap-3">
+                <span className="w-28 text-sm text-gray-700 font-semibold">Due Date</span>
+                <div
+                  onClick={() => setActivePicker("time")}
+                  className="flex items-center gap-2 hover:bg-gray-50 rounded-full px-2.5 py-1.5 transition-all cursor-pointer border border-transparent hover:border-gray-200/50 text-sm text-gray-800"
+                >
+                  <CalendarIcon className="w-4.5 h-4.5 text-gray-400" />
+                  <span>{formData.due_date ? new Date(formData.due_date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : "Select Due Date"}</span>
+                </div>
+              </div>
+
+              {/* Projects Dropdown */}
+              <div className="flex items-center gap-3 relative">
+                <span className="w-28 text-sm text-gray-700 font-semibold">Projects</span>
+                <button
+                  type="button"
+                  onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                  className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-full hover:bg-blue-100 text-sm text-blue-600 transition-all cursor-pointer font-semibold"
+                >
+                  <span>{selectedProject ? selectedProject.name : "Select Project"}</span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-80" />
+                </button>
+                {isProjectDropdownOpen && (
+                  <div className="absolute top-full left-32 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-[99999] p-1 flex flex-col gap-1 w-56 max-h-64 overflow-y-auto">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev: any) => ({ ...prev, project_object_id: null }));
+                        setIsProjectDropdownOpen(false);
+                      }}
+                      className="text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 text-gray-700 transition-all"
+                    >
+                      None
+                    </button>
+                    {projects.map((p) => (
+                      <button
+                        key={p._id}
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev: any) => ({ ...prev, project_object_id: p._id }));
+                          setIsProjectDropdownOpen(false);
+                        }}
+                        className="text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 text-gray-700 transition-all"
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Fields Grid Box */}
+              <div className="flex items-start gap-3">
+                <span className="w-28 text-sm text-gray-700 font-semibold mt-2.5">Fields</span>
+                <div className="flex-1 border border-gray-200/60 rounded-2xl bg-white max-w-md relative">
+                  {/* Status Column */}
+                  <div className="flex items-center border-b border-gray-100 divide-x divide-gray-100 rounded-t-2xl">
+                    <div className="w-1/3 px-4 py-3.5 flex items-center gap-2 text-xs text-gray-700">
+                      <CheckCircleIcon className="w-4.5 h-4.5 text-gray-700" />
+                      <span>Status</span>
+                    </div>
+                    <div className="w-2/3 px-4 py-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+                        className="px-3 py-1.5 rounded-lg text-xs transition-all bg-amber-50 text-amber-700 font-semibold flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <div
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{ backgroundColor: selectedPhase?.color || "#8350e8" }}
+                        />
+                        {selectedPhase?.name || "Select Phase"}
+                      </button>
+                      {isStatusDropdownOpen && (
+                        <div className="absolute top-full left-1/3 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-[99999] p-1 flex flex-col gap-1 w-44 max-h-64 overflow-y-auto">
+                          {phases.map((p) => (
+                            <button
+                              key={p._id}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev: any) => ({ ...prev, phase_object_id: p._id }));
+                                setIsStatusDropdownOpen(false);
+                              }}
+                              className="text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 text-gray-700 transition-all flex items-center gap-2 cursor-pointer"
+                            >
+                              <div
+                                className="w-1.5 h-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: p.color || "#8350e8" }}
+                              />
+                              {p.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Priority Column */}
+                  <div className="flex items-center divide-x divide-gray-100 relative rounded-b-2xl z-10">
+                    <div className="w-1/3 px-4 py-3.5 flex items-center gap-2 text-xs text-gray-700">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      <span>Priority</span>
+                    </div>
+                    <div className="w-2/3 px-4 py-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsPriorityDropdownOpen(!isPriorityDropdownOpen)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs transition-all font-semibold cursor-pointer",
+                          formData.priority === "High" ? "bg-red-50 text-red-600 border-red-100" :
+                            formData.priority === "Low" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                              "bg-blue-50 text-blue-600"
+                        )}
+                      >
+                        {formData.priority}
+                      </button>
+                      {isPriorityDropdownOpen && (
+                        <div className="absolute top-full left-1/3 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-[99999] p-1 flex flex-col gap-1 w-28">
+                          {(["High", "Normal", "Low"] as const).map((p) => (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev: any) => ({ ...prev, priority: p }));
+                                setIsPriorityDropdownOpen(false);
+                              }}
+                              className="text-left px-3 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 text-gray-700 transition-all cursor-pointer"
+                            >
+                              {p}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tags Section */}
+            <div className="flex items-center gap-3">
+              <span className="w-28 text-sm text-gray-700 font-semibold">Tags</span>
+              <button
+                type="button"
+                onClick={() => setActivePicker("tags")}
+                className="flex items-center gap-2 hover:bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200 transition-all cursor-pointer text-xs font-semibold text-gray-600"
+              >
+                {selectedTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedTags.map((tag) => (
+                      <span key={tag._id} className="bg-gray-100 text-gray-800 px-2 py-0.5 rounded text-[11px]">
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <span>Manage Tags</span>
+                )}
+              </button>
+            </div>
+
+            {/* Description Textarea */}
+            <div className="space-y-2 max-w-lg pt-4">
+              <label className="block text-sm font-bold text-gray-800 tracking-tight">Description</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="Provide context or instructions..."
+                rows={4}
+                className="w-full p-4 border border-gray-200/60 rounded-2xl outline-none text-sm font-medium text-gray-700 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500/70 transition-all placeholder:text-gray-400 resize-none bg-white focus-visible:outline-none"
+              />
+            </div>
+
+            {/* Attachments Section */}
+            <div className="pt-2 max-w-lg">
+              <AttachmentsSection
+                attachments={attachments}
+                onAddFiles={handleAddFiles}
+                onRemoveAttachment={handleRemoveAttachment}
+                onUpdateDescription={handleUpdateDescription}
+              />
+            </div>
+
+          </form>
         </div>
 
         {/* Side Picker Panel */}
@@ -274,7 +499,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                 {activePicker === "time" ? "Select Due Time" : 
                  activePicker === "participants" ? "Assign Teammates" : "Manage Tags"}
               </h4>
-              <button type="button" onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full">
+              <button type="button" onClick={() => setActivePicker(null)} className="p-1 hover:bg-gray-50 rounded-full cursor-pointer">
                 <CloseCircle className="w-5 h-5 text-gray-400" />
               </button>
             </div>

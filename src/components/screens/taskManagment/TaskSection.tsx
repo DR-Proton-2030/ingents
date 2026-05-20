@@ -63,74 +63,33 @@ const TaskSection: React.FC<TaskSectionProps> = ({
 
   return (
     <div className="mb-8">
-      {/* Section Header */}
-      <div className="flex items-center gap-3 mb-3">
 
-
-        {/* Section Badge */}
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-full  "
-          style={{
-            backgroundColor: sectionColor,
-
-          }}
-        >
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-0.5 hover:bg-white/20 rounded-lg"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-white" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-white" />
-            )}
-          </button>
-          <div className="text-white text-sm -ml-1">{section.title}</div>
-        </div>
-
-        {/* Task Count */}
-        <span
-          className="text-[11px] w-8 h-8 flex items-center justify-center rounded-full font-black "
-          style={{
-            backgroundColor: sectionColor,
-            color: 'white'
-          }}
-        >
-          {section.count}
-        </span>
-
-
-
-      </div>
 
       {/* Task Table */}
       {!isCollapsed && (
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200 ">
+        <div className="bg-white rounded-xl border border-gray-200/50 overflow-hidden">
+          <table className="w-full table-fixed">
+            <thead className="bg-gray-100">
               <tr>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-left py-3 pl-10 text-sm font-bold text-gray-500 w-auto">
                   Task
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Description
-                </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-left py-3 pl-0  text-sm font-semibold text-gray-500 w-[140px]">
                   Assignee
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-left py-3 px-2 text-sm font-semibold text-gray-500 w-[140px]">
                   Status
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-left py-3 px-2 text-sm font-semibold text-gray-500 w-[130px]">
                   Due Date
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-left py-3 px-2 text-sm font-semibold text-gray-500 w-[110px]">
                   Tags
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="text-left py-3 px-2 text-sm font-semibold text-gray-500 w-[110px]">
                   Priority
                 </th>
-                <th className="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                <th className="text-right py-3 pr-8 text-sm font-semibold text-gray-500 w-[80px]">
                   Actions
                 </th>
               </tr>
@@ -176,17 +135,17 @@ const TaskSection: React.FC<TaskSectionProps> = ({
           </table>
 
           {/* Add Task Row */}
-          <button
+          {/* <button
             onClick={() => onAddTask?.(section.id)}
-            className="w-full py-3 px-4 text-left text-sm text-gray-500 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
+            className="w-full py-3 px-1 text-left text-sm text-gray-500 hover:bg-gray-50 flex items-center gap-2 border-t border-gray-100"
           >
             <Plus className="w-4 h-4" />
             Add task
-          </button>
+          </button> */}
 
           {/* Section Pagination */}
           {section.tasks.length > 0 && (
-            <div className="border-t border-gray-100 px-4 bg-gray-50/30">
+            <div className="border-t border-gray-100 px-1 bg-gray-50/30">
               <Pagination
                 currentPage={section.currentPage}
                 totalPages={section.totalPages}

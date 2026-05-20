@@ -7,8 +7,10 @@ import {
     Document,
     AddCircle,
     AltArrowDown,
-    CheckCircle
+    CheckCircle,
+    CheckRead
 } from "@solar-icons/react";
+import { Plus } from "lucide-react";
 import useProjects from "@/hooks/useProjects";
 import { IProject } from "@/types/interface/project.interface";
 
@@ -69,23 +71,32 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
     }
 
     return (
-        <div className="relative">
+        <div className="relative flex items-center gap-2">
+            {/* Title / Selected Project */}
+            <div className="text-xl sm:text-2xl font-semibold text-slate-700 tracking-tight">
+                {selectedProject ? selectedProject.name : "All Taks"}
+            </div>
+
+            {/* Dropdown Toggle Button (Blue Circle) */}
             <button
                 ref={triggerRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "group flex items-center gap-3 py-2 px-4 bg-white shadow-lg shadow-gray-100 backdrop-blur-md  rounded-2xl  ",
-                    isOpen && "border-blue-200 bg-white ring-4 ring-blue-500/5 shadow-md"
+                    "w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 active:scale-95 transition-all  shadow-blue-500/20 shrink-0",
+                    isOpen && "ring-4 ring-blue-500/25"
                 )}
+                title="Select Project"
             >
+                <AltArrowDown className={cn("w-4 h-4 text-white transition-transform duration-300", isOpen && "rotate-180")} />
+            </button>
 
-                <div className="flex flex-col text-left min-w-[80px]">
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-wider leading-none mb-1">Project</p>
-                    <p className="text-sm font-black text-gray-900 leading-none truncate max-w-[120px]">
-                        {selectedProject ? selectedProject.name : "Select Project"}
-                    </p>
-                </div>
-                <AltArrowDown className={cn("w-4 h-4 text-gray-400 transition-transform duration-500 ease-in-out", isOpen && "rotate-180 text-blue-500")} />
+            {/* Create Project Button (Gray Circle) */}
+            <button
+                onClick={onOpenCreateDrawer}
+                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 active:scale-95 transition-all flex items-center justify-center shrink-0"
+                title="Create New Project"
+            >
+                <Plus className="w-4 h-4 text-gray-600" />
             </button>
 
             {typeof document !== "undefined" && createPortal(
@@ -97,7 +108,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 8, scale: 0.98 }}
                                 transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                                className="fixed p-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-white flex flex-col gap-1 overflow-hidden"
+                                className="fixed p-2 bg-white rounded-2xl border-2 border-gray-100 flex flex-col gap-1 overflow-hidden"
                                 style={{
                                     top: position.top,
                                     left: position.left,
@@ -105,9 +116,6 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                <div className="px-3 py-2 border-b border-gray-50 mb-1">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Projects</p>
-                                </div>
 
                                 <div className="max-h-64 overflow-y-auto scrollbar-hide py-1">
                                     <button
@@ -116,15 +124,14 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                                             setIsOpen(false);
                                         }}
                                         className={cn(
-                                            "w-full flex items-center justify-between p-3 rounded-xl transition-all text-left group/item mb-1",
-                                            !selectedProjectId ? "bg-orange-50 text-orange-600 shadow-sm" : "hover:bg-gray-50 text-gray-600"
+                                            "w-full flex items-center justify-between p-3 rounded-full transition-all text-left group/item mb-1",
+                                            !selectedProjectId ? "bg-gray-100 text-blck/80" : "hover:bg-gray-50 text-gray-600"
                                         )}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className={cn("w-2 h-2 rounded-full", !selectedProjectId ? "bg-orange-500" : "bg-gray-300")} />
                                             <span className="text-sm font-bold">All Tasks</span>
                                         </div>
-                                        {!selectedProjectId && <CheckCircle className="w-4 h-4" />}
+                                        {!selectedProjectId && <CheckRead className="w-6 h-6 text-green-500" />}
                                     </button>
 
                                     {projects.map((project) => (
@@ -135,22 +142,21 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                                                 setIsOpen(false);
                                             }}
                                             className={cn(
-                                                "w-full flex items-center justify-between p-3 rounded-xl transition-all text-left group/item mb-1",
-                                                selectedProjectId === project._id ? "bg-blue-50 text-blue-600 shadow-sm" : "hover:bg-gray-50 text-gray-600"
+                                                "w-full flex items-center justify-between p-3 rounded-full transition-all text-left group/item mb-1",
+                                                selectedProjectId === project._id ? "bg-gray-100 text-blck/80" : "hover:bg-gray-50 text-gray-600"
                                             )}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={cn("w-2 h-2 rounded-full", selectedProjectId === project._id ? "bg-blue-500" : "bg-gray-300")} />
                                                 <div className="flex flex-col">
                                                     <span className="text-sm font-bold">{project.name}</span>
                                                 </div>
                                             </div>
-                                            {selectedProjectId === project._id && <CheckCircle className="w-4 h-4" />}
+                                            {selectedProjectId === project._id && <CheckRead className="w-6 h-6 text-green-500" />}
                                         </button>
                                     ))}
                                 </div>
 
-                                <div className="mt-1 pt-1 border-t border-gray-100/50">
+                                {/* <div className="mt-1 pt-1 border-t border-gray-100/50">
                                     <button
                                         onClick={() => {
                                             onOpenCreateDrawer();
@@ -163,7 +169,7 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
                                         </div>
                                         <span className="text-sm font-bold relative z-10">Create New Project</span>
                                     </button>
-                                </div>
+                                </div> */}
                             </motion.div>
                         </div>
                     )}

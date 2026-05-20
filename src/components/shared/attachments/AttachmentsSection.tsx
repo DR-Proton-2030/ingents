@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import AttachmentCard from "./components/AttachmentCard";
 import UploadDropzone from "./components/UploadDropzone";
 import AttachmentPreviewer from "../AttachmentsModal/AttachmentPreviewer";
+import { Plus } from "lucide-react";
 
 interface AttachmentsSectionProps {
     attachments: AttachmentInput[];
@@ -105,10 +106,15 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     };
 
     const combinedForPreview: TaskAttachment[] = [
-        ...existingAttachments.map(att => ({ url: att.url, description: att.description })),
-        ...attachments.map(att => ({ 
-            url: att.file ? URL.createObjectURL(att.file) : (att.url || ""), 
-            description: att.description 
+        ...existingAttachments.map(att => ({ 
+            url: att.url, 
+            description: att.description,
+            isImage: ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(att.url.split("?")[0].split(".").pop()?.toLowerCase() || "")
+        })),
+        ...attachments.map(att => ({
+            url: att.file ? URL.createObjectURL(att.file) : (att.url || ""),
+            description: att.description,
+            isImage: att.file ? att.file.type.startsWith("image/") : ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes((att.url || "").split("?")[0].split(".").pop()?.toLowerCase() || "")
         }))
     ];
 
@@ -118,20 +124,25 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
     return (
         <section className="space-y-4">
             <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-black/80  flex items-center gap-2">
+                <h3 className="text-xs font-bold text-black/80 flex items-center gap-2">
                     <span>Attachments</span>
-                    <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px]">
-                        {totalFiles}/10
-                    </span>
+                    {totalFiles > 0 && (
+                        <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px]">
+                            {totalFiles}/10
+                        </span>
+                    )}
                 </h3>
+
                 {canAddMore && totalFiles > 0 && (
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-[10px] font-bold text-indigo-600 hover:text-indigo-700  bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100 transition-all"
+                        className="text-sm text-primary font-normal
+                bg-gray-100 px-3 py-2 rounded-full transition-all active:scale-95 flex items-center gap-1"
                     >
+                        <Plus className="w-3 h-3" />
                         Add More
                     </motion.button>
                 )}
@@ -163,7 +174,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
             )}
 
             {/* Files List */}
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <AnimatePresence mode="popLayout">
                     {/* Existing Files */}
                     {existingAttachments.map((att, index) => (
@@ -206,10 +217,10 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                         whileHover={{ scale: 1.01, borderColor: "rgb(129, 140, 248)" }}
                         whileTap={{ scale: 0.99 }}
                         onClick={() => fileInputRef.current?.click()}
-                        className="cursor-pointer border-2 border-dashed border-gray-100 rounded-2xl p-4 flex items-center justify-center gap-2 text-gray-400 hover:text-indigo-500 transition-all"
+                        className="cursor-pointer border-2 border-dashed border-gray-100 rounded-2xl p-4 flex items-center justify-center gap-2 text-gray-400  transition-all"
                     >
                         <AddCircle className="w-5 h-5" />
-                        <span className="text-[11px] font-bold uppercase ">Add another asset</span>
+                        <span className="text-[11px]  ">Add another asset</span>
                     </motion.div>
                 )}
             </div>

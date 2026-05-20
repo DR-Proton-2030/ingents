@@ -31,6 +31,11 @@ export default function Sidebar() {
       icon: Home,
     },
     {
+      href: `/${site}/tasks`,
+      label: "Task Management",
+      icon: ArchiveMinimalistic,
+    },
+    {
       href: `/${site}/project-management`,
       label: "Project Management",
       icon: Folder,
@@ -41,21 +46,8 @@ export default function Sidebar() {
       icon: ChatSquare,
     },
 
-    // {
-    //   href: `/${site}/seo-management`,
-    //   label: "Seomi Seo",
-    //   icon: GraphUp,
-    // },
-    // {
-    //   href: `/${site}/finance-ai`,
-    //   label: "Finance AI",
-    //   icon: Wallet,
-    // },
-    {
-      href: `/${site}/tasks`,
-      label: "Task Management",
-      icon: ArchiveMinimalistic,
-    },
+
+
     {
       href: `/${site}/campaigns`,
       label: "Campaigns",

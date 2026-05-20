@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
@@ -21,6 +21,11 @@ export const TeamControl = () => {
   const site = params?.site as string;
   const safeUsers = Array.isArray(users) ? users : [];
   const [modalOpen, setModalOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleOpenChat = (user: IUser) => {
     router.push(`/${site}/team-chat?userId=${user.id}`);
@@ -128,7 +133,7 @@ export const TeamControl = () => {
       </div>
 
       {/* Team Members Drawer - Slides from right */}
-      {typeof window !== "undefined" && createPortal(
+      {mounted && createPortal(
         <div
           className={`fixed inset-0 z-[9999] transition-opacity duration-300 ${modalOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             }`}

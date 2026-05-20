@@ -128,7 +128,7 @@ const AttendancePromptModal = () => {
                   className="bg-green-600 text-white px-10 py-3 cursor-pointer rounded-full font-bold text-sm flex items-center justify-center min-w-[120px]"
                 >
                   {isSubmitting ? (
-                    <div className="w-5 h-5  rounded-full animate-spin" />
+                    "Loading.."
                   ) : (
                     "Yes, Please"
                   )}

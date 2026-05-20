@@ -129,22 +129,32 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
 
       {/* Drawer Panel */}
       <div
-        className={`absolute top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${isOpen ? "translate-x-0" : "translate-x-full"
+        className={`absolute top-0 right-0 h-full w-full max-w-xl bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col border-l border-gray-100 ${isOpen ? "translate-x-0" : "translate-x-full"
           }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="m-3 bg-gradient-to-r from-orange-500 to-orange-400 p-4 text-white shrink-0 rounded-xl">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-
-              Filter Tasks
-            </h2>
+        {/* Premium Header */}
+        <div className="h-16 px-6 border-b border-gray-100 flex items-center justify-between shrink-0 bg-white">
+          <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className="p-1.5 hover:bg-gray-50 rounded-full transition-all text-gray-500 hover:text-gray-700 cursor-pointer"
             >
               <CloseCircle className="w-5 h-5" />
+            </button>
+            <span className="text-[10px] font-black tracking-widest text-gray-400 uppercase">
+              Filter Options
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleClear}
+              className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-bold transition-all active:scale-95 cursor-pointer"
+            >
+              Reset Filters
             </button>
           </div>
         </div>
@@ -327,20 +337,20 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-6 bg-white border-t border-gray-100 shrink-0">
+        <div className="p-6 bg-white border-t border-gray-100 shrink-0 shadow-[0_-10px_40px_-20px_rgba(0,0,0,0.05)]">
           <div className="flex gap-4">
             <button
               onClick={handleClear}
-              className="flex-1 h-13 rounded-2xl border border-gray-200 text-gray-500 text-[11px] font-extrabold uppercase tracking-wider hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all flex items-center justify-center gap-2"
+              className="flex-1 h-12 rounded-xl border border-gray-200 text-gray-500 text-xs font-bold hover:bg-gray-50 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Trash className="w-4 h-4" />
               Reset
             </button>
             <button
               onClick={handleApply}
-              className="flex-[2] h-13 rounded-2xl bg-gradient-to-r from-orange-600 to-orange-500 text-white text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-2 hover:from-orange-700 hover:to-orange-600 transition-all shadow-lg shadow-orange-500/20 active:scale-95"
+              className="flex-[2] h-12 rounded-xl bg-black text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-orange-500 transition-all active:scale-95 shadow-xl shadow-gray-200 cursor-pointer"
             >
-              <CheckCircle className="w-5 h-5" />
+              <CheckCircle className="w-4.5 h-4.5" />
               Apply Filters
             </button>
           </div>
