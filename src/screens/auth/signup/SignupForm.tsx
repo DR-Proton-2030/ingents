@@ -36,7 +36,7 @@ export default function SignupForm(
 
   return (
     <div className="w-full px-4 py-8">
-      <div className=" p-8">
+      <div className="p-0 sm:p-8">
         {/* Stepper */}
         {/* <div className="mb-8">
           <Stepper steps={STEPS} currentStep={currentStep} />
@@ -68,14 +68,14 @@ export default function SignupForm(
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mt-6 px-4 sm:px-8 lg:px-32">
           <div>
             {currentStep === 2 && (
               <button
                 type="button"
                 onClick={goPrevious}
-                className="flex items-center px-8 py-3 bg-gray-700 text-white rounded-full ml-32
-                hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+                className="flex items-center px-6 py-3 bg-gray-700 text-white rounded-full
+                hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm"
               >
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Previous
@@ -88,8 +88,8 @@ export default function SignupForm(
               <button
                 type="button"
                 onClick={goNext}
-                className="flex items-center px-8 py-3 bg-gray-700 text-white rounded-full mr-32
-                hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all"
+                className="flex items-center px-6 py-3 bg-gray-900 text-white rounded-full
+                hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all text-sm font-semibold"
               >
                 Continue
                 <ArrowRightIcon className="w-4 h-4 ml-2" />
@@ -102,11 +102,10 @@ export default function SignupForm(
                 onClick={submit}
                 disabled={isLoading}
                 className={cn(
-                  "flex items-center px-8 py-3 bg-gray-700 text-white rounded-full mr-32 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all",
+                  "flex items-center px-6 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all text-sm font-semibold",
                   isLoading
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-green-600 hover:bg-green-700 focus:ring-green-500",
-                  "text-white"
+                    ? "bg-gray-400 cursor-not-allowed text-white"
+                    : "bg-green-600 hover:bg-green-700 focus:ring-green-500 text-white"
                 )}
               >
                 {isLoading ? (

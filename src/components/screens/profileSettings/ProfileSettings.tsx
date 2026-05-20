@@ -8,6 +8,7 @@ import {
   HelpCircle,
   Lock,
   LogOut,
+  Brain,
 } from "lucide-react";
 import {
   PersonalInfo,
@@ -15,6 +16,7 @@ import {
   SubscriptionBilling,
   HelpSupport,
   DataPrivacy,
+  ProfileMemory,
 } from "./components";
 import AuthContext from "@/contexts/authContext/authContext";
 import { useRouter } from "next/navigation";
@@ -24,6 +26,7 @@ const sidebarItems = [
   { id: "personal", label: "Personal Info", icon: User },
   { id: "security", label: "Emails & Password", icon: ShieldCheck },
   { id: "subscription", label: "Subscription & Billing", icon: CreditCard },
+  { id: "memories", label: "Memories", icon: Brain },
   { id: "help", label: "Help & Support", icon: HelpCircle },
   { id: "privacy", label: "Data & Privacy", icon: Lock },
 ];
@@ -71,6 +74,8 @@ const ProfileSettings: React.FC = () => {
         return <Security />;
       case "subscription":
         return <SubscriptionBilling />;
+      case "memories":
+        return <ProfileMemory />;
       case "help":
         return <HelpSupport />;
       case "privacy":

@@ -5,3 +5,4 @@ export * from "./Integrations";
 export * from "./SubscriptionBilling";
 export * from "./HelpSupport";
 export * from "./DataPrivacy";
+export * from "./ProfileMemory";

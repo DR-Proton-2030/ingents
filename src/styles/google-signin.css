@@ -1,0 +1,34 @@
+/* Prevent Google Sign-In button from affecting layout */
+div[data-google-signin-button] {
+  display: inline-block !important;
+  width: 100% !important;
+}
+
+.g_id_signin {
+  width: 100% !important;
+}
+
+.g_id_signin iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Prevent autofill from enlarging inputs */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  box-shadow: 0 0 0 30px white inset !important;
+}
+
+input:-webkit-autofill {
+  -webkit-text-fill-color: #333 !important;
+}
+
+/* Prevent input zoom on focus on mobile */
+input,
+textarea,
+select {
+  font-size: 16px !important;
+}

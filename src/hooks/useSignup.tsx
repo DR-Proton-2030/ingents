@@ -131,15 +131,30 @@ export function useSignup() {
       });
 
       const data = await response.json();
+      console.log("Signup response:", response.status, JSON.stringify(data));
 
       if (!response.ok) {
-        throw new Error(data.message || "Signup failed");
+        // User already registered → redirect to login
+        if (response.status === 409 || data.code === "USER_ALREADY_EXISTS") {
+          router.push("/login?reason=already_registered");
+          return;
+        }
+        throw new Error(data.message || data.error || `Signup failed with status ${response.status}`);
       }
 
-      const { user } = data;
-      setUser(user);
-
-      router.push("/dashboard");
+      // Handle different response structures
+      const user = data.user || data.data?.user;
+      if (user) {
+        // Store token if present
+        const token = data.token || data.data?.token;
+        if (token && typeof window !== "undefined") {
+          localStorage.setItem("@token", token);
+        }
+        setUser(user);
+        router.push("/dashboard");
+      } else {
+        throw new Error("No user data in response");
+      }
     } catch (err) {
       const error = err as Error;
       console.error("Signup error:", error);

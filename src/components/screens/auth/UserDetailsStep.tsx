@@ -60,23 +60,28 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
   };
 
   return (
-    <div className={cn("space-y-6 px-32", className)}>
-      <div className="text-left mb-8">
-        <h2 className="text-5xl sm:text-6xl lg:text-5xl font-serif leading-tight text-gray-900">
+    <div className={cn("w-full px-4 sm:px-8 lg:px-32", className)}>
+      {/* Heading */}
+      <div className="text-left mb-6">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif leading-tight text-gray-900">
           Personal Information
         </h2>
-        <p className="mt-2 text-lg text-gray-600">
+        <p className="mt-2 text-sm sm:text-base text-gray-600">
           Uncover the Untapped Potential of Your Growth to Connect with Clients
         </p>
       </div>
 
-      <div className="flex gap-4 justify-between">
-        <div className="space-y-4 w-2/5 ">
+      {/* Layout: single column on mobile, two columns on desktop */}
+      <div className="flex flex-col lg:flex-row lg:gap-8 lg:justify-between">
+
+        {/* ── Left column: form fields ── */}
+        <div className="space-y-4 w-full lg:w-2/5">
+
           {/* Full Name */}
           <div>
             <label
               htmlFor="full_name"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 mb-1.5"
             >
               Full Name *
             </label>
@@ -90,7 +95,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                 value={data.full_name}
                 onChange={(e) => handleInputChange("full_name", e.target.value)}
                 className={cn(
-                  "block w-full pl-10 pr-3 py-4 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
+                  "block w-full pl-10 pr-3 py-3.5 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm",
                   errors.full_name
                     ? "border-red-300 bg-red-50"
                     : "border-gray-300 hover:border-gray-400"
@@ -99,7 +104,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
               />
             </div>
             {errors.full_name && (
-              <p className="text-red-500 text-sm mt-1">{errors.full_name}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.full_name}</p>
             )}
           </div>
 
@@ -107,7 +112,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 mb-1.5"
             >
               Email Address *
             </label>
@@ -121,7 +126,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                 value={data.email}
                 onChange={(e) => handleInputChange("email", e.target.value)}
                 className={cn(
-                  "block w-full pl-10 pr-3 py-4 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
+                  "block w-full pl-10 pr-3 py-3.5 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm",
                   errors.email
                     ? "border-red-300 bg-red-50"
                     : "border-gray-300 hover:border-gray-400"
@@ -130,7 +135,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
               />
             </div>
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
             )}
           </div>
 
@@ -138,7 +143,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 mb-1.5"
             >
               Password *
             </label>
@@ -152,7 +157,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                 value={data.password}
                 onChange={(e) => handleInputChange("password", e.target.value)}
                 className={cn(
-                  "block w-full pl-10 pr-3 py-4 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
+                  "block w-full pl-10 pr-10 py-3.5 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm",
                   errors.password
                     ? "border-red-300 bg-red-50"
                     : "border-gray-300 hover:border-gray-400"
@@ -163,6 +168,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <EyeOffIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -171,19 +177,20 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                 )}
               </button>
             </div>
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            {errors.password ? (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1">
+                Password must be at least 8 characters long
+              </p>
             )}
-            <p className="text-sm text-gray-500 mt-1">
-              Password must be at least 8 characters long
-            </p>
           </div>
 
           {/* Confirm Password */}
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-gray-700 mb-1.5"
             >
               Confirm Password *
             </label>
@@ -199,7 +206,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                   handleInputChange("confirmPassword", e.target.value)
                 }
                 className={cn(
-                  "block w-full pl-10 pr-10 py-4 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all",
+                  "block w-full pl-10 pr-10 py-3.5 border rounded-full bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm",
                   errors.confirmPassword
                     ? "border-red-300 bg-red-50"
                     : "border-gray-300 hover:border-gray-400"
@@ -210,6 +217,7 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
               >
                 {showConfirmPassword ? (
                   <EyeOffIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
@@ -219,18 +227,21 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
               </button>
             </div>
             {errors.confirmPassword && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="text-red-500 text-xs mt-1">
                 {errors.confirmPassword}
               </p>
             )}
           </div>
         </div>
-        {/* Avatar Upload */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="h-32 bg-white/50 rounded-2xl w-[30rem] border border-gray-200"></div>
 
-          <div className="relative -mt-20">
-            <div className="w-40 h-40 rounded-full border-4 border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden">
+        {/* ── Right column: avatar upload (desktop only) / below form on mobile ── */}
+        <div className="flex flex-col items-center mt-8 lg:mt-0 lg:flex-1">
+          {/* Card background */}
+          <div className="w-full h-28 bg-white/50 rounded-2xl border border-gray-200" />
+
+          {/* Avatar circle overlapping the card */}
+          <div className="relative -mt-16">
+            <div className="w-32 h-32 rounded-full border-4 border-gray-200 flex items-center justify-center bg-gray-50 overflow-hidden">
               {avatarPreview ? (
                 <img
                   src={avatarPreview}
@@ -239,39 +250,43 @@ export const UserDetailsStep: React.FC<UserDetailsStepProps> = ({
                 />
               ) : (
                 <img
-                  src={
-                    "https://img.freepik.com/free-vector/man-profile-account-picture_24908-81754.jpg"
-                  }
-                  alt="Avatar preview"
+                  src="https://img.freepik.com/free-vector/man-profile-account-picture_24908-81754.jpg"
+                  alt="Default avatar"
                   className="w-full h-full object-cover"
                 />
               )}
             </div>
+            {/* Hidden file input */}
             <input
               type="file"
               accept="image/*"
               onChange={handleAvatarChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              className="sr-only"
               id="avatar-upload"
             />
+            {/* Blue camera badge */}
             <label
               htmlFor="avatar-upload"
-              className="absolute bottom-5 -right-2 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
+              className="absolute bottom-1 right-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-700 transition-colors"
+              aria-label="Upload profile picture"
             >
               <ImageIcon className="w-4 h-4 text-white" />
             </label>
           </div>
-          <p className="text-sm text-gray-500 mt-2">
+
+          <p className="text-sm text-gray-500 mt-3 text-center">
             Upload your profile picture (optional)
           </p>
+
           <label
             htmlFor="avatar-upload"
-            className="ml-2 inline-flex items-center px-4 py-2 rounded-full bg-indigo-400 text-sm font-semibold text-white mt-5 hover:brightness-95"
+            className="mt-4 inline-flex items-center px-5 py-2 rounded-full bg-indigo-400 text-sm font-semibold text-white cursor-pointer hover:brightness-95 transition-all"
           >
             Upload Image
           </label>
+
           {errors.profile_picture && (
-            <p className="text-red-500 text-sm mt-1">
+            <p className="text-red-500 text-xs mt-1">
               {errors.profile_picture}
             </p>
           )}

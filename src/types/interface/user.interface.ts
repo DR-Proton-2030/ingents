@@ -1,5 +1,10 @@
 import { ICompany } from "./company.interface";
 
+export interface MemoryItem {
+  key: string;
+  value: string;
+}
+
 export interface IUser {
   id: string;
   _id?: string;
@@ -11,6 +16,7 @@ export interface IUser {
   company_object_id: string;
   role: string;
   profile_picture: string;
+  memories?: MemoryItem[];
   company_details?: ICompany;
   facebook?: {
     project_id: string;
