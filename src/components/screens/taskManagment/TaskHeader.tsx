@@ -102,7 +102,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               <button
                 onClick={onFilter}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5  rounded-full text-sm font-semibold transition-all ",
+                  "cursor-pointer flex items-center gap-2 px-4 py-2.5  rounded-full text-sm font-semibold transition-all ",
                   activeFilterCount > 0
                     ? "border-orange-200 text-orange-600 bg-orange-50"
                     : "bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:border-gray-200"
@@ -114,7 +114,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px] flex items-center justify-center rounded-full border-2 border-white font-black"
+                      className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 text-white text-[10px]
+                       flex items-center justify-center rounded-full border-2 border-white "
                     >
                       {activeFilterCount}
                     </motion.span>
@@ -129,11 +130,11 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
               {/* Create Task */}
               <button
                 onClick={onCreateTask}
-                className="group flex items-center gap-2 p-3 bg-black/70 text-white 
-                 rounded-full text-sm 
-                 "
+                className="group flex items-center gap-2 px-4 py-2.5 bg-black/70 text-white 
+                 rounded-full text-sm font-semibold transition-all hover:bg-black/80 hover:text-white cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
+                Create Task
               </button>
             </div>
           </div>

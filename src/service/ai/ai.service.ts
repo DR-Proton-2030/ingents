@@ -1,6 +1,6 @@
 import { API_BASE_URL } from "@/config/config";
 import axios from "axios";
-const BACKEND_URL = "http://localhost:8989";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8989";
 
 export const generateAIContent = async (userId: string, companyId: string, context: string) => {
   try {

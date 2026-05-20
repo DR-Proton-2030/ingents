@@ -3,12 +3,11 @@ import type { Folder } from "./types";
 
 export const FolderCard: React.FC<{ folder: Folder }> = ({ folder }) => {
   return (
-    <div className="bg-white rounded-xl p-4 shadow hover:shadow-md transition-shadow cursor-pointer group">
+    <div className="bg-white rounded-xl p-4 transition-shadow cursor-pointer group">
       <div className="flex items-center justify-between mb-3">
         <div
-          className={`w-12 h-12 ${
-            folder.color ?? "bg-yellow-400"
-          } rounded-lg flex items-center justify-center`}
+          className={`w-12 h-12 ${folder.color ?? "bg-yellow-400"
+            } rounded-lg flex items-center justify-center`}
         >
           <svg
             className="w-6 h-6 text-white"

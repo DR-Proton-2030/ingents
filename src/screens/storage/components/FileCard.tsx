@@ -4,7 +4,7 @@ import FileTypeIcon from "./FileTypeIcon";
 
 export const FileCard: React.FC<{ file: RecentFile }> = ({ file }) => {
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
+    <div className="bg-white rounded-xl p-4 transition-shadow cursor-pointer group">
       <div className="flex items-center justify-between mb-3">
         <FileTypeIcon file={file} />
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">

@@ -15,6 +15,7 @@ import MacModal from "../MacModal";
 import AuthContext from "@/contexts/authContext/authContext";
 import { UniversalSearch } from "./UniversalSearch";
 import { ChatRound } from "@solar-icons/react/ssr";
+import { Settings } from "@solar-icons/react";
 
 export default function Navbar() {
   const router = useRouter();
@@ -46,13 +47,8 @@ export default function Navbar() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          <button
-            className="h-10 w-10 rounded-full border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center"
-            aria-label="Files"
-          >
-            <Folder className="h-5 w-5 text-gray-700" />
-          </button>
-          <div className="relative">
+
+          {/* <div className="relative">
             <button
               className="h-10 w-10 rounded-full border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center"
               aria-label="Notifications"
@@ -60,7 +56,7 @@ export default function Navbar() {
               <Bell className="h-5 w-5 text-gray-700" />
             </button>
             <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 ring-2 ring-white" />
-          </div>
+          </div> */}
 
           {/* Theme toggle look-alike */}
           <div className="ml-1 flex items-center gap-2">
@@ -72,10 +68,18 @@ export default function Navbar() {
               <ChatRound className="h-5 w-5" />
             </button>
             <button
+              onClick={() => router.push("/dashboard/storage")}
+              className="h-10 w-10 rounded-full border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center"
+              aria-label="Files"
+            >
+              <Folder className="h-5 w-5 text-gray-700" />
+            </button>
+            <button
+              onClick={() => router.push("/dashboard/profile-settings")}
               className="h-10 w-10 rounded-full border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 flex items-center justify-center"
               aria-label="Dark mode"
             >
-              <Moon className="h-5 w-5" />
+              <Settings className="h-5 w-5" />
             </button>
           </div>
         </div>
